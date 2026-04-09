@@ -175,3 +175,21 @@ export function getDistrictSearchExamples(limit = 8) {
     entry.areas.slice(0, 1).map((area) => `${entry.province ?? ""} ${area}`.trim()),
   ).slice(0, limit);
 }
+
+export function getDistrictEntryByName(district: string) {
+  const normalized = normalizeKoreanText(district);
+
+  return DISTRICTS.find((entry) => normalizeKoreanText(entry.district) === normalized) ?? null;
+}
+
+export function getDistrictSearchTokens(district: string) {
+  const entry = getDistrictEntryByName(district);
+  const districtStem = district.replace(/선거구$/, "");
+  const province = entry?.province
+    ?.replace("특별자치도", "")
+    ?.replace("특별자치시", "")
+    ?.replace("특별시", "")
+    ?.replace("광역시", "");
+
+  return [...new Set([`${province ?? ""} ${districtStem}`.trim(), districtStem])];
+}
