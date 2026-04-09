@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, MapPin, Zap } from "lucide-react";
 import Link from "next/link";
 import type { Session } from "next-auth";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { getPartyPresentation } from "@/lib/parties";
 
 type HomeContainerProps = {
@@ -118,6 +119,7 @@ export function HomeContainer({ session }: HomeContainerProps) {
           </ProfileChip>
 
           <MyPageLink href="/mypage">마이페이지</MyPageLink>
+          <HeaderSignOutButton callbackUrl="/">로그아웃</HeaderSignOutButton>
         </HeaderActions>
       </MotionHeader>
 
@@ -428,6 +430,21 @@ const MyPageLink = styled(Link)`
   border: 1px solid #ebebeb;
   font-size: 0.9rem;
   font-weight: 700;
+`;
+
+const HeaderSignOutButton = styled(SignOutButton)`
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 15px;
+  border-radius: 999px;
+  color: #191f28;
+  background: #ffffff;
+  border: 1px solid #d7dde5;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
 `;
 
 const Main = styled.div`

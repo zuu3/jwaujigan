@@ -1,34 +1,33 @@
 "use client";
 
-import styled from "@emotion/styled";
+import type { ComponentPropsWithoutRef, MouseEvent } from "react";
 import { signOut } from "next-auth/react";
 
-export function SignOutButton() {
+type SignOutButtonProps = ComponentPropsWithoutRef<"button"> & {
+  callbackUrl?: string;
+};
+
+export function SignOutButton({
+  callbackUrl = "/",
+  onClick,
+  type = "button",
+  ...props
+}: SignOutButtonProps) {
+  const handleClick = async (event: MouseEvent<HTMLButtonElement>) => {
+    onClick?.(event);
+
+    if (event.defaultPrevented) {
+      return;
+    }
+
+    await signOut({
+      callbackUrl,
+    });
+  };
+
   return (
-    <Button
-      type="button"
-      onClick={() =>
-        void signOut({
-          callbackUrl: "/",
-        })
-      }
-    >
+    <button {...props} type={type} onClick={(event) => void handleClick(event)}>
       로그아웃
-    </Button>
+    </button>
   );
 }
-
-const Button = styled.button`
-  display: inline-flex;
-  min-height: 40px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 14px;
-  border: 0;
-  border-radius: 999px;
-  color: #191f28;
-  background: rgba(49, 130, 246, 0.08);
-  font-size: 0.9rem;
-  font-weight: 700;
-  cursor: pointer;
-`;
