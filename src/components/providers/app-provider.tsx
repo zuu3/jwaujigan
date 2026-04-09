@@ -4,7 +4,7 @@ import { type ReactNode, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Global } from "@emotion/react";
 import { EmotionRegistry } from "./emotion-registry";
-import { globalStyles } from "./global-styles";
+import { globalStyles } from "@/styles/global-styles";
 
 type AppProviderProps = {
   children: ReactNode;

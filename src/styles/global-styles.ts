@@ -3,7 +3,7 @@ import { css } from "@emotion/react";
 export const globalStyles = css`
   :root {
     --background: #ffffff;
-    --foreground: #171717;
+    --foreground: #191f28;
   }
 
   * {
@@ -13,6 +13,7 @@ export const globalStyles = css`
   html {
     min-height: 100%;
     background: var(--background);
+    scroll-behavior: smooth;
   }
 
   body {
@@ -21,6 +22,9 @@ export const globalStyles = css`
     color: var(--foreground);
     background: var(--background);
     font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+    overflow-x: hidden;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
   }
 
   a {
