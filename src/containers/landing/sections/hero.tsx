@@ -2,9 +2,14 @@ import styled from "@emotion/styled";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { Container, fadeUp } from "../shared";
 
-export function HeroSection() {
+type HeroSectionProps = {
+  isAuthenticated: boolean;
+};
+
+export function HeroSection({ isAuthenticated }: HeroSectionProps) {
   return (
     <Hero>
       <HeroBackground />
@@ -33,10 +38,17 @@ export function HeroSection() {
           </HeroText>
 
           <HeroActions variants={fadeUp}>
-            <PrimaryCta href="#local-info">
-              우리 동네 정치인 보기
-              <ArrowRight size={18} />
-            </PrimaryCta>
+            {isAuthenticated ? (
+              <PrimaryLinkCta href="/home">
+                서비스 이어서 보기
+                <ArrowRight size={18} />
+              </PrimaryLinkCta>
+            ) : (
+              <PrimaryButtonCta callbackUrl="/onboarding">
+                Google로 시작하기
+                <ArrowRight size={18} />
+              </PrimaryButtonCta>
+            )}
             <SecondaryCta href="#arena">AI 토론 보기</SecondaryCta>
           </HeroActions>
         </HeroCopy>
@@ -204,7 +216,7 @@ const HeroActions = styled(motion.div)`
   }
 `;
 
-const PrimaryCta = styled(Link)`
+const primaryCtaStyles = `
   display: inline-flex;
   min-height: 54px;
   align-items: center;
@@ -217,12 +229,22 @@ const PrimaryCta = styled(Link)`
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: -0.03em;
+  border: 0;
+  cursor: pointer;
 
   @media (max-width: 640px) {
     width: 100%;
     min-height: 50px;
     font-size: 0.96rem;
   }
+`;
+
+const PrimaryLinkCta = styled(Link)`
+  ${primaryCtaStyles}
+`;
+
+const PrimaryButtonCta = styled(GoogleSignInButton)`
+  ${primaryCtaStyles}
 `;
 
 const SecondaryCta = styled(Link)`

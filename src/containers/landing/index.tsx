@@ -10,11 +10,15 @@ import { AnalysisSection } from "./sections/analysis";
 import { EngagementSection } from "./sections/engagement";
 import { Page } from "./shared";
 
-export function LandingContainer() {
+type LandingContainerProps = {
+  isAuthenticated: boolean;
+};
+
+export function LandingContainer({ isAuthenticated }: LandingContainerProps) {
   return (
     <Page>
-      <LandingHeader />
-      <HeroSection />
+      <LandingHeader isAuthenticated={isAuthenticated} />
+      <HeroSection isAuthenticated={isAuthenticated} />
       <OverviewSection />
       <LocalInfoSection />
       <ArenaSection />

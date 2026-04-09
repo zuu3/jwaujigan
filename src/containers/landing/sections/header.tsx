@@ -1,8 +1,13 @@
 import styled from "@emotion/styled";
 import Link from "next/link";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { Container } from "../shared";
 
-export function LandingHeader() {
+type LandingHeaderProps = {
+  isAuthenticated: boolean;
+};
+
+export function LandingHeader({ isAuthenticated }: LandingHeaderProps) {
   return (
     <Header>
       <HeaderInner>
@@ -17,7 +22,13 @@ export function LandingHeader() {
           <NavLink href="#analysis">이슈 분석</NavLink>
         </Nav>
 
-        <HeaderCta href="#local-info">살펴보기</HeaderCta>
+        {isAuthenticated ? (
+          <HeaderLinkCta href="/home">계속하기</HeaderLinkCta>
+        ) : (
+          <HeaderButtonCta callbackUrl="/onboarding">
+            Google 로그인
+          </HeaderButtonCta>
+        )}
       </HeaderInner>
     </Header>
   );
@@ -81,7 +92,7 @@ const NavLink = styled(Link)`
   }
 `;
 
-const HeaderCta = styled(Link)`
+const headerCtaStyles = `
   display: inline-flex;
   min-height: 42px;
   align-items: center;
@@ -94,10 +105,20 @@ const HeaderCta = styled(Link)`
   font-weight: 700;
   letter-spacing: -0.02em;
   flex-shrink: 0;
+  border: 0;
+  cursor: pointer;
 
   @media (max-width: 640px) {
     min-height: 38px;
     padding: 0 14px;
     font-size: 0.88rem;
   }
+`;
+
+const HeaderLinkCta = styled(Link)`
+  ${headerCtaStyles}
+`;
+
+const HeaderButtonCta = styled(GoogleSignInButton)`
+  ${headerCtaStyles}
 `;
