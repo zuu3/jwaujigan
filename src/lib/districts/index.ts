@@ -81,6 +81,11 @@ function buildAreaAliases(area: string) {
     aliases.push(area.slice(0, -2));
   }
 
+  const numberedDongMatch = simplified.match(/^(.+?)\d동$/);
+  if (numberedDongMatch) {
+    aliases.push(`${numberedDongMatch[1]}동`);
+  }
+
   const gaMatch = simplified.match(/^(.+?)(\d)가(\d)동$/);
   if (gaMatch) {
     const [, base, lot, admin] = gaMatch;
@@ -95,9 +100,30 @@ function buildAreaAliases(area: string) {
   return dedupe(aliases).map(normalizeKoreanText);
 }
 
+function detectProvinceFromAddress(normalizedAddress: string) {
+  let matchedProvince: string | null = null;
+  let longestAliasLength = -1;
+
+  for (const province of Object.keys(PROVINCE_ALIASES)) {
+    for (const alias of buildProvinceAliases(province)) {
+      if (!alias || !normalizedAddress.includes(alias)) {
+        continue;
+      }
+
+      if (alias.length > longestAliasLength) {
+        matchedProvince = province;
+        longestAliasLength = alias.length;
+      }
+    }
+  }
+
+  return matchedProvince;
+}
+
 function scoreEntry(entry: DistrictEntry, normalizedAddress: string): DistrictCandidate {
   let score = 0;
   let matchedArea: string | null = null;
+  let bestAreaScore = 0;
 
   for (const alias of buildProvinceAliases(entry.province)) {
     if (alias && normalizedAddress.includes(alias)) {
@@ -121,13 +147,16 @@ function scoreEntry(entry: DistrictEntry, normalizedAddress: string): DistrictCa
       continue;
     }
 
-    matchedArea = area;
-    score += Math.max(30, matchedAlias.length * 2);
+    const areaScore =
+      Math.max(30, matchedAlias.length * 2) + (area.endsWith("일원") ? 8 : 0);
 
-    if (area.endsWith("일원")) {
-      score += 8;
+    if (areaScore > bestAreaScore) {
+      bestAreaScore = areaScore;
+      matchedArea = area;
     }
   }
+
+  score += bestAreaScore;
 
   return {
     entry,
@@ -143,7 +172,12 @@ export function resolveDistrictFromAddress(address: string): DistrictResolveResu
     return null;
   }
 
-  const candidates = DISTRICTS.map((entry) => scoreEntry(entry, normalizedAddress))
+  const explicitProvince = detectProvinceFromAddress(normalizedAddress);
+  const entriesToScore = explicitProvince
+    ? DISTRICTS.filter((entry) => entry.province === explicitProvince)
+    : DISTRICTS;
+
+  const candidates = entriesToScore.map((entry) => scoreEntry(entry, normalizedAddress))
     .filter((candidate) => candidate.score > 0)
     .sort((left, right) => right.score - left.score);
 

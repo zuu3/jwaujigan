@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Crosshair } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { TargetCursor } from "@/components/cursor/target-cursor";
 import { ONBOARDING_SKIP_COOKIE } from "@/lib/onboarding";
 import { questions, likertOptions } from "./questions";
 import { useOnboardingStore } from "./store";
@@ -20,19 +21,72 @@ type DistrictResponse = {
   sourceAddress: string;
 };
 
-function getCurrentPosition() {
+type GeolocationFailure = {
+  code?: number;
+  message?: string;
+};
+
+function getCurrentPosition(options?: PositionOptions) {
   return new Promise<GeolocationPosition>((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error("Geolocation is not supported."));
+    if (typeof window !== "undefined" && !window.isSecureContext) {
+      reject(
+        new Error("현재 위치는 HTTPS 또는 localhost에서만 사용할 수 있습니다."),
+      );
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(resolve, reject, {
+    if (!navigator.geolocation) {
+      reject(new Error("브라우저가 위치 정보를 지원하지 않습니다."));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(resolve, reject, options);
+  });
+}
+
+function isGeolocationFailure(error: unknown): error is GeolocationFailure {
+  return typeof error === "object" && error !== null && "code" in error;
+}
+
+function getLocationErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (isGeolocationFailure(error)) {
+    switch (error.code) {
+      case 1:
+        return "브라우저 위치 권한이 차단되어 있습니다. 주소를 직접 입력하거나 위치 권한을 허용해 주세요.";
+      case 2:
+        return "현재 위치를 정확히 확인하지 못했습니다. Wi-Fi나 네트워크 상태를 확인해 주세요.";
+      case 3:
+        return "현재 위치 확인 시간이 초과됐습니다. 다시 시도하거나 주소를 직접 입력해 주세요.";
+      default:
+        return error.message ?? "현재 위치를 확인하지 못했습니다. 주소를 직접 입력해 주세요.";
+    }
+  }
+
+  return "현재 위치를 확인하지 못했습니다. 주소를 직접 입력해 주세요.";
+}
+
+async function resolveCurrentPosition() {
+  try {
+    return await getCurrentPosition({
       enableHighAccuracy: true,
       timeout: 10_000,
       maximumAge: 0,
     });
-  });
+  } catch (error) {
+    if (isGeolocationFailure(error) && (error.code === 2 || error.code === 3)) {
+      return getCurrentPosition({
+        enableHighAccuracy: false,
+        timeout: 15_000,
+        maximumAge: 300_000,
+      });
+    }
+
+    throw error;
+  }
 }
 
 export function OnboardingContainer({
@@ -133,18 +187,14 @@ export function OnboardingContainer({
     setDistrictNotice(null);
 
     try {
-      const position = await getCurrentPosition();
+      const position = await resolveCurrentPosition();
       await saveDistrict({
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
       });
     } catch (error) {
       console.error(error);
-      setDistrictError(
-        error instanceof Error
-          ? error.message
-          : "현재 위치를 확인하지 못했습니다. 주소를 직접 입력해 주세요.",
-      );
+      setDistrictError(getLocationErrorMessage(error));
     } finally {
       setIsResolvingLocation(false);
     }
@@ -292,6 +342,7 @@ export function OnboardingContainer({
               <AnswerButton
                 key={option.label}
                 type="button"
+                data-cursor-target="onboarding-answer"
                 onClick={() => void handleAnswer(option.value)}
                 disabled={!canAnswer}
                 $selected={currentSelection === option.value}
@@ -309,6 +360,7 @@ export function OnboardingContainer({
           ) : null}
         </ContentInner>
       </Content>
+      <TargetCursor targetSelector='[data-cursor-target="onboarding-answer"]' />
     </Page>
   );
 }
