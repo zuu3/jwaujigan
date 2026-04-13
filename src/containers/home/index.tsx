@@ -162,7 +162,7 @@ export function HomeContainer({ session }: HomeContainerProps) {
                     ? "스킵하고 들어온 상태입니다. 홈을 보면서도 언제든 이어서 완료할 수 있습니다."
                     : needsDistrict
                       ? "지역구를 선택하면 우리 동네 의원 정보를 바로 볼 수 있습니다."
-                      : "정치 성향 테스트를 마치면 더 맞는 관점으로 서비스를 쓸 수 있습니다."}
+                      : "테스트를 끝내고 내 정치 성향을 확인해 보세요."}
                 </CalloutText>
                 <Checklist>
                   <ChecklistItem $done={!needsDistrict}>
@@ -712,32 +712,33 @@ const EmptyCard = styled.div`
 
 const OnboardingCallout = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 20px;
-  padding: 26px 28px;
-  border-radius: 30px;
-  background: linear-gradient(135deg, #fff7e8 0%, #fffdf7 100%);
-  box-shadow: 0 22px 54px rgba(15, 23, 42, 0.08);
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #fff8eb 0%, #fffdf8 100%);
+  border: 1px solid rgba(237, 137, 54, 0.16);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.05);
 
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: stretch;
-    padding: 22px 20px;
+    padding: 18px;
   }
 `;
 
 const CalloutCopy = styled.div`
   display: grid;
-  gap: 10px;
+  gap: 8px;
 `;
 
 const CalloutTitle = styled.h3`
   margin: 0;
   color: #191f28;
-  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  font-size: clamp(1rem, 2vw, 1.18rem);
   font-weight: 800;
-  line-height: 1.3;
+  line-height: 1.4;
   letter-spacing: -0.04em;
   word-break: keep-all;
 `;
@@ -745,23 +746,24 @@ const CalloutTitle = styled.h3`
 const CalloutText = styled.p`
   margin: 0;
   color: #4e5968;
-  line-height: 1.6;
+  font-size: 0.94rem;
+  line-height: 1.55;
   word-break: keep-all;
 `;
 
 const Checklist = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 `;
 
 const ChecklistItem = styled.div<{ $done: boolean }>`
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: 999px;
   color: ${({ $done }) => ($done ? "#166534" : "#9a3412")};
   background: ${({ $done }) =>
     $done ? "rgba(34, 197, 94, 0.12)" : "rgba(249, 115, 22, 0.12)"};
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   font-weight: 700;
 `;
 
@@ -770,11 +772,12 @@ const CalloutAction = styled(Link)`
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 54px;
-  padding: 0 20px;
+  min-height: 46px;
+  padding: 0 16px;
   border-radius: 999px;
   color: #ffffff;
   background: #191f28;
+  font-size: 0.92rem;
   font-weight: 800;
   white-space: nowrap;
 
