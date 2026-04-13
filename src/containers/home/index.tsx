@@ -141,47 +141,6 @@ export function HomeContainer({ session }: HomeContainerProps) {
           </IntroText>
         </MotionIntro>
 
-        {needsOnboarding ? (
-          <MotionSection
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.32, delay: 0.07 }}
-          >
-            <OnboardingCallout>
-              <CalloutCopy>
-                <SectionEyebrow>온보딩 미완료</SectionEyebrow>
-                <CalloutTitle>
-                  {needsDistrict && needsPoliticalProfile
-                    ? "지역구 선택과 정치 성향 테스트가 아직 남아 있습니다"
-                    : needsDistrict
-                      ? "지역구 선택이 아직 끝나지 않았습니다"
-                      : "정치 성향 테스트가 아직 끝나지 않았습니다"}
-                </CalloutTitle>
-                <CalloutText>
-                  {needsDistrict && needsPoliticalProfile
-                    ? "스킵하고 들어온 상태입니다. 홈을 보면서도 언제든 이어서 완료할 수 있습니다."
-                    : needsDistrict
-                      ? "지역구를 선택하면 우리 동네 의원 정보를 바로 볼 수 있습니다."
-                      : "테스트를 끝내고 내 정치 성향을 확인해 보세요."}
-                </CalloutText>
-                <Checklist>
-                  <ChecklistItem $done={!needsDistrict}>
-                    지역구 선택 {!needsDistrict ? "완료" : "필요"}
-                  </ChecklistItem>
-                  <ChecklistItem $done={!needsPoliticalProfile}>
-                    정치 성향 테스트 {!needsPoliticalProfile ? "완료" : "필요"}
-                  </ChecklistItem>
-                </Checklist>
-              </CalloutCopy>
-
-              <CalloutAction href="/onboarding">
-                {needsDistrict ? "지역구 선택하러 가기" : "정치 성향 테스트 이어서 하기"}
-                <ArrowRight size={18} />
-              </CalloutAction>
-            </OnboardingCallout>
-          </MotionSection>
-        ) : null}
-
         <MotionSection
           id="local-politicians"
           initial={{ opacity: 0, y: 22 }}
@@ -195,6 +154,17 @@ export function HomeContainer({ session }: HomeContainerProps) {
                 {district ? district : "지역구를 먼저 설정해 주세요"}
               </SectionTitle>
             </SectionMeta>
+            {needsOnboarding ? (
+              <SectionHeaderAside>
+                <CompactNotice>
+                  <CompactNoticeLabel>성향 테스트 미완료</CompactNoticeLabel>
+                  <CompactNoticeAction href="/onboarding">
+                    이어서 하기
+                    <ArrowRight size={15} />
+                  </CompactNoticeAction>
+                </CompactNotice>
+              </SectionHeaderAside>
+            ) : null}
           </SectionHeader>
 
           {district ? (
@@ -497,7 +467,7 @@ const HeaderSignOutButton = styled(SignOutButton)`
 const Main = styled.div`
   display: grid;
   width: min(100%, 1160px);
-  gap: 20px;
+  gap: 18px;
   margin: 18px auto 0;
 `;
 
@@ -527,6 +497,11 @@ const SectionHeader = styled.div`
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
+
+  @media (max-width: 768px) {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 `;
 
 const SectionMeta = styled.div`
@@ -547,6 +522,53 @@ const SectionTitle = styled.h2`
   line-height: 1.24;
   letter-spacing: -0.05em;
   word-break: keep-all;
+`;
+
+const SectionHeaderAside = styled.div`
+  display: flex;
+  justify-content: flex-end;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
+`;
+
+const CompactNotice = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 12px;
+  border-radius: 999px;
+  background: rgba(249, 115, 22, 0.08);
+  border: 1px solid rgba(249, 115, 22, 0.14);
+
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: space-between;
+    border-radius: 16px;
+  }
+`;
+
+const CompactNoticeLabel = styled.div`
+  color: #9a3412;
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+`;
+
+const CompactNoticeAction = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #191f28;
+  font-size: 0.84rem;
+  font-weight: 800;
+  white-space: nowrap;
 `;
 
 const PoliticianList = styled.div`
@@ -708,82 +730,6 @@ const EmptyCard = styled.div`
   background: #ffffff;
   border: 1px solid #ebebeb;
   box-shadow: 0 16px 38px rgba(15, 23, 42, 0.05);
-`;
-
-const OnboardingCallout = styled.div`
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 18px 20px;
-  border-radius: 22px;
-  background: linear-gradient(135deg, #fff8eb 0%, #fffdf8 100%);
-  border: 1px solid rgba(237, 137, 54, 0.16);
-  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.05);
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 18px;
-  }
-`;
-
-const CalloutCopy = styled.div`
-  display: grid;
-  gap: 8px;
-`;
-
-const CalloutTitle = styled.h3`
-  margin: 0;
-  color: #191f28;
-  font-size: clamp(1rem, 2vw, 1.18rem);
-  font-weight: 800;
-  line-height: 1.4;
-  letter-spacing: -0.04em;
-  word-break: keep-all;
-`;
-
-const CalloutText = styled.p`
-  margin: 0;
-  color: #4e5968;
-  font-size: 0.94rem;
-  line-height: 1.55;
-  word-break: keep-all;
-`;
-
-const Checklist = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-`;
-
-const ChecklistItem = styled.div<{ $done: boolean }>`
-  padding: 8px 10px;
-  border-radius: 999px;
-  color: ${({ $done }) => ($done ? "#166534" : "#9a3412")};
-  background: ${({ $done }) =>
-    $done ? "rgba(34, 197, 94, 0.12)" : "rgba(249, 115, 22, 0.12)"};
-  font-size: 0.84rem;
-  font-weight: 700;
-`;
-
-const CalloutAction = styled(Link)`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 46px;
-  padding: 0 16px;
-  border-radius: 999px;
-  color: #ffffff;
-  background: #191f28;
-  font-size: 0.92rem;
-  font-weight: 800;
-  white-space: nowrap;
-
-  @media (max-width: 768px) {
-    width: 100%;
-  }
 `;
 
 const DistrictPromptCard = styled.div`
