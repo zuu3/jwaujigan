@@ -2,10 +2,16 @@
 
 import styled from "@emotion/styled";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Crosshair } from "lucide-react";
+import { ArrowRight, Crosshair, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { TargetCursor } from "@/components/cursor/target-cursor";
+import {
+  DISTRICT_AREA_OPTIONS,
+  DISTRICT_PROVINCES,
+  normalizeKoreanText,
+  type DistrictAreaOption,
+} from "@/lib/districts/catalog";
 import { ONBOARDING_SKIP_COOKIE } from "@/lib/onboarding";
 import { questions, likertOptions } from "./questions";
 import { useOnboardingStore } from "./store";
@@ -14,11 +20,21 @@ type OnboardingContainerProps = {
   initialDistrict: string | null;
 };
 
+type OnboardingStep = "district" | "questions";
+
 type DistrictResponse = {
   district: string;
   province: string | null;
   matchedArea: string | null;
   sourceAddress: string;
+};
+
+type DistrictRequestPayload = {
+  latitude?: number;
+  longitude?: number;
+  district?: string;
+  matchedArea?: string;
+  sourceAddress?: string;
 };
 
 type GeolocationFailure = {
@@ -30,7 +46,9 @@ function getCurrentPosition(options?: PositionOptions) {
   return new Promise<GeolocationPosition>((resolve, reject) => {
     if (typeof window !== "undefined" && !window.isSecureContext) {
       reject(
-        new Error("현재 위치는 HTTPS 또는 localhost에서만 사용할 수 있습니다."),
+        new Error(
+          "브라우저 보안 정책 때문에 현재 위치를 사용할 수 없습니다. HTTPS 또는 localhost에서 접속해 주세요.",
+        ),
       );
       return;
     }
@@ -56,17 +74,41 @@ function getLocationErrorMessage(error: unknown) {
   if (isGeolocationFailure(error)) {
     switch (error.code) {
       case 1:
-        return "브라우저 위치 권한이 차단되어 있습니다. 주소를 직접 입력하거나 위치 권한을 허용해 주세요.";
+        return "브라우저 위치 권한이 차단되어 있습니다. 아래에서 직접 지역구를 선택해 주세요.";
       case 2:
-        return "현재 위치를 정확히 확인하지 못했습니다. Wi-Fi나 네트워크 상태를 확인해 주세요.";
+        return "현재 위치를 정확히 확인하지 못했습니다. 잠시 후 다시 시도하거나 직접 지역구를 선택해 주세요.";
       case 3:
-        return "현재 위치 확인 시간이 초과됐습니다. 다시 시도하거나 주소를 직접 입력해 주세요.";
+        return "현재 위치 확인 시간이 초과됐습니다. 다시 시도하거나 직접 지역구를 선택해 주세요.";
       default:
-        return error.message ?? "현재 위치를 확인하지 못했습니다. 주소를 직접 입력해 주세요.";
+        return error.message ?? "현재 위치를 확인하지 못했습니다. 아래에서 직접 지역구를 선택해 주세요.";
     }
   }
 
-  return "현재 위치를 확인하지 못했습니다. 주소를 직접 입력해 주세요.";
+  return "현재 위치를 확인하지 못했습니다. 아래에서 직접 지역구를 선택해 주세요.";
+}
+
+const MANUAL_MATCH_LIMIT = 8;
+
+function getManualResultScore(
+  option: DistrictAreaOption,
+  normalizedQuery: string,
+) {
+  const normalizedArea = normalizeKoreanText(option.areaLabel);
+  const normalizedDistrict = normalizeKoreanText(option.districtLabel);
+
+  if (normalizedArea === normalizedQuery) {
+    return 4;
+  }
+
+  if (normalizedArea.startsWith(normalizedQuery)) {
+    return 3;
+  }
+
+  if (normalizedDistrict.startsWith(normalizedQuery)) {
+    return 2;
+  }
+
+  return 1;
 }
 
 async function resolveCurrentPosition() {
@@ -99,23 +141,62 @@ export function OnboardingContainer({
   const reset = useOnboardingStore((state) => state.reset);
   const answers = useOnboardingStore((state) => state.answers);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [step, setStep] = useState<OnboardingStep>(
+    initialDistrict ? "questions" : "district",
+  );
   const [district, setDistrict] = useState(initialDistrict);
-  const [address, setAddress] = useState("");
   const [resolvedAddress, setResolvedAddress] = useState<string | null>(null);
   const [districtError, setDistrictError] = useState<string | null>(null);
   const [districtNotice, setDistrictNotice] = useState<string | null>(null);
-  const [isResolvingAddress, setIsResolvingAddress] = useState(false);
   const [isResolvingLocation, setIsResolvingLocation] = useState(false);
+  const [isSavingManualDistrict, setIsSavingManualDistrict] = useState(false);
+  const [savingManualOptionId, setSavingManualOptionId] = useState<string | null>(null);
+  const [selectedProvince, setSelectedProvince] = useState("all");
+  const [manualQuery, setManualQuery] = useState("");
 
   const question = questions[currentIndex];
   const progress = ((currentIndex + 1) / questions.length) * 100;
   const isLastQuestion = currentIndex === questions.length - 1;
-  const isResolvingDistrict = isResolvingAddress || isResolvingLocation;
+  const isResolvingDistrict = isResolvingLocation || isSavingManualDistrict;
   const canAnswer = Boolean(district) && !isSubmitting && !isResolvingDistrict;
   const currentSelection = useMemo(
     () => answers[question.id],
     [answers, question.id],
   );
+  const deferredManualQuery = useDeferredValue(manualQuery);
+  const normalizedManualQuery = useMemo(
+    () => normalizeKoreanText(deferredManualQuery),
+    [deferredManualQuery],
+  );
+  const manualMatches = useMemo(() => {
+    if (!normalizedManualQuery) {
+      return [];
+    }
+
+    return DISTRICT_AREA_OPTIONS
+      .filter((option) => {
+        if (
+          selectedProvince !== "all" &&
+          option.province !== selectedProvince
+        ) {
+          return false;
+        }
+
+        return option.searchText.includes(normalizedManualQuery);
+      })
+      .sort((left, right) => {
+        const scoreDiff =
+          getManualResultScore(right, normalizedManualQuery) -
+          getManualResultScore(left, normalizedManualQuery);
+
+        if (scoreDiff !== 0) {
+          return scoreDiff;
+        }
+
+        return left.areaLabel.localeCompare(right.areaLabel, "ko");
+      })
+      .slice(0, MANUAL_MATCH_LIMIT);
+  }, [normalizedManualQuery, selectedProvince]);
 
   const handleSkip = () => {
     document.cookie = `${ONBOARDING_SKIP_COOKIE}=true; path=/; max-age=604800`;
@@ -123,11 +204,7 @@ export function OnboardingContainer({
     router.push("/home?skip=true");
   };
 
-  const saveDistrict = async (payload: {
-    address?: string;
-    latitude?: number;
-    longitude?: number;
-  }) => {
+  const saveDistrict = async (payload: DistrictRequestPayload) => {
     const response = await fetch("/api/district", {
       method: "POST",
       headers: {
@@ -148,37 +225,15 @@ export function OnboardingContainer({
     setResolvedAddress(result.sourceAddress);
     setDistrictError(null);
     setDistrictNotice(
-      result.matchedArea
-        ? `${result.matchedArea} 기준으로 지역구를 찾았습니다.`
-        : "지역구를 찾았습니다.",
+      payload.district
+        ? result.matchedArea
+          ? `${result.matchedArea} 기준으로 지역구를 설정했습니다.`
+          : "지역구를 설정했습니다."
+        : result.matchedArea
+          ? `${result.matchedArea} 기준으로 지역구를 찾았습니다.`
+          : "지역구를 찾았습니다.",
     );
     router.refresh();
-  };
-
-  const handleResolveAddress = async () => {
-    const trimmed = address.trim();
-
-    if (!trimmed) {
-      setDistrictError("시/군/구와 읍/면/동까지 포함해서 입력해 주세요.");
-      return;
-    }
-
-    setIsResolvingAddress(true);
-    setDistrictError(null);
-    setDistrictNotice(null);
-
-    try {
-      await saveDistrict({ address: trimmed });
-    } catch (error) {
-      console.error(error);
-      setDistrictError(
-        error instanceof Error
-          ? error.message
-          : "주소로 지역구를 찾지 못했습니다.",
-      );
-    } finally {
-      setIsResolvingAddress(false);
-    }
   };
 
   const handleResolveLocation = async () => {
@@ -192,11 +247,50 @@ export function OnboardingContainer({
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
       });
+      setManualQuery("");
     } catch (error) {
       console.error(error);
       setDistrictError(getLocationErrorMessage(error));
     } finally {
       setIsResolvingLocation(false);
+    }
+  };
+
+  const handleContinueToQuestions = () => {
+    if (!district) {
+      setDistrictError("정치 성향 테스트 전에 지역구를 먼저 선택해 주세요.");
+      return;
+    }
+
+    setStep("questions");
+  };
+
+  const handleBackToDistrictStep = () => {
+    setStep("district");
+  };
+
+  const handleManualDistrictSelect = async (option: DistrictAreaOption) => {
+    setIsSavingManualDistrict(true);
+    setSavingManualOptionId(option.id);
+    setDistrictError(null);
+    setDistrictNotice(null);
+
+    try {
+      await saveDistrict({
+        district: option.district,
+        matchedArea: option.areaLabel,
+        sourceAddress: [option.province, option.areaLabel].filter(Boolean).join(" "),
+      });
+    } catch (error) {
+      console.error(error);
+      setDistrictError(
+        error instanceof Error
+          ? error.message
+          : "선택한 지역구를 저장하지 못했습니다.",
+      );
+    } finally {
+      setIsSavingManualDistrict(false);
+      setSavingManualOptionId(null);
     }
   };
 
@@ -257,107 +351,206 @@ export function OnboardingContainer({
 
       <Content>
         <ContentInner>
-          <DistrictSection>
-            <DistrictMeta>
-              <DistrictEyebrow>내 지역부터 설정</DistrictEyebrow>
-              <DistrictTitle>위치나 주소로 지역구를 먼저 정해 주세요</DistrictTitle>
-              <DistrictDescription>
-                주소는 시/군/구와 읍/면/동까지 입력하면 가장 정확합니다.
-              </DistrictDescription>
-            </DistrictMeta>
+          {step === "district" ? (
+            <>
+              <StepHeader>
+                <StepChip>1 / 2 지역구 선택</StepChip>
+                <StepTitle>먼저 내 지역구를 정해 주세요</StepTitle>
+                <StepDescription>
+                  정치 성향 테스트와 분리해서 진행합니다. 현재 위치로 찾거나 아래에서 직접
+                  검색해 선택하면 다음 단계로 넘어갑니다.
+                </StepDescription>
+              </StepHeader>
 
-            <DistrictPanel>
-              <DistrictStatus>
-                <StatusLabel>현재 지역구</StatusLabel>
-                <StatusValue>{district ?? "아직 설정되지 않았습니다"}</StatusValue>
-                {resolvedAddress ? (
-                  <StatusHint>{resolvedAddress}</StatusHint>
-                ) : initialDistrict ? (
-                  <StatusHint>이미 저장된 지역구를 사용합니다.</StatusHint>
-                ) : null}
-              </DistrictStatus>
+              <DistrictSection>
+                <DistrictMeta>
+                  <DistrictEyebrow>내 지역부터 설정</DistrictEyebrow>
+                  <DistrictTitle>현재 위치나 직접 검색으로 지역구를 선택해 주세요</DistrictTitle>
+                  <DistrictDescription>
+                    현재 위치가 안 잡히면 시/도와 행정동 이름으로 바로 찾을 수 있습니다.
+                  </DistrictDescription>
+                </DistrictMeta>
 
-              <LocationButton
-                type="button"
-                onClick={() => void handleResolveLocation()}
-                disabled={isResolvingDistrict}
-              >
-                <Crosshair size={16} />
-                <span>
-                  {isResolvingLocation ? "현재 위치 확인 중" : "현재 위치로 찾기"}
-                </span>
-              </LocationButton>
+                <DistrictPanel>
+                  <DistrictStatus>
+                    <StatusLabel>현재 지역구</StatusLabel>
+                    <StatusValue>{district ?? "아직 설정되지 않았습니다"}</StatusValue>
+                    {resolvedAddress ? (
+                      <StatusHint>{resolvedAddress}</StatusHint>
+                    ) : initialDistrict ? (
+                      <StatusHint>이미 저장된 지역구를 그대로 사용할 수 있습니다.</StatusHint>
+                    ) : (
+                      <StatusHint>지역구를 정하면 다음 단계에서 정치 성향 테스트를 시작합니다.</StatusHint>
+                    )}
+                  </DistrictStatus>
 
-              <AddressRow>
-                <AddressInput
-                  value={address}
-                  onChange={(event) => setAddress(event.target.value)}
-                  placeholder="예: 서울 마포구 서교동"
-                  disabled={isResolvingDistrict}
-                />
-                <AddressButton
+                  <LocationButton
+                    type="button"
+                    onClick={() => void handleResolveLocation()}
+                    disabled={isResolvingDistrict}
+                  >
+                    <Crosshair size={16} />
+                    <span>
+                      {isResolvingLocation ? "현재 위치 확인 중" : "현재 위치로 찾기"}
+                    </span>
+                  </LocationButton>
+
+                  <ManualFinder>
+                    <ManualFinderHeader>
+                      <ManualFinderTitle>직접 찾기</ManualFinderTitle>
+                      <ManualFinderDescription>
+                        긴 주소 입력은 제거했습니다. 시/도와 동 이름만으로 바로 찾습니다.
+                      </ManualFinderDescription>
+                    </ManualFinderHeader>
+
+                    <ManualFinderControls>
+                      <ProvinceSelect
+                        value={selectedProvince}
+                        onChange={(event) => setSelectedProvince(event.target.value)}
+                        disabled={isResolvingDistrict}
+                      >
+                        <option value="all">전체 시/도</option>
+                        {DISTRICT_PROVINCES.map((province) => (
+                          <option key={province} value={province}>
+                            {province}
+                          </option>
+                        ))}
+                      </ProvinceSelect>
+
+                      <ManualSearchField>
+                        <Search size={16} />
+                        <ManualSearchInput
+                          value={manualQuery}
+                          onChange={(event) => setManualQuery(event.target.value)}
+                          placeholder="예: 서교동, 분당동, 해운대구"
+                          disabled={isResolvingDistrict}
+                        />
+                      </ManualSearchField>
+                    </ManualFinderControls>
+
+                    {normalizedManualQuery ? (
+                      manualMatches.length > 0 ? (
+                        <ManualResultList>
+                          {manualMatches.map((option) => (
+                            <ManualResultButton
+                              key={option.id}
+                              type="button"
+                              onClick={() => void handleManualDistrictSelect(option)}
+                              disabled={isResolvingDistrict}
+                            >
+                              <ManualResultText>
+                                <ManualResultArea>{option.areaLabel}</ManualResultArea>
+                                <ManualResultMeta>
+                                  {[option.province, option.districtLabel]
+                                    .filter(Boolean)
+                                    .join(" · ")}
+                                </ManualResultMeta>
+                              </ManualResultText>
+                              <ManualResultAction>
+                                {savingManualOptionId === option.id ? "저장 중" : "선택"}
+                              </ManualResultAction>
+                            </ManualResultButton>
+                          ))}
+                        </ManualResultList>
+                      ) : (
+                        <ManualEmptyState>
+                          일치하는 행정동을 찾지 못했습니다. 시/도를 고르거나 동 이름을 더 자세히
+                          입력해 주세요.
+                        </ManualEmptyState>
+                      )
+                    ) : (
+                      <ManualHint>
+                        서울특별시 + 서교동, 경기도 + 분당동처럼 입력하면 더 빨리 찾을 수
+                        있어요.
+                      </ManualHint>
+                    )}
+                  </ManualFinder>
+
+                  {districtNotice ? <HelperText>{districtNotice}</HelperText> : null}
+                  {districtError ? <ErrorText>{districtError}</ErrorText> : null}
+
+                  <StepActionRow>
+                    <PrimaryActionButton
+                      type="button"
+                      onClick={handleContinueToQuestions}
+                      disabled={!district || isResolvingDistrict}
+                    >
+                      정치 성향 테스트로 이동
+                    </PrimaryActionButton>
+                  </StepActionRow>
+                </DistrictPanel>
+              </DistrictSection>
+            </>
+          ) : (
+            <>
+              <StepHeader>
+                <StepChip>2 / 2 정치 성향 테스트</StepChip>
+                <StepTitle>정치 이슈에 대한 생각을 알려주세요</StepTitle>
+                <StepDescription>
+                  지역구 선택은 끝났습니다. 아래 답변만 완료하면 홈으로 이동합니다.
+                </StepDescription>
+              </StepHeader>
+
+              <DistrictSummaryCard>
+                <DistrictSummaryText>
+                  <StatusLabel>선택한 지역구</StatusLabel>
+                  <StatusValue>{district ?? "아직 설정되지 않았습니다"}</StatusValue>
+                  {resolvedAddress ? <StatusHint>{resolvedAddress}</StatusHint> : null}
+                </DistrictSummaryText>
+                <SecondaryActionButton
                   type="button"
-                  onClick={() => void handleResolveAddress()}
-                  disabled={isResolvingDistrict}
+                  onClick={handleBackToDistrictStep}
+                  disabled={isSubmitting}
                 >
-                  {isResolvingAddress ? "찾는 중" : "주소로 찾기"}
-                </AddressButton>
-              </AddressRow>
+                  지역구 다시 선택
+                </SecondaryActionButton>
+              </DistrictSummaryCard>
 
-              {districtNotice ? <HelperText>{districtNotice}</HelperText> : null}
-              {districtError ? <ErrorText>{districtError}</ErrorText> : null}
-            </DistrictPanel>
-          </DistrictSection>
+              <Header>
+                <ProgressMeta>
+                  <ProgressText>
+                    질문 {currentIndex + 1}/{questions.length}
+                  </ProgressText>
+                  <ProgressTitle>정치 이슈에 대한 생각을 알려주세요</ProgressTitle>
+                </ProgressMeta>
 
-          <Header>
-            <ProgressMeta>
-              <ProgressText>
-                {currentIndex + 1}/{questions.length}
-              </ProgressText>
-              <ProgressTitle>정치 이슈에 대한 생각을 알려주세요</ProgressTitle>
-            </ProgressMeta>
+                <ProgressBar>
+                  <ProgressFill style={{ width: `${progress}%` }} />
+                </ProgressBar>
+              </Header>
 
-            <ProgressBar>
-              <ProgressFill style={{ width: `${progress}%` }} />
-            </ProgressBar>
-          </Header>
+              <QuestionStage>
+                <AnimatePresence mode="wait">
+                  <QuestionCard
+                    key={question.id}
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -24 }}
+                    transition={{ duration: 0.24, ease: "easeOut" }}
+                  >
+                    <QuestionEyebrow>{question.axis.toUpperCase()}</QuestionEyebrow>
+                    <QuestionText>{question.text}</QuestionText>
+                  </QuestionCard>
+                </AnimatePresence>
+              </QuestionStage>
 
-          <QuestionStage>
-            <AnimatePresence mode="wait">
-              <QuestionCard
-                key={question.id}
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -24 }}
-                transition={{ duration: 0.24, ease: "easeOut" }}
-              >
-                <QuestionEyebrow>{question.axis.toUpperCase()}</QuestionEyebrow>
-                <QuestionText>{question.text}</QuestionText>
-              </QuestionCard>
-            </AnimatePresence>
-          </QuestionStage>
-
-          <AnswerGrid>
-            {likertOptions.map((option) => (
-              <AnswerButton
-                key={option.label}
-                type="button"
-                data-cursor-target="onboarding-answer"
-                onClick={() => void handleAnswer(option.value)}
-                disabled={!canAnswer}
-                $selected={currentSelection === option.value}
-              >
-                <span>{option.label}</span>
-                <ArrowRight size={16} />
-              </AnswerButton>
-            ))}
-          </AnswerGrid>
-
-          {!district ? (
-            <BottomHint>
-              지역구를 설정해야 테스트 결과를 저장하고 홈으로 이동할 수 있습니다.
-            </BottomHint>
-          ) : null}
+              <AnswerGrid>
+                {likertOptions.map((option) => (
+                  <AnswerButton
+                    key={option.label}
+                    type="button"
+                    data-cursor-target="onboarding-answer"
+                    onClick={() => void handleAnswer(option.value)}
+                    disabled={!canAnswer}
+                    $selected={currentSelection === option.value}
+                  >
+                    <span>{option.label}</span>
+                    <ArrowRight size={16} />
+                  </AnswerButton>
+                ))}
+              </AnswerGrid>
+            </>
+          )}
         </ContentInner>
       </Content>
       <TargetCursor targetSelector='[data-cursor-target="onboarding-answer"]' />
@@ -417,6 +610,41 @@ const Content = styled.section`
 
 const ContentInner = styled.div`
   width: min(100%, 960px);
+`;
+
+const StepHeader = styled.div`
+  display: grid;
+  gap: 10px;
+  max-width: 760px;
+  margin-bottom: 24px;
+`;
+
+const StepChip = styled.div`
+  width: fit-content;
+  padding: 8px 12px;
+  border-radius: 999px;
+  color: #1d4ed8;
+  background: rgba(49, 130, 246, 0.1);
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+`;
+
+const StepTitle = styled.h1`
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-weight: 800;
+  line-height: 1.18;
+  letter-spacing: -0.06em;
+  word-break: keep-all;
+  text-wrap: balance;
+`;
+
+const StepDescription = styled.p`
+  margin: 0;
+  color: #6b7684;
+  line-height: 1.6;
+  word-break: keep-all;
 `;
 
 const DistrictSection = styled.section`
@@ -530,9 +758,38 @@ const LocationButton = styled.button`
   }
 `;
 
-const AddressRow = styled.div`
+const ManualFinder = styled.section`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(49, 130, 246, 0.14);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(244, 248, 255, 0.92) 0%, #ffffff 100%);
+`;
+
+const ManualFinderHeader = styled.div`
+  display: grid;
+  gap: 6px;
+`;
+
+const ManualFinderTitle = styled.h3`
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+`;
+
+const ManualFinderDescription = styled.p`
+  margin: 0;
+  color: #6b7684;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  word-break: keep-all;
+`;
+
+const ManualFinderControls = styled.div`
+  display: grid;
+  grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
   gap: 10px;
 
   @media (max-width: 640px) {
@@ -540,35 +797,163 @@ const AddressRow = styled.div`
   }
 `;
 
-const AddressInput = styled.input`
-  width: 100%;
+const ProvinceSelect = styled.select`
   min-height: 54px;
   padding: 0 16px;
   border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 18px;
   color: #191f28;
   background: #ffffff;
+  appearance: none;
+`;
+
+const ManualSearchField = styled.label`
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 18px;
+  color: #6b7684;
+  background: #ffffff;
+`;
+
+const ManualSearchInput = styled.input`
+  width: 100%;
+  border: 0;
+  color: #191f28;
+  background: transparent;
   font-size: 0.96rem;
+  outline: none;
 
   &::placeholder {
     color: #8b95a1;
   }
 `;
 
-const AddressButton = styled.button`
+const ManualResultList = styled.div`
+  display: grid;
+  gap: 8px;
+`;
+
+const ManualResultButton = styled.button`
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid rgba(49, 130, 246, 0.12);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+
+  &:hover:enabled {
+    transform: translateY(-1px);
+    border-color: rgba(49, 130, 246, 0.24);
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.72;
+  }
+`;
+
+const ManualResultText = styled.div`
+  display: grid;
+  gap: 4px;
+`;
+
+const ManualResultArea = styled.div`
+  font-size: 0.98rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+`;
+
+const ManualResultMeta = styled.div`
+  color: #6b7684;
+  font-size: 0.9rem;
+  line-height: 1.4;
+`;
+
+const ManualResultAction = styled.div`
+  color: #1d4ed8;
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+`;
+
+const ManualHint = styled.div`
+  color: #6b7684;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  word-break: keep-all;
+`;
+
+const ManualEmptyState = styled.div`
+  padding: 14px 16px;
+  border-radius: 18px;
+  color: #6b7684;
+  background: rgba(15, 23, 42, 0.04);
+  font-size: 0.9rem;
+  line-height: 1.5;
+`;
+
+const StepActionRow = styled.div`
+  display: flex;
+  justify-content: flex-end;
+
+  @media (max-width: 640px) {
+    justify-content: stretch;
+  }
+`;
+
+const PrimaryActionButton = styled.button`
   min-height: 54px;
-  padding: 0 18px;
+  padding: 0 22px;
   border: 0;
   border-radius: 18px;
   color: #ffffff;
-  background: #3182f6;
-  font-size: 0.95rem;
+  background: linear-gradient(90deg, #2563eb 0%, #3182f6 100%);
+  font-size: 0.96rem;
+  font-weight: 800;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  @media (max-width: 640px) {
+    width: 100%;
+  }
+`;
+
+const SecondaryActionButton = styled.button`
+  min-height: 48px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 16px;
+  color: #1d4ed8;
+  background: rgba(49, 130, 246, 0.1);
+  font-size: 0.92rem;
   font-weight: 700;
   cursor: pointer;
 
   &:disabled {
     cursor: not-allowed;
     opacity: 0.7;
+  }
+
+  @media (max-width: 640px) {
+    width: 100%;
   }
 `;
 
@@ -586,6 +971,28 @@ const ErrorText = styled.div`
 
 const Header = styled.div`
   max-width: 720px;
+`;
+
+const DistrictSummaryCard = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+  padding: 20px 22px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.06);
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+
+const DistrictSummaryText = styled.div`
+  display: grid;
+  gap: 6px;
 `;
 
 const ProgressMeta = styled.div`
@@ -706,23 +1113,5 @@ const AnswerButton = styled.button<{ $selected: boolean }>`
 
   @media (max-width: 960px) {
     min-height: 58px;
-  }
-`;
-
-const BottomHint = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 16px;
-  color: #6b7684;
-  font-size: 0.92rem;
-  font-weight: 600;
-
-  &::before {
-    content: "";
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
-    background: #9aa4b2;
   }
 `;

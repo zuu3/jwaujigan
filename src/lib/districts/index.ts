@@ -1,19 +1,17 @@
 import "server-only";
-import rawDistricts from "./data.json";
+import {
+  DISTRICTS,
+  normalizeKoreanText,
+  type DistrictEntry,
+} from "./catalog";
 
-export type DistrictEntry = {
-  province: string | null;
-  district: string;
-  areas: string[];
-};
+export { normalizeKoreanText } from "./catalog";
 
 type DistrictCandidate = {
   entry: DistrictEntry;
   score: number;
   matchedArea: string | null;
 };
-
-const DISTRICTS = rawDistricts as DistrictEntry[];
 
 const PROVINCE_ALIASES: Record<string, string[]> = {
   서울특별시: ["서울특별시", "서울시", "서울"],
@@ -42,22 +40,55 @@ export type DistrictResolveResult = {
   sourceAddress: string;
 };
 
-export function normalizeKoreanText(value: string) {
-  return value
-    .trim()
-    .replace(/\s+/g, "")
-    .replace(/[·ㆍ․]/g, "")
-    .replace(/[()]/g, "")
-    .replace(/제(?=\d)/g, "")
-    .replace(/특별자치도/g, "도")
-    .replace(/특별자치시/g, "시")
-    .replace(/특별시/g, "시")
-    .replace(/광역시/g, "시");
-}
-
 function dedupe(values: string[]) {
   return [...new Set(values.filter(Boolean))];
 }
+
+function tokenizeAddress(address: string) {
+  return dedupe(
+    address
+      .split(/[\s,/]+/g)
+      .map((token) => normalizeKoreanText(token))
+      .filter(Boolean),
+  );
+}
+
+function isAdministrativeAlias(alias: string) {
+  return /(?:시|군|구|동|읍|면|리)$/.test(alias);
+}
+
+function addressIncludesAlias(
+  alias: string,
+  normalizedAddress: string,
+  addressTokens: string[],
+) {
+  if (isAdministrativeAlias(alias)) {
+    return addressTokens.includes(alias);
+  }
+
+  return normalizedAddress.includes(alias);
+}
+
+function buildDistrictAliases(entry: DistrictEntry) {
+  const districtStem = entry.district.replace(/선거구$/, "");
+  const withoutSuffix = districtStem.replace(/(갑|을|병|정|무)$/, "");
+  const administrativeParts = districtStem.match(/[가-힣]+?(?:시|군|구)/g) ?? [];
+
+  return dedupe([
+    withoutSuffix,
+    ...administrativeParts,
+    ...administrativeParts.slice(-1),
+  ]).map(normalizeKoreanText);
+}
+
+const DISTRICT_ALIAS_COUNTS = DISTRICTS.reduce<Record<string, number>>((acc, entry) => {
+  for (const alias of buildDistrictAliases(entry)) {
+    const key = `${entry.province ?? "all"}:${alias}`;
+    acc[key] = (acc[key] ?? 0) + 1;
+  }
+
+  return acc;
+}, {});
 
 function buildProvinceAliases(province: string | null) {
   if (!province) {
@@ -120,13 +151,17 @@ function detectProvinceFromAddress(normalizedAddress: string) {
   return matchedProvince;
 }
 
-function scoreEntry(entry: DistrictEntry, normalizedAddress: string): DistrictCandidate {
+function scoreEntry(
+  entry: DistrictEntry,
+  normalizedAddress: string,
+  addressTokens: string[],
+): DistrictCandidate {
   let score = 0;
   let matchedArea: string | null = null;
   let bestAreaScore = 0;
 
   for (const alias of buildProvinceAliases(entry.province)) {
-    if (alias && normalizedAddress.includes(alias)) {
+    if (alias && addressIncludesAlias(alias, normalizedAddress, addressTokens)) {
       score += 20;
       break;
     }
@@ -137,7 +172,10 @@ function scoreEntry(entry: DistrictEntry, normalizedAddress: string): DistrictCa
     let matchedAlias: string | null = null;
 
     for (const alias of aliases) {
-      if (alias.length >= 2 && normalizedAddress.includes(alias)) {
+      if (
+        alias.length >= 2 &&
+        addressIncludesAlias(alias, normalizedAddress, addressTokens)
+      ) {
         matchedAlias = alias;
         break;
       }
@@ -158,6 +196,21 @@ function scoreEntry(entry: DistrictEntry, normalizedAddress: string): DistrictCa
 
   score += bestAreaScore;
 
+  // When reverse geocoding only yields city/county/gu, allow a fallback if that
+  // administrative name maps to a single constituency within the province.
+  for (const alias of buildDistrictAliases(entry)) {
+    const key = `${entry.province ?? "all"}:${alias}`;
+
+    if (
+      alias.length >= 2 &&
+      addressIncludesAlias(alias, normalizedAddress, addressTokens) &&
+      DISTRICT_ALIAS_COUNTS[key] === 1
+    ) {
+      score += 18;
+      break;
+    }
+  }
+
   return {
     entry,
     score,
@@ -167,6 +220,7 @@ function scoreEntry(entry: DistrictEntry, normalizedAddress: string): DistrictCa
 
 export function resolveDistrictFromAddress(address: string): DistrictResolveResult | null {
   const normalizedAddress = normalizeKoreanText(address);
+  const addressTokens = tokenizeAddress(address);
 
   if (!normalizedAddress) {
     return null;
@@ -177,7 +231,8 @@ export function resolveDistrictFromAddress(address: string): DistrictResolveResu
     ? DISTRICTS.filter((entry) => entry.province === explicitProvince)
     : DISTRICTS;
 
-  const candidates = entriesToScore.map((entry) => scoreEntry(entry, normalizedAddress))
+  const candidates = entriesToScore
+    .map((entry) => scoreEntry(entry, normalizedAddress, addressTokens))
     .filter((candidate) => candidate.score > 0)
     .sort((left, right) => right.score - left.score);
 
