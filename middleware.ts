@@ -21,10 +21,18 @@ export default async function middleware(req: NextRequest) {
   const canSkipOnboarding = hasSkipQuery || hasSkipCookie;
 
   const state = await getUserGateState(token.email);
+  const needsDistrict = !state.district;
+  const needsPoliticalProfile = !state.hasPoliticalProfile;
 
-  const needsOnboarding = !state.hasPoliticalProfile || !state.district;
+  if (needsDistrict) {
+    if (pathname.startsWith("/onboarding")) {
+      return NextResponse.next();
+    }
 
-  if (needsOnboarding) {
+    return NextResponse.redirect(new URL("/onboarding", origin));
+  }
+
+  if (needsPoliticalProfile) {
     if (pathname.startsWith("/onboarding")) {
       return NextResponse.next();
     }

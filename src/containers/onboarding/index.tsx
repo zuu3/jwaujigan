@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Crosshair, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useMemo, useState } from "react";
+import { FullScreenLoader } from "@/components/loading/full-screen-loader";
 import { TargetCursor } from "@/components/cursor/target-cursor";
 import {
   DISTRICT_AREA_OPTIONS,
@@ -340,12 +341,22 @@ export function OnboardingContainer({
 
   return (
     <Page>
+      {isSubmitting ? (
+        <FullScreenLoader
+          title="결과를 저장하고 있어요"
+          description="정치 성향을 분석한 뒤 홈으로 이동합니다. 잠시만 기다려 주세요."
+        />
+      ) : null}
       <TopBar>
         <TopBarInner>
           <TopText>정치 성향 테스트</TopText>
-          <SkipButton type="button" onClick={handleSkip}>
-            건너뛰기
-          </SkipButton>
+          {step === "questions" ? (
+            <SkipButton type="button" onClick={handleSkip} disabled={isSubmitting}>
+              테스트 건너뛰기
+            </SkipButton>
+          ) : (
+            <TopBarSpacer aria-hidden="true" />
+          )}
         </TopBarInner>
       </TopBar>
 
@@ -485,7 +496,7 @@ export function OnboardingContainer({
             <>
               <StepHeader>
                 <StepChip>2 / 2 정치 성향 테스트</StepChip>
-                <StepTitle>정치 이슈에 대한 생각을 알려주세요</StepTitle>
+                <StepTitle>정치 성향 테스트를 마무리해 주세요</StepTitle>
                 <StepDescription>
                   지역구 선택은 끝났습니다. 아래 답변만 완료하면 홈으로 이동합니다.
                 </StepDescription>
@@ -511,7 +522,7 @@ export function OnboardingContainer({
                   <ProgressText>
                     질문 {currentIndex + 1}/{questions.length}
                   </ProgressText>
-                  <ProgressTitle>정치 이슈에 대한 생각을 알려주세요</ProgressTitle>
+                  <ProgressTitle>가장 가까운 입장을 골라 주세요</ProgressTitle>
                 </ProgressMeta>
 
                 <ProgressBar>
@@ -553,7 +564,9 @@ export function OnboardingContainer({
           )}
         </ContentInner>
       </Content>
-      <TargetCursor targetSelector='[data-cursor-target="onboarding-answer"]' />
+      {step === "questions" ? (
+        <TargetCursor targetSelector='[data-cursor-target="onboarding-answer"]' />
+      ) : null}
     </Page>
   );
 }
@@ -587,6 +600,11 @@ const TopText = styled.div`
   letter-spacing: -0.02em;
 `;
 
+const TopBarSpacer = styled.div`
+  width: 116px;
+  height: 44px;
+`;
+
 const SkipButton = styled.button`
   padding: 10px 14px;
   border: 0;
@@ -596,6 +614,11 @@ const SkipButton = styled.button`
   font-size: 0.92rem;
   font-weight: 700;
   cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
 `;
 
 const Content = styled.section`

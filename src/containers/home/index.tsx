@@ -19,6 +19,7 @@ type UserProfileResponse = {
   name: string | null;
   image: string | null;
   district: string | null;
+  hasPoliticalProfile: boolean;
 };
 
 type LocalPolitician = {
@@ -79,6 +80,11 @@ export function HomeContainer({ session }: HomeContainerProps) {
   });
 
   const district = profileQuery.data?.district ?? session.user.district ?? null;
+  const hasPoliticalProfile =
+    profileQuery.data?.hasPoliticalProfile ?? session.user.hasPoliticalProfile;
+  const needsDistrict = !district;
+  const needsPoliticalProfile = !hasPoliticalProfile;
+  const needsOnboarding = needsDistrict || needsPoliticalProfile;
 
   const politiciansQuery = useQuery({
     queryKey: ["local-politicians", district],
@@ -134,6 +140,47 @@ export function HomeContainer({ session }: HomeContainerProps) {
             {district ? `${district} 기준으로` : "지역구 설정 후"} 오늘 볼 내용을 정리했습니다.
           </IntroText>
         </MotionIntro>
+
+        {needsOnboarding ? (
+          <MotionSection
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.32, delay: 0.07 }}
+          >
+            <OnboardingCallout>
+              <CalloutCopy>
+                <SectionEyebrow>온보딩 미완료</SectionEyebrow>
+                <CalloutTitle>
+                  {needsDistrict && needsPoliticalProfile
+                    ? "지역구 선택과 정치 성향 테스트가 아직 남아 있습니다"
+                    : needsDistrict
+                      ? "지역구 선택이 아직 끝나지 않았습니다"
+                      : "정치 성향 테스트가 아직 끝나지 않았습니다"}
+                </CalloutTitle>
+                <CalloutText>
+                  {needsDistrict && needsPoliticalProfile
+                    ? "스킵하고 들어온 상태입니다. 홈을 보면서도 언제든 이어서 완료할 수 있습니다."
+                    : needsDistrict
+                      ? "지역구를 선택하면 우리 동네 의원 정보를 바로 볼 수 있습니다."
+                      : "정치 성향 테스트를 마치면 더 맞는 관점으로 서비스를 쓸 수 있습니다."}
+                </CalloutText>
+                <Checklist>
+                  <ChecklistItem $done={!needsDistrict}>
+                    지역구 선택 {!needsDistrict ? "완료" : "필요"}
+                  </ChecklistItem>
+                  <ChecklistItem $done={!needsPoliticalProfile}>
+                    정치 성향 테스트 {!needsPoliticalProfile ? "완료" : "필요"}
+                  </ChecklistItem>
+                </Checklist>
+              </CalloutCopy>
+
+              <CalloutAction href="/onboarding">
+                {needsDistrict ? "지역구 선택하러 가기" : "정치 성향 테스트 이어서 하기"}
+                <ArrowRight size={18} />
+              </CalloutAction>
+            </OnboardingCallout>
+          </MotionSection>
+        ) : null}
 
         <MotionSection
           id="local-politicians"
@@ -661,6 +708,79 @@ const EmptyCard = styled.div`
   background: #ffffff;
   border: 1px solid #ebebeb;
   box-shadow: 0 16px 38px rgba(15, 23, 42, 0.05);
+`;
+
+const OnboardingCallout = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 26px 28px;
+  border-radius: 30px;
+  background: linear-gradient(135deg, #fff7e8 0%, #fffdf7 100%);
+  box-shadow: 0 22px 54px rgba(15, 23, 42, 0.08);
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 22px 20px;
+  }
+`;
+
+const CalloutCopy = styled.div`
+  display: grid;
+  gap: 10px;
+`;
+
+const CalloutTitle = styled.h3`
+  margin: 0;
+  color: #191f28;
+  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.04em;
+  word-break: keep-all;
+`;
+
+const CalloutText = styled.p`
+  margin: 0;
+  color: #4e5968;
+  line-height: 1.6;
+  word-break: keep-all;
+`;
+
+const Checklist = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+`;
+
+const ChecklistItem = styled.div<{ $done: boolean }>`
+  padding: 10px 12px;
+  border-radius: 999px;
+  color: ${({ $done }) => ($done ? "#166534" : "#9a3412")};
+  background: ${({ $done }) =>
+    $done ? "rgba(34, 197, 94, 0.12)" : "rgba(249, 115, 22, 0.12)"};
+  font-size: 0.9rem;
+  font-weight: 700;
+`;
+
+const CalloutAction = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 54px;
+  padding: 0 20px;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #191f28;
+  font-weight: 800;
+  white-space: nowrap;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 const DistrictPromptCard = styled.div`

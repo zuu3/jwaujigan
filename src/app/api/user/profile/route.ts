@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "../../../../../auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
+import { getUserGateState } from "@/lib/users";
 
 export async function GET() {
   const session = await auth();
@@ -9,6 +10,7 @@ export async function GET() {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
+  const gateState = await getUserGateState(session.user.email);
   const supabase = createServiceRoleSupabaseClient();
   const { data, error } = await supabase
     .from("users")
@@ -25,13 +27,15 @@ export async function GET() {
     );
   }
 
-  return NextResponse.json(
-    data ?? {
+  return NextResponse.json({
+    ...(data ?? {
       id: session.user.id,
       email: session.user.email,
       name: session.user.name ?? null,
       image: session.user.image ?? null,
-      district: session.user.district ?? null,
-    },
-  );
+      district: gateState.district ?? session.user.district ?? null,
+    }),
+    district: gateState.district ?? data?.district ?? session.user.district ?? null,
+    hasPoliticalProfile: gateState.hasPoliticalProfile,
+  });
 }
