@@ -3,11 +3,15 @@
 import styled from "@emotion/styled";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, MapPin, Zap } from "lucide-react";
+import { ArrowRight, ChevronDown, ExternalLink, MapPin, Zap } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import type { Session } from "next-auth";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { useIssues } from "@/hooks/useIssues";
+import type { PoliticianDetail } from "@/lib/assembly";
 import { getPartyPresentation } from "@/lib/parties";
+import type { HotIssue } from "@/types/issue";
 
 type HomeContainerProps = {
   session: Session;
@@ -38,27 +42,6 @@ type LocalPoliticiansResponse = {
   politicians: LocalPolitician[];
 };
 
-const HOT_ISSUES = [
-  {
-    id: "issue-1",
-    title: "연금개혁 속도와 세대 간 부담",
-    progressive: "지속 가능성을 위해 공적 안전망 보강이 우선이라는 시각",
-    conservative: "미래 세대 부담을 줄이기 위해 재정 통제가 먼저라는 시각",
-  },
-  {
-    id: "issue-2",
-    title: "전세사기 대응과 공공 개입 범위",
-    progressive: "피해 복구에 국가가 더 적극적으로 개입해야 한다는 입장",
-    conservative: "시장 왜곡을 줄이며 선별 지원해야 한다는 입장",
-  },
-  {
-    id: "issue-3",
-    title: "AI 산업 육성과 규제 균형",
-    progressive: "기술 확산 전 안전성과 노동 보호 장치가 필요하다는 입장",
-    conservative: "규제를 최소화해 빠르게 산업 경쟁력을 확보해야 한다는 입장",
-  },
-];
-
 async function fetchJson<T>(url: string) {
   const response = await fetch(url);
 
@@ -73,26 +56,128 @@ function getProfileInitial(name: string | null, email: string | null) {
   return (name?.trim()?.[0] ?? email?.trim()?.[0] ?? "유").toUpperCase();
 }
 
+function getOnboardingCopy({
+  needsDistrict,
+  needsPoliticalProfile,
+}: {
+  needsDistrict: boolean;
+  needsPoliticalProfile: boolean;
+}) {
+  if (needsDistrict && needsPoliticalProfile) {
+    return {
+      label: "지역구와 성향 분석이 필요해요",
+      action: "설정 이어가기",
+      title: "내 지역구와 성향을 먼저 정리해 보세요",
+      description:
+        "지역구를 저장하고 성향 분석을 마치면 맞춤 의원 정보와 배틀 진입 흐름이 더 정확해집니다.",
+    };
+  }
+
+  if (needsDistrict) {
+    return {
+      label: "지역구 설정이 필요해요",
+      action: "지역구 설정하기",
+      title: "내 지역구를 먼저 설정해 보세요",
+      description:
+        "지역구를 저장하면 현재 선거구 기준 의원 정보를 바로 불러올 수 있습니다.",
+    };
+  }
+
+  return {
+    label: "성향 분석을 완료해 주세요",
+    action: "성향 분석 이어가기",
+    title: "내 정치 성향을 마무리해 보세요",
+    description:
+      "성향 분석을 마치면 홈에서 더 자연스럽게 토론 주제와 추천 흐름을 이어갈 수 있습니다.",
+  };
+}
+
+function getIssueLink(issue: HotIssue) {
+  const searchParams = new URLSearchParams();
+
+  if (issue.id) {
+    searchParams.set("issueId", issue.id);
+  }
+
+  if (issue.bill_id) {
+    searchParams.set("billId", issue.bill_id);
+  }
+
+  return `/arena?${searchParams.toString()}`;
+}
+
+function getIssueMetaLabel(issue: HotIssue) {
+  if (issue.published_at) {
+    return new Intl.DateTimeFormat("ko-KR", {
+      month: "numeric",
+      day: "numeric",
+    }).format(new Date(issue.published_at));
+  }
+
+  if (issue.bill_id) {
+    return issue.bill_id;
+  }
+
+  return "국회 발의안";
+}
+
+function getPartyTone(party: string) {
+  if (party.includes("국민의힘")) {
+    return "red";
+  }
+
+  if (party.includes("더불어민주") || party.includes("민주")) {
+    return "blue";
+  }
+
+  return "neutral";
+}
+
 export function HomeContainer({ session }: HomeContainerProps) {
+  const [expandedPoliticianId, setExpandedPoliticianId] = useState<string | null>(null);
+  const [expandedIssueId, setExpandedIssueId] = useState<string | null>(null);
   const profileQuery = useQuery({
     queryKey: ["user-profile"],
     queryFn: () => fetchJson<UserProfileResponse>("/api/user/profile"),
   });
+  const issuesQuery = useIssues();
 
+  const displayName = profileQuery.data?.name ?? session.user.name ?? null;
+  const displayEmail = profileQuery.data?.email ?? session.user.email ?? null;
+  const displayImage = profileQuery.data?.image ?? session.user.image ?? null;
   const district = profileQuery.data?.district ?? session.user.district ?? null;
   const hasPoliticalProfile =
     profileQuery.data?.hasPoliticalProfile ?? session.user.hasPoliticalProfile;
   const needsDistrict = !district;
   const needsPoliticalProfile = !hasPoliticalProfile;
   const needsOnboarding = needsDistrict || needsPoliticalProfile;
+  const onboardingCopy = getOnboardingCopy({
+    needsDistrict,
+    needsPoliticalProfile,
+  });
 
   const politiciansQuery = useQuery({
     queryKey: ["local-politicians", district],
     enabled: Boolean(district),
     queryFn: () => fetchJson<LocalPoliticiansResponse>("/api/politicians/local"),
   });
+  const politicianDetailQuery = useQuery({
+    queryKey: ["politician-detail", expandedPoliticianId],
+    enabled: Boolean(expandedPoliticianId),
+    queryFn: () => fetchJson<PoliticianDetail>(`/api/politicians/${expandedPoliticianId}`),
+  });
 
   const politicians = politiciansQuery.data?.politicians ?? [];
+  const issues = issuesQuery.data?.issues ?? [];
+  const politicianCountLabel =
+    politicians.length > 0 ? `${politicians.length}명 확인` : "의원 정보 대기 중";
+  const issueCountLabel = issues.length > 0 ? `${issues.length}건 반영` : "이슈 수집 중";
+  const primaryAction = needsOnboarding
+    ? { href: "/onboarding", label: onboardingCopy.action }
+    : { href: "/arena", label: "AI 배틀 시작하기" };
+  const secondaryAction = needsDistrict
+    ? { href: "/onboarding", label: "지역구 설정" }
+    : { href: "#local-politicians", label: "의원 보기" };
 
   return (
     <Page>
@@ -112,15 +197,15 @@ export function HomeContainer({ session }: HomeContainerProps) {
         <HeaderActions>
           <ProfileChip>
             <Avatar aria-hidden="true">
-              {session.user.image ? (
-                <AvatarImage src={session.user.image} alt="" />
+              {displayImage ? (
+                <AvatarImage src={displayImage} alt="" />
               ) : (
-                getProfileInitial(session.user.name ?? null, session.user.email ?? null)
+                getProfileInitial(displayName, displayEmail)
               )}
             </Avatar>
             <ProfileMeta>
-              <ProfileName>{session.user.name ?? "사용자"}</ProfileName>
-              <ProfileEmail>{session.user.email ?? ""}</ProfileEmail>
+              <ProfileName>{displayName ?? "사용자"}</ProfileName>
+              <ProfileEmail>{displayEmail ?? ""}</ProfileEmail>
             </ProfileMeta>
           </ProfileChip>
 
@@ -135,10 +220,48 @@ export function HomeContainer({ session }: HomeContainerProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.32, delay: 0.04 }}
         >
-          <IntroText>
-            {session.user.name ? `${session.user.name}님, ` : ""}
-            {district ? `${district} 기준으로` : "지역구 설정 후"} 오늘 볼 내용을 정리했습니다.
-          </IntroText>
+          <IntroBand>
+            <IntroCopy>
+              <IntroEyebrow>
+                {district ? `${district} 기준 홈 브리핑` : "맞춤 홈 브리핑"}
+              </IntroEyebrow>
+              <IntroTitle>
+                {displayName ? `${displayName}님, ` : ""}
+                {needsOnboarding
+                  ? onboardingCopy.title
+                  : "오늘 확인할 정치 이슈와 지역구 의원을 바로 볼 수 있어요"}
+              </IntroTitle>
+              <IntroText>{onboardingCopy.description}</IntroText>
+              <IntroActions>
+                <PrimaryActionLink href={primaryAction.href}>
+                  {primaryAction.label}
+                  <ArrowRight size={16} />
+                </PrimaryActionLink>
+                <SecondaryActionLink href={secondaryAction.href}>
+                  {secondaryAction.label}
+                </SecondaryActionLink>
+              </IntroActions>
+            </IntroCopy>
+
+            <IntroStats aria-label="홈 상태 요약">
+              <StatItem>
+                <StatLabel>지역구</StatLabel>
+                <StatValue>{district ?? "미설정"}</StatValue>
+              </StatItem>
+              <StatItem>
+                <StatLabel>성향 분석</StatLabel>
+                <StatValue>{hasPoliticalProfile ? "완료" : "미완료"}</StatValue>
+              </StatItem>
+              <StatItem>
+                <StatLabel>내 지역구 의원</StatLabel>
+                <StatValue>{district ? politicianCountLabel : "설정 필요"}</StatValue>
+              </StatItem>
+              <StatItem>
+                <StatLabel>핫이슈</StatLabel>
+                <StatValue>{issueCountLabel}</StatValue>
+              </StatItem>
+            </IntroStats>
+          </IntroBand>
         </MotionIntro>
 
         <MotionSection
@@ -157,9 +280,9 @@ export function HomeContainer({ session }: HomeContainerProps) {
             {needsOnboarding ? (
               <SectionHeaderAside>
                 <CompactNotice>
-                  <CompactNoticeLabel>성향 테스트 미완료</CompactNoticeLabel>
+                  <CompactNoticeLabel>{onboardingCopy.label}</CompactNoticeLabel>
                   <CompactNoticeAction href="/onboarding">
-                    이어서 하기
+                    {onboardingCopy.action}
                     <ArrowRight size={15} />
                   </CompactNoticeAction>
                 </CompactNotice>
@@ -170,13 +293,30 @@ export function HomeContainer({ session }: HomeContainerProps) {
           {district ? (
             politiciansQuery.isLoading ? (
               <EmptyCard>의원 정보를 불러오는 중입니다.</EmptyCard>
+            ) : politiciansQuery.isError ? (
+              <EmptyCard>
+                <EmptyCardTitle>의원 정보를 불러오지 못했습니다.</EmptyCardTitle>
+                <EmptyCardText>
+                  잠시 후 다시 시도해 주세요. 문제가 계속되면 지역구 설정 상태도 함께
+                  확인하는 편이 안전합니다.
+                </EmptyCardText>
+                <RetryButton
+                  type="button"
+                  onClick={() => {
+                    void politiciansQuery.refetch();
+                  }}
+                >
+                  다시 시도
+                </RetryButton>
+              </EmptyCard>
             ) : politicians.length > 0 ? (
               <PoliticianList>
                 {politicians.map((politician) => {
-                  const partyLogo = getPartyPresentation(politician.party);
+                  const partyTone = getPartyTone(politician.party);
+                  const party = getPartyPresentation(politician.party);
 
                   return (
-                    <PoliticianCard key={politician.id}>
+                    <PoliticianRow key={politician.id}>
                       <PoliticianImageWrap>
                         {politician.image ? (
                           <PoliticianImage src={politician.image} alt={politician.name} />
@@ -188,70 +328,130 @@ export function HomeContainer({ session }: HomeContainerProps) {
                       </PoliticianImageWrap>
 
                       <PoliticianBody>
-                        <PoliticianTop>
+                        <PoliticianInline>
                           <PoliticianName>{politician.name}</PoliticianName>
-                          <PartyBadge>
-                            {partyLogo.src ? (
+                          <PoliticianDivider />
+                          <PartyInline>
+                            {party.src ? (
                               <PartyLogo
-                                src={partyLogo.src}
-                                alt={partyLogo.label}
+                                src={party.src}
+                                alt={party.label}
                                 onError={(event) => {
                                   event.currentTarget.style.display = "none";
-                                  const fallback =
-                                    event.currentTarget.nextElementSibling;
-                                  if (fallback instanceof HTMLElement) {
-                                    fallback.style.display = "inline-flex";
-                                  }
                                 }}
                               />
-                            ) : null}
-                            <PartyFallback
-                              style={{
-                                display: partyLogo.src ? "none" : "inline-flex",
-                              }}
-                            >
-                              {partyLogo.label}
-                            </PartyFallback>
-                          </PartyBadge>
-                        </PoliticianTop>
-
-                        <PoliticianMetaRow>
+                            ) : (
+                              <PartyTextBadge $tone={partyTone}>{party.label}</PartyTextBadge>
+                            )}
+                          </PartyInline>
+                          <PoliticianDivider />
                           <PoliticianMeta>
-                            <MapPin size={14} />
+                            <MapPin size={13} />
                             <span>{politician.district}</span>
                           </PoliticianMeta>
                           {politician.reelection ? (
-                            <PoliticianTag>{politician.reelection}</PoliticianTag>
+                            <>
+                              <PoliticianDivider />
+                              <PoliticianTag>{politician.reelection}</PoliticianTag>
+                            </>
                           ) : null}
-                        </PoliticianMetaRow>
+                        </PoliticianInline>
 
                         {politician.committee ? (
                           <PoliticianSubtext>{politician.committee}</PoliticianSubtext>
                         ) : null}
 
-                        <DetailLink href={`/politicians/${politician.id}`}>
-                          자세히 보기
-                          <ArrowRight size={16} />
-                        </DetailLink>
+                        <PoliticianActions>
+                          <InlineActionButton
+                            type="button"
+                            onClick={() => {
+                              setExpandedPoliticianId((current) =>
+                                current === politician.id ? null : politician.id,
+                              );
+                            }}
+                          >
+                            {expandedPoliticianId === politician.id
+                              ? "상세 닫기"
+                              : "홈에서 바로 보기"}
+                            <ArrowRight size={15} />
+                          </InlineActionButton>
+                          <DetailLink href={`/politicians/${politician.id}`}>
+                            상세 페이지
+                            <ArrowRight size={15} />
+                          </DetailLink>
+                        </PoliticianActions>
+
+                        {expandedPoliticianId === politician.id ? (
+                          <PoliticianInlineDetail>
+                            {politicianDetailQuery.isLoading ? (
+                              <InlineDetailText>
+                                상세 정보를 불러오는 중입니다.
+                              </InlineDetailText>
+                            ) : politicianDetailQuery.isError ? (
+                              <InlineDetailText>
+                                상세 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+                              </InlineDetailText>
+                            ) : politicianDetailQuery.data ? (
+                              <>
+                                <InlineDetailGrid>
+                                  <InlineDetailItem>
+                                    <InlineDetailLabel>직책</InlineDetailLabel>
+                                    <InlineDetailValue>
+                                      {politicianDetailQuery.data.jobTitle ?? "-"}
+                                    </InlineDetailValue>
+                                  </InlineDetailItem>
+                                  <InlineDetailItem>
+                                    <InlineDetailLabel>의원회관</InlineDetailLabel>
+                                    <InlineDetailValue>
+                                      {politicianDetailQuery.data.office ?? "-"}
+                                    </InlineDetailValue>
+                                  </InlineDetailItem>
+                                  <InlineDetailItem>
+                                    <InlineDetailLabel>전화</InlineDetailLabel>
+                                    <InlineDetailValue>
+                                      {politicianDetailQuery.data.phone ?? "-"}
+                                    </InlineDetailValue>
+                                  </InlineDetailItem>
+                                  <InlineDetailItem>
+                                    <InlineDetailLabel>이메일</InlineDetailLabel>
+                                    <InlineDetailValue>
+                                      {politicianDetailQuery.data.email ?? "-"}
+                                    </InlineDetailValue>
+                                  </InlineDetailItem>
+                                </InlineDetailGrid>
+
+                                {politicianDetailQuery.data.homepage ? (
+                                  <InlineExternalLink
+                                    href={politicianDetailQuery.data.homepage}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
+                                    홈페이지 열기
+                                    <ExternalLink size={14} />
+                                  </InlineExternalLink>
+                                ) : null}
+                              </>
+                            ) : null}
+                          </PoliticianInlineDetail>
+                        ) : null}
                       </PoliticianBody>
-                    </PoliticianCard>
+                    </PoliticianRow>
                   );
                 })}
               </PoliticianList>
             ) : (
               <EmptyCard>
-                현재 지역구와 일치하는 의원 정보를 찾지 못했습니다. 온보딩에서 지역구를 다시
-                설정해 보세요.
+                <EmptyCardTitle>등록된 지역구 의원 정보를 찾지 못했습니다.</EmptyCardTitle>
+                <EmptyCardText>
+                  현재 저장된 지역구와 일치하는 결과가 없습니다. 온보딩에서 지역구를 다시
+                  설정한 뒤 다시 확인해 보세요.
+                </EmptyCardText>
               </EmptyCard>
             )
           ) : (
             <DistrictPromptCard>
-              <PromptTitle>
-                내 지역구를 설정하면 우리 동네 의원을 바로 볼 수 있어요
-              </PromptTitle>
-              <PromptText>
-                먼저 지역구를 저장하면 현재 선거구 기준 의원 정보를 바로 불러옵니다.
-              </PromptText>
+              <PromptTitle>{onboardingCopy.title}</PromptTitle>
+              <PromptText>{onboardingCopy.description}</PromptText>
               <PromptLink href="/onboarding">지역구 설정하기</PromptLink>
             </DistrictPromptCard>
           )}
@@ -266,30 +466,91 @@ export function HomeContainer({ session }: HomeContainerProps) {
           <SectionHeader>
             <SectionMeta>
               <SectionEyebrow>오늘의 핫이슈</SectionEyebrow>
-              <SectionTitle>입장 차이를 짧게 보고 바로 배틀로 들어갑니다</SectionTitle>
+              <SectionTitle>오늘 나온 쟁점을 빠르게 훑어봅니다</SectionTitle>
             </SectionMeta>
+            {!issuesQuery.isLoading && issues.length > 0 ? (
+              <IssueSectionBadge>{issues.length}개 이슈</IssueSectionBadge>
+            ) : null}
           </SectionHeader>
 
           <IssueLayout>
-            {HOT_ISSUES.map((issue, index) => (
-              <IssueCard key={issue.id} $featured={index === 0}>
-                <IssueTitle $featured={index === 0}>{issue.title}</IssueTitle>
-                <IssuePoint>
-                  <IssueLabel $tone="blue">진보</IssueLabel>
-                  <IssueText>{issue.progressive}</IssueText>
-                </IssuePoint>
-                <IssuePoint>
-                  <IssueLabel $tone="red">보수</IssueLabel>
-                  <IssueText>{issue.conservative}</IssueText>
-                </IssuePoint>
-                <IssueFooter>
-                  <IssueLink href="/arena">
-                    배틀 보기
-                    <ArrowRight size={15} />
-                  </IssueLink>
-                </IssueFooter>
-              </IssueCard>
-            ))}
+            {issuesQuery.isLoading ? (
+              <EmptyCard>핫이슈를 불러오는 중입니다.</EmptyCard>
+            ) : issuesQuery.isError ? (
+              <EmptyCard>
+                <EmptyCardTitle>핫이슈를 불러오지 못했습니다.</EmptyCardTitle>
+                <EmptyCardText>
+                  잠시 후 다시 시도해 주세요. 국회 공공데이터 또는 이슈 생성 과정에서
+                  문제가 발생했을 수 있습니다.
+                </EmptyCardText>
+                <RetryButton
+                  type="button"
+                  onClick={() => {
+                    void issuesQuery.refetch();
+                  }}
+                >
+                  다시 시도
+                </RetryButton>
+              </EmptyCard>
+            ) : issues.length > 0 ? (
+              issues.map((issue) => {
+                const isExpanded = expandedIssueId === issue.id;
+
+                return (
+                  <IssueItem key={issue.id}>
+                    <IssueRow>
+                      <IssueRowMeta>{getIssueMetaLabel(issue)}</IssueRowMeta>
+                      <IssueRowBody>
+                        <IssueTitle>{issue.title}</IssueTitle>
+                        <IssueSummary>{issue.summary}</IssueSummary>
+                      </IssueRowBody>
+                      <IssueActions>
+                        <IssueToggleButton
+                          type="button"
+                          onClick={() => {
+                            setExpandedIssueId((current) =>
+                              current === issue.id ? null : issue.id,
+                            );
+                          }}
+                          aria-expanded={isExpanded}
+                        >
+                          입장 보기
+                          <IssueChevron $expanded={isExpanded}>
+                            <ChevronDown size={15} />
+                          </IssueChevron>
+                        </IssueToggleButton>
+                        <IssueTopLink href={getIssueLink(issue)}>
+                          배틀 보기
+                          <ArrowRight size={15} />
+                        </IssueTopLink>
+                      </IssueActions>
+                    </IssueRow>
+
+                    {isExpanded ? (
+                      <IssueExpanded>
+                        <IssueComparisonList>
+                          <IssueComparisonRow>
+                            <IssueLabel $tone="blue">진보</IssueLabel>
+                            <IssueText $tone="blue">{issue.progressive}</IssueText>
+                          </IssueComparisonRow>
+                          <IssueComparisonRow>
+                            <IssueLabel $tone="red">보수</IssueLabel>
+                            <IssueText $tone="red">{issue.conservative}</IssueText>
+                          </IssueComparisonRow>
+                        </IssueComparisonList>
+                      </IssueExpanded>
+                    ) : null}
+                  </IssueItem>
+                );
+              })
+            ) : (
+              <EmptyCard>
+                <EmptyCardTitle>지금 보여드릴 핫이슈가 없습니다.</EmptyCardTitle>
+                <EmptyCardText>
+                  국회 최신 법안을 다시 수집해 올 때까지 잠시 기다려 주세요.
+                </EmptyCardText>
+              </EmptyCard>
+            )}
           </IssueLayout>
         </MotionSection>
 
@@ -323,12 +584,12 @@ export function HomeContainer({ session }: HomeContainerProps) {
 
 const Page = styled.main`
   min-height: 100vh;
-  padding: 26px 24px 64px;
-  background: #f8f8f6;
-  color: #191f28;
+  padding: 24px 24px 80px;
+  background: #ffffff;
+  color: #111827;
 
   @media (max-width: 768px) {
-    padding: 18px 16px 44px;
+    padding: 16px 16px 56px;
   }
 `;
 
@@ -466,30 +727,127 @@ const HeaderSignOutButton = styled(SignOutButton)`
 
 const Main = styled.div`
   display: grid;
-  width: min(100%, 1160px);
-  gap: 18px;
-  margin: 18px auto 0;
+  width: min(100%, 720px);
+  gap: 0;
+  margin: 20px auto 0;
 `;
 
 const MotionIntro = styled(motion.div)`
-  display: flex;
-  align-items: center;
-  min-height: 48px;
-  padding: 0 2px;
+  display: grid;
+`;
+
+const IntroBand = styled.section`
+  display: grid;
+  gap: 14px;
+  padding: 28px 24px;
+  background: #f8f9fa;
+`;
+
+const IntroCopy = styled.div`
+  display: grid;
+  gap: 10px;
+`;
+
+const IntroEyebrow = styled.div`
+  color: #9ca3af;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+`;
+
+const IntroTitle = styled.h1`
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.03em;
+  color: #111827;
+  word-break: keep-all;
 `;
 
 const IntroText = styled.p`
   margin: 0;
-  color: #4e5968;
-  font-size: 0.98rem;
-  font-weight: 600;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 400;
   line-height: 1.6;
   word-break: keep-all;
 `;
 
+const IntroActions = styled.div`
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+`;
+
+const PrimaryActionLink = styled(Link)`
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 14px;
+  border-radius: 6px;
+  color: #ffffff;
+  background: #111827;
+  font-size: 12px;
+  font-weight: 600;
+`;
+
+const SecondaryActionLink = styled(Link)`
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border-radius: 6px;
+  color: #374151;
+  background: transparent;
+  border: 1px solid #d1d5db;
+  font-size: 12px;
+  font-weight: 600;
+`;
+
+const IntroStats = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  padding-top: 2px;
+`;
+
+const StatLabel = styled.span`
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 400;
+`;
+
+const StatValue = styled.span`
+  color: #374151;
+  font-size: 12px;
+  font-weight: 600;
+  word-break: keep-all;
+`;
+
+const StatItem = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  &:not(:last-of-type)::after {
+    content: "|";
+    margin: 0 8px;
+    color: #d1d5db;
+    font-weight: 400;
+  }
+`;
+
 const MotionSection = styled(motion.section)`
   display: grid;
-  gap: 14px;
+  gap: 0;
+  padding-top: 24px;
 `;
 
 const SectionHeader = styled.div`
@@ -497,6 +855,9 @@ const SectionHeader = styled.div`
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
+  padding: 10px 0 12px;
+  border-top: 1px solid #e5e7eb;
+  margin-bottom: 4px;
 
   @media (max-width: 768px) {
     align-items: flex-start;
@@ -506,21 +867,24 @@ const SectionHeader = styled.div`
 
 const SectionMeta = styled.div`
   display: grid;
-  gap: 6px;
+  gap: 4px;
 `;
 
 const SectionEyebrow = styled.div`
-  color: #3182f6;
-  font-size: 0.84rem;
-  font-weight: 700;
+  color: #9ca3af;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 `;
 
 const SectionTitle = styled.h2`
   margin: 0;
-  font-size: clamp(1.35rem, 3vw, 1.9rem);
-  font-weight: 800;
-  line-height: 1.24;
-  letter-spacing: -0.05em;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+  color: #111827;
   word-break: keep-all;
 `;
 
@@ -537,23 +901,21 @@ const CompactNotice = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 10px 8px 12px;
-  border-radius: 999px;
-  background: rgba(249, 115, 22, 0.08);
-  border: 1px solid rgba(249, 115, 22, 0.14);
+  padding: 0;
+  background: transparent;
+  border: 0;
 
   @media (max-width: 768px) {
     width: 100%;
     justify-content: space-between;
-    border-radius: 16px;
   }
 `;
 
 const CompactNoticeLabel = styled.div`
   color: #9a3412;
-  font-size: 0.86rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
   white-space: nowrap;
 `;
 
@@ -561,59 +923,28 @@ const CompactNoticeAction = styled(Link)`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 34px;
+  min-height: 32px;
   padding: 0 12px;
   border-radius: 999px;
-  color: #ffffff;
-  background: #191f28;
-  font-size: 0.84rem;
-  font-weight: 800;
+  color: #191f28;
+  background: #f3f4f6;
+  font-size: 12px;
+  font-weight: 600;
   white-space: nowrap;
 `;
 
 const PoliticianList = styled.div`
   display: grid;
-  gap: 12px;
-`;
-
-const PoliticianCard = styled.article`
-  display: grid;
-  grid-template-columns: 108px minmax(0, 1fr);
-  gap: 16px;
-  align-items: center;
-  padding: 14px;
-  border-radius: 24px;
-  background: #ffffff;
-  border: 1px solid #ebebeb;
-  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.05);
-  transition:
-    transform 180ms ease,
-    box-shadow 180ms ease,
-    border-color 180ms ease;
-
-  &:hover {
-    transform: translateY(-3px);
-    border-color: #222222;
-    box-shadow: 0 22px 44px rgba(15, 23, 42, 0.08);
-  }
-
-  @media (max-width: 768px) {
-    grid-template-columns: 92px minmax(0, 1fr);
-    gap: 14px;
-    padding: 12px;
-  }
+  gap: 0;
 `;
 
 const PoliticianImageWrap = styled.div`
-  width: 100%;
-  height: 128px;
+  width: 32px;
+  height: 32px;
   overflow: hidden;
-  border-radius: 18px;
-  background: #eef3f8;
-
-  @media (max-width: 768px) {
-    height: 116px;
-  }
+  border-radius: 999px;
+  background: #f3f4f6;
+  flex-shrink: 0;
 `;
 
 const PoliticianImage = styled.img`
@@ -630,86 +961,86 @@ const PoliticianFallback = styled.div`
   align-items: center;
   justify-content: center;
   color: #6b7684;
-  font-size: 1.8rem;
+  font-size: 0.84rem;
   font-weight: 800;
+`;
+
+const PoliticianRow = styled.article`
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
 `;
 
 const PoliticianBody = styled.div`
   display: grid;
-  gap: 10px;
+  gap: 6px;
   min-width: 0;
 `;
 
-const PoliticianTop = styled.div`
+const PoliticianInline = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-
-  @media (max-width: 640px) {
-    align-items: flex-start;
-    flex-direction: column;
-  }
+  flex-wrap: wrap;
+  gap: 8px;
 `;
 
 const PoliticianName = styled.div`
-  font-size: 1.14rem;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 600;
   letter-spacing: -0.03em;
 `;
 
-const PartyBadge = styled.div`
+const PoliticianDivider = styled.div`
+  width: 1px;
+  height: 12px;
+  background: #d1d5db;
+`;
+
+const PartyTextBadge = styled.div<{ $tone: "blue" | "red" | "neutral" }>`
+  display: inline-flex;
+  color: ${({ $tone }) =>
+    $tone === "blue" ? "#3182f6" : $tone === "red" ? "#ef4444" : "#6b7280"};
+  font-size: 11px;
+  font-weight: 600;
+`;
+
+const PartyInline = styled.div`
   display: inline-flex;
   align-items: center;
-  min-height: 20px;
+  gap: 6px;
 `;
 
 const PartyLogo = styled.img`
   display: block;
   width: auto;
-  height: 20px;
-`;
-
-const PartyFallback = styled.div`
-  display: inline-flex;
-  color: #1d4ed8;
-  font-size: 0.88rem;
-  font-weight: 700;
-`;
-
-const PoliticianMetaRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  height: 12px;
+  flex-shrink: 0;
 `;
 
 const PoliticianMeta = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #4e5968;
-  font-size: 0.9rem;
-  font-weight: 600;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 400;
   min-width: 0;
 `;
 
 const PoliticianTag = styled.div`
   display: inline-flex;
-  align-items: center;
-  min-height: 26px;
-  padding: 0 10px;
-  border-radius: 999px;
-  color: #4e5968;
-  background: #f3f6fa;
-  font-size: 0.82rem;
-  font-weight: 700;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 400;
 `;
 
 const PoliticianSubtext = styled.div`
   color: #6b7684;
-  font-size: 0.9rem;
-  line-height: 1.58;
+  font-size: 12px;
+  line-height: 1.6;
   word-break: keep-all;
 `;
 
@@ -717,29 +1048,126 @@ const DetailLink = styled(Link)`
   display: inline-flex;
   width: fit-content;
   align-items: center;
+  gap: 4px;
+  color: #3182f6;
+  font-size: 12px;
+  font-weight: 500;
+`;
+
+const PoliticianActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+`;
+
+const InlineActionButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  color: #3182f6;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+`;
+
+const PoliticianInlineDetail = styled.div`
+  display: grid;
+  gap: 12px;
+  padding: 14px 0 2px;
+  border-top: 1px solid #e5e7eb;
+`;
+
+const InlineDetailGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 18px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const InlineDetailItem = styled.div`
+  display: grid;
+  gap: 4px;
+`;
+
+const InlineDetailLabel = styled.div`
+  color: #6b7684;
+  font-size: 0.78rem;
+  font-weight: 700;
+`;
+
+const InlineDetailValue = styled.div`
+  color: #191f28;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  word-break: break-word;
+`;
+
+const InlineDetailText = styled.p`
+  margin: 0;
+  color: #6b7684;
+  font-size: 0.88rem;
+  line-height: 1.55;
+`;
+
+const InlineExternalLink = styled.a`
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
   gap: 6px;
   color: #191f28;
-  font-size: 0.92rem;
+  font-size: 0.86rem;
   font-weight: 700;
 `;
 
 const EmptyCard = styled.div`
-  padding: 20px 22px;
-  border-radius: 22px;
+  display: grid;
+  gap: 8px;
+  padding: 20px 0;
+  color: #6b7280;
+`;
+
+const EmptyCardTitle = styled.div`
+  color: #111827;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+`;
+
+const EmptyCardText = styled.p`
+  margin: 0;
   color: #6b7684;
-  background: #ffffff;
-  border: 1px solid #ebebeb;
-  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.05);
+  line-height: 1.7;
+  word-break: keep-all;
+`;
+
+const RetryButton = styled.button`
+  display: inline-flex;
+  width: fit-content;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border-radius: 6px;
+  color: #ffffff;
+  background: #111827;
+  border: 0;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
 `;
 
 const DistrictPromptCard = styled.div`
   display: grid;
   gap: 12px;
-  padding: 24px;
-  border-radius: 24px;
-  background: linear-gradient(135deg, #ffffff 0%, #f3f8ff 100%);
-  border: 1px solid #ebebeb;
-  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.05);
+  padding: 18px 0;
+  border-bottom: 1px solid #e5e7eb;
 `;
 
 const PromptTitle = styled.div`
@@ -760,147 +1188,248 @@ const PromptText = styled.p`
 const PromptLink = styled(Link)`
   display: inline-flex;
   width: fit-content;
-  min-height: 44px;
+  min-height: 34px;
   align-items: center;
   justify-content: center;
-  padding: 0 18px;
-  border-radius: 14px;
+  padding: 0 14px;
+  border-radius: 6px;
   color: #ffffff;
-  background: #3182f6;
-  font-size: 0.94rem;
-  font-weight: 700;
+  background: #111827;
+  font-size: 12px;
+  font-weight: 600;
 `;
 
 const IssueLayout = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
-  gap: 14px;
-
-  @media (max-width: 1024px) {
-    grid-template-columns: 1fr;
-  }
+  gap: 0;
 `;
 
-const IssueCard = styled.article<{ $featured: boolean }>`
+const IssueItem = styled.div`
   display: grid;
-  gap: ${({ $featured }) => ($featured ? "10px" : "12px")};
-  padding: ${({ $featured }) => ($featured ? "20px 22px 16px" : "18px 20px 16px")};
-  border-radius: 24px;
-  background: #ffffff;
-  border: 1px solid #ebebeb;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.05);
-  grid-row: ${({ $featured }) => ($featured ? "span 2" : "span 1")};
+  border-bottom: 1px solid #f3f4f6;
 
-  @media (max-width: 1024px) {
-    grid-row: auto;
+  &:last-of-type {
+    border-bottom: 0;
   }
 `;
 
-const IssueTitle = styled.h3<{ $featured: boolean }>`
+const IssueSectionBadge = styled.div`
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: #4e5968;
+  background: #f3f4f6;
+  border: 0;
+  font-size: 12px;
+  font-weight: 600;
+`;
+
+const IssueRow = styled.article`
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+  padding: 14px 0;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+`;
+
+const IssueRowMeta = styled.div`
+  color: #9ca3af;
+  font-size: 11px;
+  font-weight: 400;
+  padding-top: 2px;
+`;
+
+const IssueRowBody = styled.div`
+  display: grid;
+  gap: 6px;
+`;
+
+const IssueTitle = styled.h3`
   margin: 0;
-  font-size: ${({ $featured }) => ($featured ? "1.5rem" : "1.08rem")};
-  font-weight: 800;
-  line-height: 1.42;
-  letter-spacing: -0.04em;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+  color: #111827;
   word-break: keep-all;
 `;
 
-const IssuePoint = styled.div`
+const IssueSummary = styled.p`
+  margin: 0;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.7;
+  word-break: keep-all;
+`;
+
+const IssueActions = styled.div`
+  display: grid;
+  align-content: start;
+  justify-items: end;
+  gap: 8px;
+  min-width: 108px;
+
+  @media (max-width: 768px) {
+    justify-items: start;
+    min-width: 0;
+  }
+`;
+
+const IssueToggleButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  width: 108px;
+  padding: 0;
+  color: #6b7684;
+  background: transparent;
+  border: 0;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+
+  @media (max-width: 768px) {
+    width: auto;
+    justify-content: flex-start;
+  }
+`;
+
+const IssueChevron = styled.span<{ $expanded: boolean }>`
+  display: inline-flex;
+  svg {
+    transform: rotate(${({ $expanded }) => ($expanded ? "180deg" : "0deg")});
+    transition: transform 160ms ease;
+  }
+`;
+
+const IssueTopLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  width: 108px;
+  color: #191f28;
+  font-size: 12px;
+  font-weight: 600;
+
+  @media (max-width: 768px) {
+    justify-content: flex-start;
+    width: auto;
+  }
+`;
+
+const IssueComparisonList = styled.div`
+  display: grid;
+  gap: 0;
+`;
+
+const IssueComparisonRow = styled.div`
   display: grid;
   gap: 4px;
+  padding: 8px 0;
+
+  &:not(:last-of-type) {
+    border-bottom: 1px solid #f3f4f6;
+  }
 `;
 
 const IssueLabel = styled.div<{ $tone: "blue" | "red" }>`
-  color: ${({ $tone }) => ($tone === "blue" ? "#4da2ff" : "#ef4444")};
-  font-size: 0.84rem;
+  color: ${({ $tone }) => ($tone === "blue" ? "#3182f6" : "#ef4444")};
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0;
 `;
 
-const IssueText = styled.p`
+const IssueText = styled.p<{ $tone: "blue" | "red" }>`
   margin: 0;
-  color: #4e5968;
-  line-height: 1.68;
+  color: ${({ $tone }) => ($tone === "blue" ? "#3182f6" : "#ef4444")};
+  font-size: 12px;
+  line-height: 1.6;
   word-break: keep-all;
 `;
 
-const IssueLink = styled(Link)`
-  display: inline-flex;
-  width: fit-content;
-  align-items: center;
-  gap: 6px;
-  color: #191f28;
-  font-size: 0.92rem;
-  font-weight: 700;
-`;
+const IssueExpanded = styled.div`
+  padding: 10px 0 12px 16px;
+  margin-left: 88px;
+  border-left: 2px solid #e5e7eb;
 
-const IssueFooter = styled.div`
-  display: flex;
-  align-items: center;
-  padding-top: 12px;
-  border-top: 1px solid #ebebeb;
-  margin-top: 2px;
+  @media (max-width: 768px) {
+    margin-left: 0;
+  }
 `;
 
 const MotionBattleBanner = styled(motion.section)`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 22px;
-  margin-top: 6px;
-  padding: 30px 28px;
-  border-radius: 30px;
+  gap: 20px;
+  margin-top: 24px;
+  padding: 24px;
+  border-radius: 12px;
   color: #ffffff;
-  background: #111111;
+  background: #111827;
 
   @media (max-width: 768px) {
     align-items: flex-start;
     flex-direction: column;
-    padding: 24px;
   }
 `;
 
 const BannerCopy = styled.div`
   display: grid;
-  gap: 8px;
+  gap: 6px;
 `;
 
 const BannerEyebrow = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: rgba(255, 255, 255, 0.88);
-  font-size: 0.86rem;
-  font-weight: 700;
+  color: #9ca3af;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 `;
 
 const BannerTitle = styled.h2`
   margin: 0;
-  font-size: clamp(1.85rem, 4vw, 2.4rem);
-  font-weight: 800;
-  line-height: 1.18;
-  letter-spacing: -0.06em;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.03em;
+  color: #ffffff;
   word-break: keep-all;
 `;
 
 const BannerText = styled.p`
-  max-width: 620px;
   margin: 0;
-  color: rgba(255, 255, 255, 0.86);
-  line-height: 1.7;
+  color: #9ca3af;
+  font-size: 13px;
+  line-height: 1.6;
   word-break: keep-all;
 `;
 
 const BannerLink = styled(Link)`
   display: inline-flex;
-  min-height: 50px;
+  min-height: 40px;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   padding: 0 18px;
-  border-radius: 16px;
-  color: #111111;
+  border-radius: 8px;
+  color: #111827;
   background: #ffffff;
-  font-size: 0.96rem;
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: 600;
   flex-shrink: 0;
+  white-space: nowrap;
 `;
