@@ -3,6 +3,45 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 export type Database = {
   public: {
     Tables: {
+      issues: {
+        Row: {
+          id: string;
+          title: string;
+          summary: string;
+          progressive: string;
+          conservative: string;
+          source_url: string | null;
+          bill_id: string | null;
+          published_at: string | null;
+          expires_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          summary: string;
+          progressive: string;
+          conservative: string;
+          source_url?: string | null;
+          bill_id?: string | null;
+          published_at?: string | null;
+          expires_at: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          summary?: string;
+          progressive?: string;
+          conservative?: string;
+          source_url?: string | null;
+          bill_id?: string | null;
+          published_at?: string | null;
+          expires_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       users: {
         Row: {
           id: string;

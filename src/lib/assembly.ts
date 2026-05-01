@@ -69,6 +69,64 @@ export type PoliticianDetail = {
   image: string | null;
 };
 
+type BillListRow = {
+  BILL_ID?: string;
+  BILL_NO?: string;
+  BILL_NAME?: string;
+  PROPOSER?: string;
+  PROPOSE_DT?: string;
+  COMMITTEE?: string;
+  CURR_COMMITTEE?: string;
+  LINK_URL?: string;
+  DETAIL_LINK?: string;
+  AGE?: string;
+};
+
+export type AssemblyIssueBill = {
+  billId: string;
+  title: string;
+  proposer: string | null;
+  committee: string | null;
+  publishedAt: string | null;
+  sourceUrl: string | null;
+};
+
+const ISSUE_KEYWORDS = [
+  "예산",
+  "세금",
+  "조세",
+  "안보",
+  "국방",
+  "복지",
+  "교육",
+  "노동",
+  "환경",
+  "외교",
+  "연금",
+  "청년",
+  "주택",
+  "부동산",
+  "임대",
+  "전세",
+  "산업",
+  "통상",
+  "기업",
+  "소상공인",
+  "재난",
+  "의료",
+  "보건",
+  "기후",
+  "에너지",
+  "아동",
+  "돌봄",
+  "저출생",
+  "출산",
+  "이민",
+  "교통",
+  "AI",
+  "인공지능",
+];
+
 function getAssemblyApiKey() {
   const value = process.env.ASSEMBLY_OPEN_API_KEY;
 
@@ -111,6 +169,29 @@ async function fetchAssemblyJson(endpoint: string, params: Record<string, string
   }
 
   return (await response.json()) as AssemblyJsonResponse;
+}
+
+function toIsoDate(dateString: string | undefined) {
+  if (!dateString) {
+    return null;
+  }
+
+  const trimmed = dateString.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(trimmed)
+    ? `${trimmed}T00:00:00.000Z`
+    : trimmed;
+  const date = new Date(normalized);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toISOString();
 }
 
 function extractRows<T>(payload: AssemblyJsonResponse, rootKey: string) {
@@ -299,4 +380,37 @@ export async function getPoliticianDetailById(
     biography: member.MEM_TITLE ?? null,
     image,
   };
+}
+
+export async function getRecentIssueBills(): Promise<AssemblyIssueBill[]> {
+  const payload = await fetchAssemblyJson("nzmimeepazxkubdpn", {
+    AGE: 22,
+    pIndex: 1,
+    pSize: 20,
+  });
+  const rows = extractRows<BillListRow>(payload, "nzmimeepazxkubdpn");
+
+  return rows
+    .filter((row) => {
+      const haystack = [
+        row.BILL_NAME,
+        row.COMMITTEE,
+        row.CURR_COMMITTEE,
+        row.PROPOSER,
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      return ISSUE_KEYWORDS.some((keyword) => haystack.includes(keyword));
+    })
+    .map((row) => ({
+      billId: row.BILL_ID ?? row.BILL_NO ?? "",
+      title: row.BILL_NAME?.trim() ?? "",
+      proposer: row.PROPOSER?.trim() ?? null,
+      committee: row.COMMITTEE?.trim() ?? row.CURR_COMMITTEE?.trim() ?? null,
+      publishedAt: toIsoDate(row.PROPOSE_DT),
+      sourceUrl: row.DETAIL_LINK?.trim() ?? row.LINK_URL?.trim() ?? null,
+    }))
+    .filter((bill) => bill.billId && bill.title)
+    .slice(0, 5);
 }
