@@ -26,6 +26,15 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.96.2
         version: 5.96.2(react@19.2.4)
+      '@toss/tds-colors':
+        specifier: ^0.1.0
+        version: 0.1.0
+      '@toss/tds-typography':
+        specifier: ^0.0.3
+        version: 0.0.3
+      '@use-funnel/browser':
+        specifier: ^0.0.17
+        version: 0.0.17(react@19.2.4)
       framer-motion:
         specifier: ^12.38.0
         version: 12.38.0(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -540,6 +549,12 @@ packages:
     peerDependencies:
       react: ^18 || ^19
 
+  '@toss/tds-colors@0.1.0':
+    resolution: {integrity: sha512-NVV6vpcqobw8NBD7EKFS+muvmiyDsUItzzko9ib2RufU2DywlSb4A/4EyBO9EFV/Ff28ODrWySIuS6MjzDpiPw==}
+
+  '@toss/tds-typography@0.0.3':
+    resolution: {integrity: sha512-4BLnuAZ/IzSGvNONldJIA62QPiibADntLhe9VSUbirPjKESeZUEOgIm+KXk0z2mPQ2D2xWGh7w/+zUoH8c96Sg==}
+
   '@tybys/wasm-util@0.10.1':
     resolution: {integrity: sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg==}
 
@@ -722,6 +737,16 @@ packages:
     resolution: {integrity: sha512-lrW200hZdbfRtztbygyaq/6jP6AKE8qQN2KvPcJ+x7wiD038YtnYtZ82IMNJ69GJibV7bwL3y9FgK+5w/pYt6g==}
     cpu: [x64]
     os: [win32]
+
+  '@use-funnel/browser@0.0.17':
+    resolution: {integrity: sha512-saexLJSpTwm02If0I6oY6s1Z7cPwkEGqHvBg+IVokDywcrkhZA9MpxDHT27GSrNlhJHRxis/3g/xIQ48UYfp2Q==}
+    peerDependencies:
+      react: '>=16.8'
+
+  '@use-funnel/core@0.1.0':
+    resolution: {integrity: sha512-KEjBKTbOh5wd6CQZ1jYWhI6KuGrI9Pjn9CkmUgAYzonsyZE0lsiZ2/1RwsaWcxVO5RJBgfwCM8dRpibwm7An9w==}
+    peerDependencies:
+      react: '>=16.8'
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -940,6 +965,9 @@ packages:
   doctrine@2.1.0:
     resolution: {integrity: sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==}
     engines: {node: '>=0.10.0'}
+
+  dot-case@3.0.4:
+    resolution: {integrity: sha512-Kv5nKlh6yRrdrGvxeJ2e5y2eRUpkUosIW4A2AS38zwSz27zu7ufDwQPi5Jhs3XAlGNetl3bmnGhQsMtkKJnj3w==}
 
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
@@ -1483,6 +1511,9 @@ packages:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
     hasBin: true
 
+  lower-case@2.0.2:
+    resolution: {integrity: sha512-7fm3l3NAF9WfN6W3JOmf5drwpVqX78JtoGJ3A6W0a6ZnldM41w2fV5D490psKFTpMds8TJse/eHLFFsNHHjHgg==}
+
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
@@ -1574,6 +1605,9 @@ packages:
       sass:
         optional: true
 
+  no-case@3.0.4:
+    resolution: {integrity: sha512-fgAN3jGAh+RoxUGZHTSOLJIqUc2wmoBwGR4tbpNAKmmovFoWq0OdRkb0VkldReO2a2iBT/OEulG9XSUc10r3zg==}
+
   node-exports-info@1.6.0:
     resolution: {integrity: sha512-pyFS63ptit/P5WqUkt+UUfe+4oevH+bFeIiPPdfb0pFeYEu/1ELnJu5l+5EcTKYL5M7zaAa7S8ddywgXypqKCw==}
     engines: {node: '>= 0.4'}
@@ -1645,6 +1679,9 @@ packages:
   p-locate@5.0.0:
     resolution: {integrity: sha512-LaNjtRWUBY++zB5nE/NwcaoMylSPk+S+ZHNB1TzdbMJMny6dynpAGt7X/tl/QYq3TIeE6nxHppbo2LGymrG5Pw==}
     engines: {node: '>=10'}
+
+  param-case@3.0.4:
+    resolution: {integrity: sha512-RXlj7zCYokReqWpOPH9oYivUzLYZ5vAPIfEmCTNViosC78F8F0H9y7T7gG2M39ymgutxF5gcFEsyZQSph9Bp3A==}
 
   parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
@@ -2528,6 +2565,12 @@ snapshots:
       '@tanstack/query-core': 5.96.2
       react: 19.2.4
 
+  '@toss/tds-colors@0.1.0': {}
+
+  '@toss/tds-typography@0.0.3':
+    dependencies:
+      param-case: 3.0.4
+
   '@tybys/wasm-util@0.10.1':
     dependencies:
       tslib: 2.8.1
@@ -2706,6 +2749,15 @@ snapshots:
 
   '@unrs/resolver-binding-win32-x64-msvc@1.11.1':
     optional: true
+
+  '@use-funnel/browser@0.0.17(react@19.2.4)':
+    dependencies:
+      '@use-funnel/core': 0.1.0(react@19.2.4)
+      react: 19.2.4
+
+  '@use-funnel/core@0.1.0(react@19.2.4)':
+    dependencies:
+      react: 19.2.4
 
   acorn-jsx@5.3.2(acorn@8.16.0):
     dependencies:
@@ -2950,6 +3002,11 @@ snapshots:
   doctrine@2.1.0:
     dependencies:
       esutils: 2.0.3
+
+  dot-case@3.0.4:
+    dependencies:
+      no-case: 3.0.4
+      tslib: 2.8.1
 
   dunder-proto@1.0.1:
     dependencies:
@@ -3634,6 +3691,10 @@ snapshots:
     dependencies:
       js-tokens: 4.0.0
 
+  lower-case@2.0.2:
+    dependencies:
+      tslib: 2.8.1
+
   lru-cache@5.1.1:
     dependencies:
       yallist: 3.1.1
@@ -3718,6 +3779,11 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - babel-plugin-macros
+
+  no-case@3.0.4:
+    dependencies:
+      lower-case: 2.0.2
+      tslib: 2.8.1
 
   node-exports-info@1.6.0:
     dependencies:
@@ -3807,6 +3873,11 @@ snapshots:
   p-locate@5.0.0:
     dependencies:
       p-limit: 3.1.0
+
+  param-case@3.0.4:
+    dependencies:
+      dot-case: 3.0.4
+      tslib: 2.8.1
 
   parent-module@1.0.1:
     dependencies:

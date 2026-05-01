@@ -1,9 +1,32 @@
 import { css } from "@emotion/react";
+import {
+  defaultTypographyRule,
+  makeMobileTypographyVariables,
+} from "@toss/tds-typography";
+
+const mobileTypographyVariables = makeMobileTypographyVariables(
+  defaultTypographyRule,
+);
+const mobileTypographyCSS = Object.entries(mobileTypographyVariables)
+  .map(([name, value]) => `${name}: ${value};`)
+  .join("\n");
 
 export const globalStyles = css`
   :root {
-    --background: #ffffff;
-    --foreground: #191f28;
+    ${mobileTypographyCSS}
+    --background: var(--adaptiveBackground);
+    --foreground: var(--adaptiveGrey900);
+    --muted-foreground: var(--adaptiveGrey600);
+    --surface: var(--adaptiveLayeredBackground);
+    --surface-muted: var(--adaptiveGreyBackground);
+    --border-subtle: var(--adaptiveHairlineBorder);
+    --brand: var(--adaptiveBlue500);
+    --brand-pressed: var(--adaptiveBlue600);
+    --danger: var(--adaptiveRed600);
+    --success: var(--adaptiveGreen600);
+    --shadow-card: 0 16px 40px rgba(0, 27, 55, 0.08);
+    --radius-control: 16px;
+    --radius-card: 24px;
   }
 
   * {
@@ -21,7 +44,14 @@ export const globalStyles = css`
     margin: 0;
     color: var(--foreground);
     background: var(--background);
-    font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+    font-family:
+      var(--font-geist-sans),
+      "Toss Product Sans",
+      "SF Pro KR",
+      "Apple SD Gothic Neo",
+      Arial,
+      Helvetica,
+      sans-serif;
     overflow-x: hidden;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;

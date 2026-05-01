@@ -1,6 +1,7 @@
 "use client";
 
 import styled from "@emotion/styled";
+import { useFunnel } from "@use-funnel/browser";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Crosshair, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -22,6 +23,17 @@ type OnboardingContainerProps = {
 };
 
 type OnboardingStep = "district" | "questions";
+
+type OnboardingFunnel = {
+  district: {
+    district: string | null;
+    resolvedAddress: string | null;
+  };
+  questions: {
+    district: string;
+    resolvedAddress: string | null;
+  };
+};
 
 type DistrictResponse = {
   district: string;
@@ -136,15 +148,62 @@ export function OnboardingContainer({
   initialDistrict,
 }: OnboardingContainerProps) {
   const router = useRouter();
+  const initialFunnelState = useMemo(
+    () =>
+      initialDistrict
+        ? {
+            step: "questions" as const,
+            context: {
+              district: initialDistrict,
+              resolvedAddress: null,
+            },
+          }
+        : {
+            step: "district" as const,
+            context: {
+              district: null,
+              resolvedAddress: null,
+            },
+          },
+    [initialDistrict],
+  );
+  const funnel = useFunnel<OnboardingFunnel>({
+    id: "onboarding",
+    initial: initialFunnelState,
+    steps: {
+      district: {
+        parse: (data) => {
+          const context =
+            typeof data === "object" && data !== null
+              ? (data as Partial<OnboardingFunnel["district"]>)
+              : {};
+
+          return {
+            district:
+              typeof context.district === "string" ? context.district : null,
+            resolvedAddress:
+              typeof context.resolvedAddress === "string"
+                ? context.resolvedAddress
+                : null,
+          };
+        },
+      },
+      questions: {
+        guard: (data): data is OnboardingFunnel["questions"] =>
+          typeof data === "object" &&
+          data !== null &&
+          typeof (data as Partial<OnboardingFunnel["questions"]>).district ===
+            "string",
+      },
+    },
+  });
   const currentIndex = useOnboardingStore((state) => state.currentIndex);
   const answerQuestion = useOnboardingStore((state) => state.answerQuestion);
   const nextQuestion = useOnboardingStore((state) => state.nextQuestion);
   const reset = useOnboardingStore((state) => state.reset);
   const answers = useOnboardingStore((state) => state.answers);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [step, setStep] = useState<OnboardingStep>(
-    initialDistrict ? "questions" : "district",
-  );
+  const step: OnboardingStep = funnel.step;
   const [district, setDistrict] = useState(initialDistrict);
   const [resolvedAddress, setResolvedAddress] = useState<string | null>(null);
   const [districtError, setDistrictError] = useState<string | null>(null);
@@ -224,6 +283,17 @@ export function OnboardingContainer({
 
     setDistrict(result.district);
     setResolvedAddress(result.sourceAddress);
+    if (funnel.step === "questions") {
+      void funnel.history.replace("questions", {
+        district: result.district,
+        resolvedAddress: result.sourceAddress,
+      });
+    } else {
+      void funnel.history.replace("district", {
+        district: result.district,
+        resolvedAddress: result.sourceAddress,
+      });
+    }
     setDistrictError(null);
     setDistrictNotice(
       payload.district
@@ -263,11 +333,22 @@ export function OnboardingContainer({
       return;
     }
 
-    setStep("questions");
+    void funnel.history.push("questions", {
+      district,
+      resolvedAddress,
+    });
   };
 
   const handleBackToDistrictStep = () => {
-    setStep("district");
+    if (funnel.index > 0) {
+      void funnel.history.back();
+      return;
+    }
+
+    void funnel.history.replace("district", {
+      district,
+      resolvedAddress,
+    });
   };
 
   const handleManualDistrictSelect = async (option: DistrictAreaOption) => {
@@ -573,8 +654,8 @@ export function OnboardingContainer({
 
 const Page = styled.main`
   min-height: 100vh;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-  color: #191f28;
+  background: var(--adaptiveBackground);
+  color: var(--adaptiveGrey900);
 `;
 
 const TopBar = styled.div`
@@ -594,7 +675,7 @@ const TopBarInner = styled.div`
 `;
 
 const TopText = styled.div`
-  color: #6b7684;
+  color: var(--adaptiveGrey600);
   font-size: 0.92rem;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -609,8 +690,8 @@ const SkipButton = styled.button`
   padding: 10px 14px;
   border: 0;
   border-radius: 999px;
-  color: #4e5968;
-  background: rgba(49, 130, 246, 0.08);
+  color: var(--adaptiveGrey700);
+  background: var(--adaptiveBlue50);
   font-size: 0.92rem;
   font-weight: 700;
   cursor: pointer;
@@ -646,8 +727,8 @@ const StepChip = styled.div`
   width: fit-content;
   padding: 8px 12px;
   border-radius: 999px;
-  color: #1d4ed8;
-  background: rgba(49, 130, 246, 0.1);
+  color: var(--adaptiveBlue700);
+  background: var(--adaptiveBlue50);
   font-size: 0.86rem;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -665,7 +746,7 @@ const StepTitle = styled.h1`
 
 const StepDescription = styled.p`
   margin: 0;
-  color: #6b7684;
+  color: var(--adaptiveGrey600);
   line-height: 1.6;
   word-break: keep-all;
 `;
@@ -675,13 +756,14 @@ const DistrictSection = styled.section`
   gap: 16px;
   margin-bottom: 32px;
   padding: 24px;
-  border-radius: 32px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--adaptiveHairlineBorder);
+  border-radius: var(--radius-card);
+  background: var(--adaptiveLayeredBackground);
+  box-shadow: var(--shadow-card);
 
   @media (max-width: 640px) {
     padding: 20px;
-    border-radius: 24px;
+    border-radius: 20px;
   }
 `;
 
@@ -691,7 +773,7 @@ const DistrictMeta = styled.div`
 `;
 
 const DistrictEyebrow = styled.div`
-  color: #3182f6;
+  color: var(--adaptiveBlue500);
   font-size: 0.84rem;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -708,7 +790,7 @@ const DistrictTitle = styled.h2`
 
 const DistrictDescription = styled.p`
   margin: 0;
-  color: #6b7684;
+  color: var(--adaptiveGrey600);
   line-height: 1.6;
   word-break: keep-all;
 `;
@@ -722,12 +804,12 @@ const DistrictStatus = styled.div`
   display: grid;
   gap: 6px;
   padding: 18px 20px;
-  border-radius: 22px;
-  background: #f4f8ff;
+  border-radius: var(--radius-control);
+  background: var(--adaptiveBlue50);
 `;
 
 const StatusLabel = styled.div`
-  color: #6b7684;
+  color: var(--adaptiveGrey600);
   font-size: 0.85rem;
   font-weight: 700;
 `;
@@ -745,13 +827,13 @@ const StatusValue = styled.div`
     width: 10px;
     height: 10px;
     border-radius: 999px;
-    background: #3182f6;
+    background: var(--adaptiveBlue500);
     flex: 0 0 auto;
   }
 `;
 
 const StatusHint = styled.div`
-  color: #6b7684;
+  color: var(--adaptiveGrey600);
   font-size: 0.92rem;
   line-height: 1.5;
 `;
@@ -763,9 +845,9 @@ const LocationButton = styled.button`
   gap: 8px;
   padding: 12px 16px;
   border: 0;
-  border-radius: 999px;
-  color: #1d4ed8;
-  background: rgba(49, 130, 246, 0.1);
+  border-radius: var(--radius-control);
+  color: var(--adaptiveBlue700);
+  background: var(--adaptiveBlue50);
   font-size: 0.94rem;
   font-weight: 700;
   cursor: pointer;
@@ -785,9 +867,9 @@ const ManualFinder = styled.section`
   display: grid;
   gap: 14px;
   padding: 18px;
-  border: 1px solid rgba(49, 130, 246, 0.14);
-  border-radius: 24px;
-  background: linear-gradient(180deg, rgba(244, 248, 255, 0.92) 0%, #ffffff 100%);
+  border: 1px solid var(--adaptiveHairlineBorder);
+  border-radius: var(--radius-card);
+  background: var(--adaptiveGreyBackground);
 `;
 
 const ManualFinderHeader = styled.div`
@@ -804,7 +886,7 @@ const ManualFinderTitle = styled.h3`
 
 const ManualFinderDescription = styled.p`
   margin: 0;
-  color: #6b7684;
+  color: var(--adaptiveGrey600);
   font-size: 0.92rem;
   line-height: 1.5;
   word-break: keep-all;
@@ -823,10 +905,10 @@ const ManualFinderControls = styled.div`
 const ProvinceSelect = styled.select`
   min-height: 54px;
   padding: 0 16px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 18px;
-  color: #191f28;
-  background: #ffffff;
+  border: 1px solid var(--adaptiveHairlineBorder);
+  border-radius: var(--radius-control);
+  color: var(--adaptiveGrey900);
+  background: var(--adaptiveLayeredBackground);
   appearance: none;
 `;
 
@@ -836,22 +918,22 @@ const ManualSearchField = styled.label`
   align-items: center;
   gap: 10px;
   padding: 0 16px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 18px;
-  color: #6b7684;
-  background: #ffffff;
+  border: 1px solid var(--adaptiveHairlineBorder);
+  border-radius: var(--radius-control);
+  color: var(--adaptiveGrey600);
+  background: var(--adaptiveLayeredBackground);
 `;
 
 const ManualSearchInput = styled.input`
   width: 100%;
   border: 0;
-  color: #191f28;
+  color: var(--adaptiveGrey900);
   background: transparent;
   font-size: 0.96rem;
   outline: none;
 
   &::placeholder {
-    color: #8b95a1;
+    color: var(--adaptiveGrey500);
   }
 `;
 
@@ -867,9 +949,9 @@ const ManualResultButton = styled.button`
   justify-content: space-between;
   gap: 14px;
   padding: 16px 18px;
-  border: 1px solid rgba(49, 130, 246, 0.12);
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--adaptiveHairlineBorder);
+  border-radius: var(--radius-control);
+  background: var(--adaptiveLayeredBackground);
   text-align: left;
   cursor: pointer;
   transition:
@@ -879,8 +961,8 @@ const ManualResultButton = styled.button`
 
   &:hover:enabled {
     transform: translateY(-1px);
-    border-color: rgba(49, 130, 246, 0.24);
-    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+    border-color: var(--adaptiveBlue200);
+    box-shadow: var(--shadow-card);
   }
 
   &:disabled {
@@ -901,20 +983,20 @@ const ManualResultArea = styled.div`
 `;
 
 const ManualResultMeta = styled.div`
-  color: #6b7684;
+  color: var(--adaptiveGrey600);
   font-size: 0.9rem;
   line-height: 1.4;
 `;
 
 const ManualResultAction = styled.div`
-  color: #1d4ed8;
+  color: var(--adaptiveBlue700);
   font-size: 0.9rem;
   font-weight: 700;
   white-space: nowrap;
 `;
 
 const ManualHint = styled.div`
-  color: #6b7684;
+  color: var(--adaptiveGrey600);
   font-size: 0.9rem;
   line-height: 1.5;
   word-break: keep-all;
@@ -923,8 +1005,8 @@ const ManualHint = styled.div`
 const ManualEmptyState = styled.div`
   padding: 14px 16px;
   border-radius: 18px;
-  color: #6b7684;
-  background: rgba(15, 23, 42, 0.04);
+  color: var(--adaptiveGrey600);
+  background: var(--adaptiveGreyOpacity50);
   font-size: 0.9rem;
   line-height: 1.5;
 `;
@@ -942,9 +1024,9 @@ const PrimaryActionButton = styled.button`
   min-height: 54px;
   padding: 0 22px;
   border: 0;
-  border-radius: 18px;
-  color: #ffffff;
-  background: linear-gradient(90deg, #2563eb 0%, #3182f6 100%);
+  border-radius: var(--radius-control);
+  color: var(--white);
+  background: var(--adaptiveBlue500);
   font-size: 0.96rem;
   font-weight: 800;
   cursor: pointer;
@@ -963,9 +1045,9 @@ const SecondaryActionButton = styled.button`
   min-height: 48px;
   padding: 0 16px;
   border: 0;
-  border-radius: 16px;
-  color: #1d4ed8;
-  background: rgba(49, 130, 246, 0.1);
+  border-radius: var(--radius-control);
+  color: var(--adaptiveBlue700);
+  background: var(--adaptiveBlue50);
   font-size: 0.92rem;
   font-weight: 700;
   cursor: pointer;
@@ -981,13 +1063,13 @@ const SecondaryActionButton = styled.button`
 `;
 
 const HelperText = styled.div`
-  color: #1d4ed8;
+  color: var(--adaptiveBlue700);
   font-size: 0.92rem;
   font-weight: 600;
 `;
 
 const ErrorText = styled.div`
-  color: #e11d48;
+  color: var(--adaptiveRed600);
   font-size: 0.92rem;
   font-weight: 600;
 `;
@@ -1003,9 +1085,10 @@ const DistrictSummaryCard = styled.div`
   gap: 16px;
   margin-bottom: 28px;
   padding: 20px 22px;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--adaptiveHairlineBorder);
+  border-radius: var(--radius-card);
+  background: var(--adaptiveLayeredBackground);
+  box-shadow: var(--shadow-card);
 
   @media (max-width: 640px) {
     flex-direction: column;
@@ -1024,7 +1107,7 @@ const ProgressMeta = styled.div`
 `;
 
 const ProgressText = styled.div`
-  color: #3182f6;
+  color: var(--adaptiveBlue500);
   font-size: 0.92rem;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -1044,14 +1127,14 @@ const ProgressBar = styled.div`
   height: 8px;
   margin-top: 24px;
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.08);
+  background: var(--adaptiveGreyOpacity100);
   overflow: hidden;
 `;
 
 const ProgressFill = styled.div`
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #3182f6 0%, #5ba4ff 100%);
+  background: var(--adaptiveBlue500);
   transition: width 220ms ease;
 `;
 
@@ -1062,19 +1145,20 @@ const QuestionStage = styled.div`
 const QuestionCard = styled(motion.div)`
   min-height: 250px;
   padding: 30px;
-  border-radius: 32px;
-  background: #ffffff;
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--adaptiveHairlineBorder);
+  border-radius: var(--radius-card);
+  background: var(--adaptiveLayeredBackground);
+  box-shadow: var(--shadow-card);
 
   @media (max-width: 640px) {
     min-height: 220px;
     padding: 22px;
-    border-radius: 24px;
+    border-radius: 20px;
   }
 `;
 
 const QuestionEyebrow = styled.div`
-  color: #3182f6;
+  color: var(--adaptiveBlue500);
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -1109,11 +1193,13 @@ const AnswerButton = styled.button<{ $selected: boolean }>`
   gap: 12px;
   padding: 0 18px;
   border: 1px solid
-    ${({ $selected }) => ($selected ? "rgba(49, 130, 246, 0.36)" : "transparent")};
-  border-radius: 18px;
-  color: ${({ $selected }) => ($selected ? "#1d4ed8" : "#191f28")};
+    ${({ $selected }) =>
+      $selected ? "var(--adaptiveBlue200)" : "transparent"};
+  border-radius: var(--radius-control);
+  color: ${({ $selected }) =>
+    $selected ? "var(--adaptiveBlue700)" : "var(--adaptiveGrey900)"};
   background: ${({ $selected }) =>
-    $selected ? "rgba(49, 130, 246, 0.08)" : "rgba(255, 255, 255, 0.9)"};
+    $selected ? "var(--adaptiveBlue50)" : "var(--adaptiveLayeredBackground)"};
   font-size: 0.96rem;
   font-weight: 700;
   text-align: left;
