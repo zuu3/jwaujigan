@@ -25,7 +25,7 @@ export function TargetCursor({
   targetSelector,
   spinDuration = 2.2,
   hoverDuration = 0.18,
-  hideDefaultCursor = false,
+  hideDefaultCursor = true,
   minWidth = 961,
 }: TargetCursorProps) {
   const cursorRef = useRef<HTMLDivElement>(null);
@@ -190,6 +190,11 @@ export function TargetCursor({
           return;
         }
 
+        if (!activeTargetRef.current.isConnected) {
+          stopTargeting();
+          return;
+        }
+
         const cursorX = gsap.getProperty(cursor, "x") as number;
         const cursorY = gsap.getProperty(cursor, "y") as number;
         const strength = activeStrengthRef.current.value;
@@ -275,7 +280,7 @@ const CursorRoot = styled.div`
   height: 0;
   pointer-events: none;
   z-index: 9999;
-  mix-blend-mode: difference;
+  filter: drop-shadow(0 8px 18px rgba(49, 130, 246, 0.24));
 `;
 
 const CursorDot = styled.div`
@@ -285,7 +290,7 @@ const CursorDot = styled.div`
   width: 4px;
   height: 4px;
   border-radius: 999px;
-  background: #ffffff;
+  background: #3182f6;
   transform: translate(-50%, -50%);
 `;
 
@@ -295,7 +300,7 @@ const CursorCorner = styled.div`
   left: 50%;
   width: ${CORNER_SIZE}px;
   height: ${CORNER_SIZE}px;
-  border: ${BORDER_WIDTH}px solid #ffffff;
+  border: ${BORDER_WIDTH}px solid #3182f6;
 
   &[data-target-corner="top-left"] {
     border-right: none;

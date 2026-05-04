@@ -105,6 +105,132 @@ export function calculatePoliticalProfile(
     socialState === "neutral"
   ) {
     political_type = "안보진보·경제보수";
+  } else if (
+    economicState === "positive" &&
+    securityState === "positive" &&
+    socialState === "neutral"
+  ) {
+    political_type = "진보성장파";
+  } else if (
+    economicState === "positive" &&
+    securityState === "neutral" &&
+    socialState === "positive"
+  ) {
+    political_type = "사회진보·실용경제파";
+  } else if (
+    economicState === "positive" &&
+    securityState === "negative" &&
+    socialState === "positive"
+  ) {
+    political_type = "사회진보·안보보수파";
+  } else if (
+    economicState === "positive" &&
+    securityState === "negative" &&
+    socialState === "neutral"
+  ) {
+    political_type = "안보보수·경제진보파";
+  } else if (
+    economicState === "positive" &&
+    securityState === "negative" &&
+    socialState === "negative"
+  ) {
+    political_type = "경제진보·전통보수파";
+  } else if (
+    economicState === "positive" &&
+    securityState === "positive" &&
+    socialState === "negative"
+  ) {
+    political_type = "안보진보·사회보수파";
+  } else if (
+    economicState === "positive" &&
+    securityState === "neutral" &&
+    socialState === "negative"
+  ) {
+    political_type = "경제진보·사회보수파";
+  } else if (
+    economicState === "neutral" &&
+    securityState === "positive" &&
+    socialState === "positive"
+  ) {
+    political_type = "사회진보·안보중시파";
+  } else if (
+    economicState === "neutral" &&
+    securityState === "positive" &&
+    socialState === "neutral"
+  ) {
+    political_type = "안보중시파";
+  } else if (
+    economicState === "neutral" &&
+    securityState === "positive" &&
+    socialState === "negative"
+  ) {
+    political_type = "안보중시·사회보수파";
+  } else if (
+    economicState === "neutral" &&
+    securityState === "neutral" &&
+    socialState === "positive"
+  ) {
+    political_type = "사회진보·경제중도파";
+  } else if (
+    economicState === "neutral" &&
+    securityState === "neutral" &&
+    socialState === "negative"
+  ) {
+    political_type = "사회보수·경제중도파";
+  } else if (
+    economicState === "neutral" &&
+    securityState === "negative" &&
+    socialState === "positive"
+  ) {
+    political_type = "사회진보·안보보수파";
+  } else if (
+    economicState === "neutral" &&
+    securityState === "negative" &&
+    socialState === "neutral"
+  ) {
+    political_type = "안보보수파";
+  } else if (
+    economicState === "neutral" &&
+    securityState === "negative" &&
+    socialState === "negative"
+  ) {
+    political_type = "보수안정·경제중도파";
+  } else if (
+    economicState === "negative" &&
+    securityState === "positive" &&
+    socialState === "positive"
+  ) {
+    political_type = "진보사회·경제보수파";
+  } else if (
+    economicState === "negative" &&
+    securityState === "positive" &&
+    socialState === "negative"
+  ) {
+    political_type = "안보진보·전통보수파";
+  } else if (
+    economicState === "negative" &&
+    securityState === "neutral" &&
+    socialState === "positive"
+  ) {
+    political_type = "사회진보·경제보수파";
+  } else if (
+    economicState === "negative" &&
+    securityState === "neutral" &&
+    socialState === "neutral"
+  ) {
+    political_type = "경제보수·중도파";
+  } else if (
+    economicState === "negative" &&
+    securityState === "neutral" &&
+    socialState === "negative"
+  ) {
+    political_type = "경제보수·사회보수파";
+  } else if (
+    economicState === "negative" &&
+    securityState === "negative" &&
+    socialState === "neutral"
+  ) {
+    political_type = "보수·사회중도파";
   }
 
   return {

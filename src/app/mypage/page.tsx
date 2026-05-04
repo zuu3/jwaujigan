@@ -1,60 +1,73 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { SignOutButton } from "@/components/auth/sign-out-button";
 import { auth } from "../../../auth";
+import { MyPageContainer, type BattleLogItem, type MyPageProfile, type PoliticalProfile } from "@/containers/mypage";
+import { createServiceRoleSupabaseClient } from "@/lib/supabase";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 export default async function MyPage() {
+  noStore();
+
   const session = await auth();
 
   if (!session?.user?.email) {
     redirect("/");
   }
 
+  const supabase = createServiceRoleSupabaseClient();
+  const { data: user, error: userError } = await supabase
+    .from("users")
+    .select("id, email, name, image, district, created_at")
+    .eq("email", session.user.email)
+    .maybeSingle();
+
+  if (userError) {
+    console.error("Failed to fetch mypage user", userError);
+    throw new Error("Failed to fetch mypage user.");
+  }
+
+  const profile: MyPageProfile = {
+    id: user?.id ?? session.user.id,
+    email: user?.email ?? session.user.email,
+    name: user?.name ?? session.user.name ?? null,
+    image: user?.image ?? session.user.image ?? null,
+    district: user?.district ?? session.user.district ?? null,
+    created_at: user?.created_at ?? null,
+  };
+  const userIds = [...new Set([profile.id, session.user.id].filter(Boolean))];
+
+  const [politicalProfileResult, battleLogsResult] = await Promise.all([
+    supabase
+      .from("user_political_profiles")
+      .select("economic_score, social_score, security_score, political_type, completed_at")
+      .in("user_id", userIds)
+      .order("completed_at", { ascending: false, nullsFirst: false })
+      .limit(1),
+    supabase
+      .from("battle_logs")
+      .select("id, topic, result, created_at")
+      .in("user_id", userIds)
+      .order("created_at", { ascending: false }),
+  ]);
+
+  if (politicalProfileResult.error) {
+    console.error("Failed to fetch political profile", politicalProfileResult.error);
+    throw new Error("Failed to fetch political profile.");
+  }
+
+  if (battleLogsResult.error) {
+    console.error("Failed to fetch battle logs", battleLogsResult.error);
+    throw new Error("Failed to fetch battle logs.");
+  }
+
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        padding: "32px 24px",
-        color: "#191f28",
-        background: "#f8fbff",
-      }}
-    >
-      <div style={{ width: "min(100%, 960px)", margin: "0 auto" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 16,
-            flexWrap: "wrap",
-          }}
-        >
-          <h1 style={{ margin: 0, fontSize: "2rem", letterSpacing: "-0.05em" }}>
-            마이페이지
-          </h1>
-          <SignOutButton
-            callbackUrl="/"
-            style={{
-              display: "inline-flex",
-              minHeight: 40,
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "0 14px",
-              border: "1px solid #d7dde5",
-              borderRadius: 999,
-              color: "#191f28",
-              background: "#ffffff",
-              fontSize: "0.9rem",
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          />
-        </div>
-        <p style={{ marginTop: 16, color: "#6b7684", lineHeight: 1.7 }}>
-          {session.user.name ?? "사용자"} / {session.user.email}
-        </p>
-        <Link href="/home">홈으로 돌아가기</Link>
-      </div>
-    </main>
+    <MyPageContainer
+      profile={profile}
+      politicalProfile={(politicalProfileResult.data?.[0] ?? null) as PoliticalProfile | null}
+      battleLogs={(battleLogsResult.data ?? []) as BattleLogItem[]}
+    />
   );
 }

@@ -1,5 +1,13 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
+type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
 export type Database = {
   public: {
     Tables: {
@@ -41,6 +49,77 @@ export type Database = {
           created_at?: string;
         };
         Relationships: [];
+      };
+      battle_logs: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          topic: string;
+          messages: Json;
+          result: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          topic: string;
+          messages: Json;
+          result?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          topic?: string;
+          messages?: Json;
+          result?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "battle_logs_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      votes: {
+        Row: {
+          id: string;
+          battle_id: string;
+          user_id: string;
+          side: string;
+        };
+        Insert: {
+          id?: string;
+          battle_id: string;
+          user_id: string;
+          side: string;
+        };
+        Update: {
+          id?: string;
+          battle_id?: string;
+          user_id?: string;
+          side?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "votes_battle_id_fkey";
+            columns: ["battle_id"];
+            isOneToOne: false;
+            referencedRelation: "battle_logs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "votes_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       users: {
         Row: {

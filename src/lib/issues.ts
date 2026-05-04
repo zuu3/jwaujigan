@@ -1,8 +1,8 @@
 import "server-only";
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { Database } from "@/lib/supabase";
 import type { AssemblyIssueBill } from "@/lib/assembly";
+import { getGeminiModel } from "@/lib/gemini";
 
 type IssueInsert = Database["public"]["Tables"]["issues"]["Insert"];
 
@@ -13,21 +13,8 @@ type GeneratedIssueCard = {
   conservative: string;
 };
 
-function getGeminiApiKey() {
-  const value = process.env.GEMINI_API_KEY;
-
-  if (!value) {
-    throw new Error("Missing environment variable: GEMINI_API_KEY");
-  }
-
-  return value;
-}
-
-function getGenerativeModel() {
-  const client = new GoogleGenerativeAI(getGeminiApiKey());
-
-  return client.getGenerativeModel({
-    model: "gemini-2.5-flash",
+function getIssueGenerativeModel() {
+  return getGeminiModel({
     generationConfig: {
       responseMimeType: "application/json",
       temperature: 0.4,
@@ -45,7 +32,7 @@ function normalizeGeneratedIssue(raw: GeneratedIssueCard): GeneratedIssueCard {
 }
 
 export async function buildIssueFromBill(bill: AssemblyIssueBill): Promise<IssueInsert> {
-  const model = getGenerativeModel();
+  const model = getIssueGenerativeModel();
   const prompt = [
     "다음 국회 발의 법안을 홈 화면용 정치 이슈 카드로 변환하세요.",
     "반드시 JSON 객체만 반환하세요.",
