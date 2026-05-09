@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Jwaujigan",
-  description: "Jwaujigan web",
+  title: "좌우지간",
+  description: "우리 동네 정치인 정보와 이슈 분석, AI 토론을 한 흐름으로 확인하세요.",
 };
 
 export default function RootLayout({

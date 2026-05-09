@@ -2,6 +2,7 @@
 
 import styled from "@emotion/styled";
 import { ArrowLeft, ExternalLink, Mail, MapPin, Phone } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import type { PoliticianDetail } from "@/lib/assembly";
 import { getPartyPresentation } from "@/lib/parties";
@@ -40,7 +41,14 @@ export function PoliticianDetailContainer({
         <HeroCard>
           <HeroImageWrap>
             {politician.image ? (
-              <HeroImage src={politician.image} alt={politician.name} />
+              <Image
+                src={politician.image}
+                alt={politician.name}
+                fill
+                sizes="(max-width: 860px) 100vw, 40vw"
+                style={{ objectFit: "cover" }}
+                priority
+              />
             ) : (
               <HeroFallback>{politician.name.slice(0, 1)}</HeroFallback>
             )}
@@ -206,6 +214,11 @@ const BackLink = styled(Link)`
   color: #4e5968;
   font-size: 0.92rem;
   font-weight: 700;
+  transition: color 120ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    color: #191f28;
+  }
 `;
 
 const HeroCard = styled.section`
@@ -224,6 +237,7 @@ const HeroCard = styled.section`
 `;
 
 const HeroImageWrap = styled.div`
+  position: relative;
   overflow: hidden;
   height: 280px;
   border-radius: 24px;
@@ -236,12 +250,6 @@ const HeroImageWrap = styled.div`
   @media (max-width: 640px) {
     height: 260px;
   }
-`;
-
-const HeroImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 `;
 
 const HeroFallback = styled.div`

@@ -4,6 +4,7 @@ import styled from "@emotion/styled";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, ChevronDown, ExternalLink, MapPin, Zap } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import type { Session } from "next-auth";
@@ -198,7 +199,7 @@ export function HomeContainer({ session }: HomeContainerProps) {
           <ProfileChip>
             <Avatar aria-hidden="true">
               {displayImage ? (
-                <AvatarImage src={displayImage} alt="" />
+                <AvatarImage src={displayImage} alt="" width={38} height={38} />
               ) : (
                 getProfileInitial(displayName, displayEmail)
               )}
@@ -319,7 +320,7 @@ export function HomeContainer({ session }: HomeContainerProps) {
                     <PoliticianRow key={politician.id}>
                       <PoliticianImageWrap>
                         {politician.image ? (
-                          <PoliticianImage src={politician.image} alt={politician.name} />
+                          <PoliticianImage src={politician.image} alt={politician.name} width={32} height={32} />
                         ) : (
                           <PoliticianFallback>
                             {politician.name.slice(0, 1)}
@@ -671,10 +672,9 @@ const Avatar = styled.div`
   font-weight: 800;
 `;
 
-const AvatarImage = styled.img`
-  width: 100%;
-  height: 100%;
+const AvatarImage = styled(Image)`
   object-fit: cover;
+  border-radius: 999px;
 `;
 
 const ProfileMeta = styled.div`
@@ -698,7 +698,7 @@ const ProfileEmail = styled.div`
 
 const MyPageLink = styled(Link)`
   display: inline-flex;
-  min-height: 40px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   padding: 0 15px;
@@ -708,11 +708,16 @@ const MyPageLink = styled(Link)`
   border: 1px solid #ebebeb;
   font-size: 0.9rem;
   font-weight: 700;
+  transition: background 140ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    background: rgba(49, 130, 246, 0.16);
+  }
 `;
 
 const HeaderSignOutButton = styled(SignOutButton)`
   display: inline-flex;
-  min-height: 40px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   padding: 0 15px;
@@ -723,6 +728,11 @@ const HeaderSignOutButton = styled(SignOutButton)`
   font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
+  transition: background 140ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    background: #f3f4f6;
+  }
 `;
 
 const Main = styled.div`
@@ -784,7 +794,7 @@ const IntroActions = styled.div`
 
 const PrimaryActionLink = styled(Link)`
   display: inline-flex;
-  min-height: 34px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   gap: 6px;
@@ -794,11 +804,16 @@ const PrimaryActionLink = styled(Link)`
   background: #111827;
   font-size: 12px;
   font-weight: 600;
+  transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    opacity: 0.82;
+  }
 `;
 
 const SecondaryActionLink = styled(Link)`
   display: inline-flex;
-  min-height: 34px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   padding: 0 14px;
@@ -808,6 +823,11 @@ const SecondaryActionLink = styled(Link)`
   border: 1px solid #d1d5db;
   font-size: 12px;
   font-weight: 600;
+  transition: background 140ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    background: #f9fafb;
+  }
 `;
 
 const IntroStats = styled.div`
@@ -923,7 +943,7 @@ const CompactNoticeAction = styled(Link)`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 32px;
+  min-height: 44px;
   padding: 0 12px;
   border-radius: 999px;
   color: #191f28;
@@ -931,6 +951,11 @@ const CompactNoticeAction = styled(Link)`
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
+  transition: background 140ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    background: #e8eaed;
+  }
 `;
 
 const PoliticianList = styled.div`
@@ -947,9 +972,7 @@ const PoliticianImageWrap = styled.div`
   flex-shrink: 0;
 `;
 
-const PoliticianImage = styled.img`
-  width: 100%;
-  height: 100%;
+const PoliticianImage = styled(Image)`
   object-fit: cover;
   object-position: center top;
 `;
@@ -1052,6 +1075,11 @@ const DetailLink = styled(Link)`
   color: #3182f6;
   font-size: 12px;
   font-weight: 500;
+  transition: opacity 120ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    opacity: 0.72;
+  }
 `;
 
 const PoliticianActions = styled.div`
@@ -1072,6 +1100,11 @@ const InlineActionButton = styled.button`
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
+  transition: opacity 120ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    opacity: 0.72;
+  }
 `;
 
 const PoliticianInlineDetail = styled.div`
@@ -1150,7 +1183,7 @@ const EmptyCardText = styled.p`
 const RetryButton = styled.button`
   display: inline-flex;
   width: fit-content;
-  min-height: 34px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   padding: 0 14px;
@@ -1161,6 +1194,11 @@ const RetryButton = styled.button`
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    opacity: 0.82;
+  }
 `;
 
 const DistrictPromptCard = styled.div`
@@ -1188,7 +1226,7 @@ const PromptText = styled.p`
 const PromptLink = styled(Link)`
   display: inline-flex;
   width: fit-content;
-  min-height: 34px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   padding: 0 14px;
@@ -1197,6 +1235,11 @@ const PromptLink = styled(Link)`
   background: #111827;
   font-size: 12px;
   font-weight: 600;
+  transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    opacity: 0.82;
+  }
 `;
 
 const IssueLayout = styled.div`
@@ -1296,6 +1339,11 @@ const IssueToggleButton = styled.button`
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
+  transition: color 120ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    color: #191f28;
+  }
 
   @media (max-width: 768px) {
     width: auto;
@@ -1307,7 +1355,7 @@ const IssueChevron = styled.span<{ $expanded: boolean }>`
   display: inline-flex;
   svg {
     transform: rotate(${({ $expanded }) => ($expanded ? "180deg" : "0deg")});
-    transition: transform 160ms ease;
+    transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 `;
 
@@ -1320,6 +1368,11 @@ const IssueTopLink = styled(Link)`
   color: #191f28;
   font-size: 12px;
   font-weight: 600;
+  transition: opacity 120ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    opacity: 0.6;
+  }
 
   @media (max-width: 768px) {
     justify-content: flex-start;
@@ -1420,7 +1473,7 @@ const BannerText = styled.p`
 
 const BannerLink = styled(Link)`
   display: inline-flex;
-  min-height: 40px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   gap: 6px;
@@ -1432,4 +1485,9 @@ const BannerLink = styled(Link)`
   font-weight: 600;
   flex-shrink: 0;
   white-space: nowrap;
+  transition: background 140ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    background: #f3f4f6;
+  }
 `;

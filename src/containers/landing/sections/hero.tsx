@@ -231,6 +231,17 @@ const primaryCtaStyles = `
   letter-spacing: -0.03em;
   border: 0;
   cursor: pointer;
+  transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 140ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    opacity: 0.88;
+  }
+
+  &:active {
+    transform: scale(0.97);
+    opacity: 1;
+  }
 
   @media (max-width: 640px) {
     width: 100%;
@@ -256,10 +267,17 @@ const SecondaryCta = styled(Link)`
   border: 1px solid var(--line);
   border-radius: 16px;
   color: var(--text);
-  background: #fff;
+  background: var(--surface-soft);
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: -0.03em;
+  transition: background 140ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 140ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    background: var(--surface);
+    border-color: #c8cdd4;
+  }
 
   @media (max-width: 640px) {
     width: 100%;

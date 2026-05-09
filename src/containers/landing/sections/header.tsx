@@ -94,7 +94,7 @@ const NavLink = styled(Link)`
 
 const headerCtaStyles = `
   display: inline-flex;
-  min-height: 42px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   padding: 0 18px;
@@ -107,9 +107,20 @@ const headerCtaStyles = `
   flex-shrink: 0;
   border: 0;
   cursor: pointer;
+  transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 140ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    opacity: 0.88;
+  }
+
+  &:active {
+    transform: scale(0.97);
+    opacity: 1;
+  }
 
   @media (max-width: 640px) {
-    min-height: 38px;
+    min-height: 44px;
     padding: 0 14px;
     font-size: 0.88rem;
   }

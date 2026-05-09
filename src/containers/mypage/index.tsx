@@ -2,6 +2,7 @@
 
 import styled from "@emotion/styled";
 import { ArrowRight, BarChart3, MapPin, RotateCcw, Swords } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 
@@ -131,7 +132,7 @@ export function MyPageContainer({
         <ProfileSection>
           <Avatar aria-hidden="true">
             {profile.image ? (
-              <AvatarImage src={profile.image} alt="" />
+              <AvatarImage src={profile.image} alt="" width={72} height={72} />
             ) : (
               getInitial(profile.name, profile.email)
             )}
@@ -487,7 +488,7 @@ const HeaderActions = styled.div`
 
 const HeaderLink = styled(Link)`
   display: inline-flex;
-  min-height: 40px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--adaptiveHairlineBorder);
@@ -497,11 +498,16 @@ const HeaderLink = styled(Link)`
   background: var(--adaptiveLayeredBackground);
   font-size: 0.9rem;
   font-weight: 800;
+  transition: background 140ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    background: var(--adaptiveGreyBackground);
+  }
 `;
 
 const HeaderSignOutButton = styled(SignOutButton)`
   display: inline-flex;
-  min-height: 40px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--adaptiveHairlineBorder);
@@ -512,6 +518,11 @@ const HeaderSignOutButton = styled(SignOutButton)`
   font-size: 0.9rem;
   font-weight: 800;
   cursor: pointer;
+  transition: background 140ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    background: var(--adaptiveGreyBackground);
+  }
 `;
 
 const Hero = styled.section`
@@ -575,10 +586,9 @@ const Avatar = styled.div`
   font-weight: 900;
 `;
 
-const AvatarImage = styled.img`
-  width: 100%;
-  height: 100%;
+const AvatarImage = styled(Image)`
   object-fit: cover;
+  border-radius: 50%;
 `;
 
 const ProfileContent = styled.div`
@@ -623,6 +633,11 @@ const ProfileAction = styled(Link)`
   background: var(--adaptiveBlue500);
   font-size: 0.92rem;
   font-weight: 900;
+  transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    opacity: 0.88;
+  }
 
   @media (max-width: 720px) {
     grid-column: 1 / -1;
@@ -902,7 +917,7 @@ const EmptyText = styled.p`
 const PrimaryLink = styled(Link)`
   display: inline-flex;
   width: fit-content;
-  min-height: 42px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   gap: 6px;
@@ -912,4 +927,9 @@ const PrimaryLink = styled(Link)`
   background: var(--adaptiveBlue500);
   font-size: 0.9rem;
   font-weight: 900;
+  transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    opacity: 0.88;
+  }
 `;

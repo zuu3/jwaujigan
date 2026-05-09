@@ -5,8 +5,8 @@ import { useEffect, useRef } from "react";
 import styled from "@emotion/styled";
 
 const DEFAULT_COLOR_STOPS: [string, string, string] = [
-  "#3b82f6",
-  "#8b5cf6",
+  "#3182f6",
+  "#dbe8fe",
   "#ef4444",
 ];
 
@@ -132,10 +132,23 @@ export function Aurora({
   time,
 }: AuroraProps) {
   const propsRef = useRef({ colorStops, amplitude, blend, speed, time });
+  const colorStopsGLRef = useRef<number[][]>(
+    colorStops.map((hex) => {
+      const c = new Color(hex);
+      return [c.r, c.g, c.b];
+    }),
+  );
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const prev = propsRef.current;
     propsRef.current = { colorStops, amplitude, blend, speed, time };
+    if (colorStops !== prev.colorStops) {
+      colorStopsGLRef.current = colorStops.map((hex) => {
+        const c = new Color(hex);
+        return [c.r, c.g, c.b];
+      });
+    }
   }, [amplitude, blend, colorStops, speed, time]);
 
   useEffect(() => {
@@ -161,12 +174,6 @@ export function Aurora({
       delete geometry.attributes.uv;
     }
 
-    const getColorStops = (stops: [string, string, string]) =>
-      stops.map((hex) => {
-        const color = new Color(hex);
-        return [color.r, color.g, color.b];
-      });
-
     const initialProps = propsRef.current;
 
     const program = new Program(gl, {
@@ -175,7 +182,7 @@ export function Aurora({
       uniforms: {
         uTime: { value: 0 },
         uAmplitude: { value: initialProps.amplitude },
-        uColorStops: { value: getColorStops(initialProps.colorStops) },
+        uColorStops: { value: colorStopsGLRef.current },
         uResolution: { value: [container.offsetWidth, container.offsetHeight] },
         uBlend: { value: initialProps.blend },
       },
@@ -203,9 +210,7 @@ export function Aurora({
         (currentProps.time ?? frameTime * 0.01) * currentProps.speed * 0.1;
       program.uniforms.uAmplitude.value = currentProps.amplitude;
       program.uniforms.uBlend.value = currentProps.blend;
-      program.uniforms.uColorStops.value = getColorStops(
-        currentProps.colorStops,
-      );
+      program.uniforms.uColorStops.value = colorStopsGLRef.current;
 
       renderer.render({ scene: mesh });
     };
