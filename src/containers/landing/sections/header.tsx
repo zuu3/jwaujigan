@@ -26,7 +26,7 @@ export function LandingHeader({ isAuthenticated }: LandingHeaderProps) {
           <HeaderLinkCta href="/home">계속하기</HeaderLinkCta>
         ) : (
           <HeaderButtonCta callbackUrl="/onboarding">
-            Google 로그인
+            로그인
           </HeaderButtonCta>
         )}
       </HeaderInner>
@@ -39,9 +39,8 @@ const Header = styled.header`
   top: 0;
   z-index: 20;
   padding: 0 24px;
-  border-bottom: 1px solid rgba(229, 232, 235, 0.88);
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+  background: #ffffff;
 
   @media (max-width: 640px) {
     padding: 0 20px;
@@ -50,21 +49,17 @@ const Header = styled.header`
 
 const HeaderInner = styled(Container)`
   display: flex;
-  min-height: 72px;
+  min-height: 64px;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-
-  @media (max-width: 640px) {
-    min-height: 64px;
-  }
 `;
 
 const Brand = styled(Link)`
   color: var(--text);
-  font-size: 1.05rem;
-  font-weight: 800;
-  letter-spacing: -0.04em;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   flex-shrink: 0;
 `;
 
@@ -79,50 +74,41 @@ const Nav = styled.nav`
 `;
 
 const NavLink = styled(Link)`
-  padding: 10px 12px;
-  border-radius: 999px;
-  color: var(--muted);
-  font-size: 0.94rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  padding: 8px 12px;
+  color: var(--sub);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
 
   &:hover {
     color: var(--text);
-    background: var(--surface);
   }
 `;
 
 const headerCtaStyles = `
   display: inline-flex;
-  min-height: 44px;
+  min-height: 40px;
   align-items: center;
   justify-content: center;
-  padding: 0 18px;
-  border-radius: 999px;
-  color: #fff;
-  background: var(--blue);
-  font-size: 0.94rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  padding: 0 16px;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #191f28;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   flex-shrink: 0;
   border: 0;
   cursor: pointer;
-  transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1),
-              transform 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 140ms ease;
 
   &:hover {
-    opacity: 0.88;
-  }
-
-  &:active {
-    transform: scale(0.97);
-    opacity: 1;
+    opacity: 0.9;
   }
 
   @media (max-width: 640px) {
-    min-height: 44px;
+    min-height: 40px;
     padding: 0 14px;
-    font-size: 0.88rem;
   }
 `;
 

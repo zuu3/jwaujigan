@@ -87,17 +87,17 @@ function getLocationErrorMessage(error: unknown) {
   if (isGeolocationFailure(error)) {
     switch (error.code) {
       case 1:
-        return "브라우저 위치 권한이 차단되어 있습니다. 아래에서 직접 지역구를 선택해 주세요.";
+        return "위치 권한이 차단되어 있습니다. 아래에서 직접 지역구를 선택하세요.";
       case 2:
-        return "현재 위치를 정확히 확인하지 못했습니다. 잠시 후 다시 시도하거나 직접 지역구를 선택해 주세요.";
+        return "현재 위치를 확인하지 못했습니다. 잠시 후 다시 시도하거나 직접 선택하세요.";
       case 3:
-        return "현재 위치 확인 시간이 초과됐습니다. 다시 시도하거나 직접 지역구를 선택해 주세요.";
+        return "위치 확인 시간이 초과됐습니다. 다시 시도하거나 직접 선택하세요.";
       default:
-        return error.message ?? "현재 위치를 확인하지 못했습니다. 아래에서 직접 지역구를 선택해 주세요.";
+        return error.message ?? "현재 위치를 확인하지 못했습니다.";
     }
   }
 
-  return "현재 위치를 확인하지 못했습니다. 아래에서 직접 지역구를 선택해 주세요.";
+  return "현재 위치를 확인하지 못했습니다.";
 }
 
 const MANUAL_MATCH_LIMIT = 8;
@@ -329,7 +329,7 @@ export function OnboardingContainer({
 
   const handleContinueToQuestions = () => {
     if (!district) {
-      setDistrictError("정치 성향 테스트 전에 지역구를 먼저 선택해 주세요.");
+      setDistrictError("지역구를 먼저 선택하세요.");
       return;
     }
 
@@ -378,7 +378,7 @@ export function OnboardingContainer({
 
   const handleAnswer = async (score: number) => {
     if (!district) {
-      setDistrictError("테스트를 마치기 전에 지역구를 먼저 설정해 주세요.");
+      setDistrictError("지역구를 먼저 설정하세요.");
       return;
     }
 
@@ -425,7 +425,7 @@ export function OnboardingContainer({
       {isSubmitting ? (
         <FullScreenLoader
           title="결과를 저장하고 있어요"
-          description="정치 성향을 분석한 뒤 홈으로 이동합니다. 잠시만 기다려 주세요."
+          description="정치 성향을 분석한 뒤 홈으로 이동합니다."
         />
       ) : null}
       <TopBar>
@@ -433,7 +433,7 @@ export function OnboardingContainer({
           <TopText>정치 성향 테스트</TopText>
           {step === "questions" ? (
             <SkipButton type="button" onClick={handleSkip} disabled={isSubmitting}>
-              테스트 건너뛰기
+              건너뛰기
             </SkipButton>
           ) : (
             <TopBarSpacer aria-hidden="true" />
@@ -446,43 +446,41 @@ export function OnboardingContainer({
           {step === "district" ? (
             <>
               <StepHeader>
-                <StepChip>1 / 2 지역구 선택</StepChip>
-                <StepTitle>먼저 내 지역구를 정해 주세요</StepTitle>
+                <StepChip>1 / 2 지역구</StepChip>
+                <StepTitle>먼저 지역구를 선택하세요</StepTitle>
                 <StepDescription>
-                  현재 위치로 찾거나 행정동을 검색해 지역구를 저장한 뒤 다음 단계로
-                  이동합니다.
+                  현재 위치로 찾거나 행정동을 검색해 지역구를 저장합니다.
                 </StepDescription>
               </StepHeader>
 
               <DistrictSection>
                 <DistrictMeta>
-                  <DistrictEyebrow>내 지역부터 설정</DistrictEyebrow>
-                  <DistrictTitle>현재 위치나 직접 검색으로 지역구를 선택해 주세요</DistrictTitle>
+                  <DistrictTitle>현재 위치 또는 직접 검색</DistrictTitle>
                   <DistrictDescription>
-                    현재 위치가 안 잡히면 시/도와 행정동 이름으로 바로 찾을 수 있습니다.
+                    위치가 잡히지 않으면 시/도와 행정동 이름으로 찾으세요.
                   </DistrictDescription>
                 </DistrictMeta>
 
                 <DistrictPanel>
                   <DistrictStatus>
                     <StatusLabel>현재 지역구</StatusLabel>
-                    <StatusValue>{district ?? "아직 설정되지 않았습니다"}</StatusValue>
+                    <StatusValue>{district ?? "설정되지 않음"}</StatusValue>
                     {resolvedAddress ? (
                       <StatusHint>{resolvedAddress}</StatusHint>
                     ) : initialDistrict ? (
-                      <StatusHint>이미 저장된 지역구를 그대로 사용할 수 있습니다.</StatusHint>
+                      <StatusHint>저장된 지역구를 그대로 사용할 수 있습니다.</StatusHint>
                     ) : (
-                      <StatusHint>지역구를 정하면 다음 단계에서 정치 성향 테스트를 시작합니다.</StatusHint>
+                      <StatusHint>지역구를 정하면 다음 단계로 이동합니다.</StatusHint>
                     )}
                   </DistrictStatus>
 
-                  <LocationCard>
-                    <LocationCopy>
-                      <LocationTitle>현재 위치로 찾기</LocationTitle>
-                      <LocationDescription>
-                        브라우저 위치 권한을 허용하면 현재 위치 기준 선거구를 바로 찾습니다.
-                      </LocationDescription>
-                    </LocationCopy>
+                  <SectionRow>
+                    <SectionRowText>
+                      <SectionRowTitle>현재 위치로 찾기</SectionRowTitle>
+                      <SectionRowDescription>
+                        브라우저 위치 권한을 허용하면 자동으로 선거구를 찾습니다.
+                      </SectionRowDescription>
+                    </SectionRowText>
                     <LocationButton
                       type="button"
                       onClick={() => void handleResolveLocation()}
@@ -490,17 +488,16 @@ export function OnboardingContainer({
                     >
                       <Crosshair size={16} />
                       <span>
-                        {isResolvingLocation ? "현재 위치 확인 중" : "현재 위치로 찾기"}
+                        {isResolvingLocation ? "확인 중" : "위치 찾기"}
                       </span>
                     </LocationButton>
-                  </LocationCard>
+                  </SectionRow>
 
                   <ManualFinder>
                     <ManualFinderHeader>
                       <ManualFinderTitle>직접 찾기</ManualFinderTitle>
                       <ManualFinderDescription>
-                        시/도와 동 이름으로 찾고, 결과를 선택한 뒤 아래 다음 버튼을 눌러
-                        이동합니다.
+                        시/도와 동 이름을 입력하고 결과를 선택하세요.
                       </ManualFinderDescription>
                     </ManualFinderHeader>
 
@@ -561,14 +558,12 @@ export function OnboardingContainer({
                         </ManualResultList>
                       ) : (
                         <ManualEmptyState>
-                          일치하는 행정동을 찾지 못했습니다. 시/도를 고르거나 동 이름을 더 자세히
-                          입력해 주세요.
+                          일치하는 행정동이 없습니다. 시/도를 고르거나 동 이름을 더 입력하세요.
                         </ManualEmptyState>
                       )
                     ) : (
                       <ManualHint>
-                        서울특별시 + 서교동, 경기도 + 분당동처럼 입력하면 더 빨리 찾을 수
-                        있어요.
+                        시/도와 동 이름을 함께 입력하면 더 빨리 찾을 수 있습니다.
                       </ManualHint>
                     )}
                   </ManualFinder>
@@ -579,8 +574,8 @@ export function OnboardingContainer({
                   <StepActionRow>
                     <NextStepHint>
                       {district
-                        ? "선택한 지역구를 확인하고 다음 단계로 이동하세요."
-                        : "현재 위치로 찾거나 검색 결과를 먼저 선택하세요."}
+                        ? "선택한 지역구로 다음 단계로 이동합니다."
+                        : "위치 찾기 또는 검색 결과를 먼저 선택하세요."}
                     </NextStepHint>
                     <PrimaryActionButton
                       type="button"
@@ -588,7 +583,7 @@ export function OnboardingContainer({
                       disabled={!district || isResolvingDistrict}
                     >
                       다음
-                      <ArrowRight size={17} />
+                      <ArrowRight size={16} />
                     </PrimaryActionButton>
                   </StepActionRow>
                 </DistrictPanel>
@@ -598,16 +593,16 @@ export function OnboardingContainer({
             <>
               <StepHeader>
                 <StepChip>2 / 2 정치 성향 테스트</StepChip>
-                <StepTitle>정치 성향 테스트를 마무리해 주세요</StepTitle>
+                <StepTitle>정치 성향 테스트</StepTitle>
                 <StepDescription>
-                  지역구 선택은 끝났습니다. 아래 답변만 완료하면 홈으로 이동합니다.
+                  지역구 선택은 끝났습니다. 답변을 마치면 홈으로 이동합니다.
                 </StepDescription>
               </StepHeader>
 
               <DistrictSummaryCard>
                 <DistrictSummaryText>
                   <StatusLabel>선택한 지역구</StatusLabel>
-                  <StatusValue>{district ?? "아직 설정되지 않았습니다"}</StatusValue>
+                  <StatusValue>{district ?? "설정되지 않음"}</StatusValue>
                   {resolvedAddress ? <StatusHint>{resolvedAddress}</StatusHint> : null}
                 </DistrictSummaryText>
                 <SecondaryActionButton
@@ -615,16 +610,16 @@ export function OnboardingContainer({
                   onClick={handleBackToDistrictStep}
                   disabled={isSubmitting}
                 >
-                  지역구 다시 선택
+                  다시 선택
                 </SecondaryActionButton>
               </DistrictSummaryCard>
 
               <Header>
                 <ProgressMeta>
                   <ProgressText>
-                    질문 {currentIndex + 1}/{questions.length}
+                    질문 {currentIndex + 1} / {questions.length}
                   </ProgressText>
-                  <ProgressTitle>가장 가까운 입장을 골라 주세요</ProgressTitle>
+                  <ProgressTitle>가장 가까운 입장을 고르세요</ProgressTitle>
                 </ProgressMeta>
 
                 <ProgressBar>
@@ -636,12 +631,12 @@ export function OnboardingContainer({
                 <AnimatePresence mode="wait">
                   <QuestionCard
                     key={question.id}
-                    initial={{ opacity: 0, y: 24 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -24 }}
-                    transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    <QuestionEyebrow>{question.axis.toUpperCase()}</QuestionEyebrow>
+                    <QuestionEyebrow>{question.axis}</QuestionEyebrow>
                     <QuestionText>{question.text}</QuestionText>
                   </QuestionCard>
                 </AnimatePresence>
@@ -679,12 +674,12 @@ export function OnboardingContainer({
 
 const Page = styled.main`
   min-height: 100vh;
-  background: #eef2f7;
-  color: var(--adaptiveGrey900);
+  background: #ffffff;
+  color: #191f28;
 `;
 
 const TopBar = styled.div`
-  padding: 18px 24px 0;
+  padding: 20px 24px 0;
 
   @media (max-width: 640px) {
     padding: 16px 20px 0;
@@ -693,7 +688,7 @@ const TopBar = styled.div`
 
 const TopBarInner = styled.div`
   display: flex;
-  width: min(100%, 960px);
+  width: min(100%, 760px);
   align-items: center;
   justify-content: space-between;
   margin: 0 auto;
@@ -701,25 +696,29 @@ const TopBarInner = styled.div`
 
 const TopText = styled.div`
   color: #4e5968;
-  font-size: 0.92rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const TopBarSpacer = styled.div`
-  width: 116px;
+  width: 80px;
   height: 44px;
 `;
 
 const SkipButton = styled.button`
-  padding: 10px 14px;
+  min-height: 44px;
+  padding: 0 14px;
   border: 0;
-  border-radius: 999px;
-  color: var(--adaptiveGrey700);
-  background: var(--adaptiveBlue50);
-  font-size: 0.92rem;
-  font-weight: 700;
+  border-radius: 8px;
+  color: #4e5968;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+
+  &:hover:enabled {
+    color: #191f28;
+  }
 
   &:disabled {
     cursor: not-allowed;
@@ -730,211 +729,165 @@ const SkipButton = styled.button`
 const Content = styled.section`
   display: flex;
   justify-content: center;
-  padding: 30px 24px 64px;
+  padding: 40px 24px 80px;
 
   @media (max-width: 640px) {
-    padding: 28px 20px 48px;
+    padding: 32px 20px 64px;
   }
 `;
 
 const ContentInner = styled.div`
-  width: min(100%, 960px);
+  width: min(100%, 760px);
 `;
 
 const StepHeader = styled.div`
   display: grid;
   gap: 12px;
-  max-width: 760px;
-  margin-bottom: 24px;
+  margin-bottom: 40px;
 `;
 
 const StepChip = styled.div`
-  width: fit-content;
-  padding: 8px 12px;
-  border-radius: 999px;
-  color: #064b9f;
-  background: #dbeafe;
-  font-size: 0.86rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  color: #8b95a1;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 const StepTitle = styled.h1`
   margin: 0;
-  font-size: 2.75rem;
-  font-weight: 800;
-  line-height: 1.18;
-  letter-spacing: 0;
+  color: #191f28;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.3;
   word-break: keep-all;
 
   @media (max-width: 640px) {
-    font-size: 2rem;
+    font-size: 24px;
   }
 `;
 
 const StepDescription = styled.p`
   margin: 0;
   color: #4e5968;
-  font-weight: 650;
-  line-height: 1.6;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.55;
   word-break: keep-all;
 `;
 
 const DistrictSection = styled.section`
   display: grid;
-  grid-template-columns: minmax(260px, 0.82fr) minmax(0, 1.18fr);
-  align-items: start;
-  gap: 22px;
-  margin-bottom: 32px;
-  padding: 28px;
-  border: 1px solid #d8e1ee;
-  border-radius: var(--radius-card);
-  background: #ffffff;
-  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.12);
-
-  @media (max-width: 860px) {
-    grid-template-columns: 1fr;
-  }
-
-  @media (max-width: 640px) {
-    padding: 20px;
-    border-radius: 20px;
-  }
+  gap: 40px;
+  margin-bottom: 40px;
 `;
 
 const DistrictMeta = styled.div`
   display: grid;
-  align-content: start;
-  gap: 12px;
-  min-height: 100%;
-  padding: 22px;
-  border-radius: var(--radius-control);
-  color: #ffffff;
-  background: #172033;
-`;
-
-const DistrictEyebrow = styled.div`
-  color: #93c5fd;
-  font-size: 0.84rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  gap: 8px;
 `;
 
 const DistrictTitle = styled.h2`
   margin: 0;
-  font-size: 1.85rem;
-  font-weight: 800;
-  line-height: 1.28;
-  letter-spacing: 0;
+  color: #191f28;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
   word-break: keep-all;
 `;
 
 const DistrictDescription = styled.p`
   margin: 0;
-  color: #d7deea;
-  line-height: 1.6;
+  color: #4e5968;
+  font-size: 14px;
+  line-height: 1.55;
   word-break: keep-all;
 `;
 
 const DistrictPanel = styled.div`
   display: grid;
-  gap: 14px;
+  gap: 32px;
 `;
 
 const DistrictStatus = styled.div`
   display: grid;
   gap: 6px;
-  padding: 18px;
-  border: 1px solid #bfdbfe;
-  border-radius: var(--radius-control);
-  background: #eff6ff;
+  padding: 16px 0;
+  border-top: 1px solid #f2f4f6;
+  border-bottom: 1px solid #f2f4f6;
 `;
 
 const StatusLabel = styled.div`
-  color: #4e5968;
-  font-size: 0.85rem;
-  font-weight: 700;
+  color: #8b95a1;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 const StatusValue = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-
-  &::before {
-    content: "";
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    background: #3182f6;
-    flex: 0 0 auto;
-  }
+  color: #191f28;
+  font-size: 18px;
+  font-weight: 700;
 `;
 
 const StatusHint = styled.div`
   color: #4e5968;
-  font-size: 0.92rem;
+  font-size: 14px;
   line-height: 1.5;
 `;
 
-const LocationCard = styled.section`
+const SectionRow = styled.section`
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 16px;
-  padding: 18px;
-  border: 1px solid #bfdbfe;
-  border-radius: var(--radius-control);
-  background: #eaf4ff;
+  padding: 16px 0;
+  border-bottom: 1px solid #f2f4f6;
 
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
   }
 `;
 
-const LocationCopy = styled.div`
+const SectionRowText = styled.div`
   display: grid;
-  gap: 5px;
+  gap: 4px;
 `;
 
-const LocationTitle = styled.h3`
+const SectionRowTitle = styled.h3`
   margin: 0;
-  color: var(--adaptiveGrey900);
-  font-size: 1rem;
-  font-weight: 800;
+  color: #191f28;
+  font-size: 16px;
+  font-weight: 600;
 `;
 
-const LocationDescription = styled.p`
+const SectionRowDescription = styled.p`
   margin: 0;
   color: #4e5968;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 14px;
   line-height: 1.5;
   word-break: keep-all;
 `;
 
 const LocationButton = styled.button`
   display: inline-flex;
-  min-width: 172px;
-  min-height: 52px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   padding: 0 16px;
-  border: 0;
-  border-radius: var(--radius-control);
-  color: var(--white);
-  background: #3182f6;
-  font-size: 0.94rem;
-  font-weight: 800;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #191f28;
+  background: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+
+  &:hover:enabled {
+    background: #f9fafb;
+  }
 
   &:disabled {
     cursor: not-allowed;
-    opacity: 0.7;
+    opacity: 0.6;
   }
 
   @media (max-width: 640px) {
@@ -944,37 +897,33 @@ const LocationButton = styled.button`
 
 const ManualFinder = styled.section`
   display: grid;
-  gap: 14px;
-  padding: 20px;
-  border: 1px solid #d8e1ee;
-  border-radius: var(--radius-control);
-  background: #f8fafc;
+  gap: 16px;
 `;
 
 const ManualFinderHeader = styled.div`
   display: grid;
-  gap: 6px;
+  gap: 4px;
 `;
 
 const ManualFinderTitle = styled.h3`
   margin: 0;
-  font-size: 1rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  color: #191f28;
+  font-size: 16px;
+  font-weight: 600;
 `;
 
 const ManualFinderDescription = styled.p`
   margin: 0;
   color: #4e5968;
-  font-size: 0.92rem;
+  font-size: 14px;
   line-height: 1.5;
   word-break: keep-all;
 `;
 
 const ManualFinderControls = styled.div`
   display: grid;
-  grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
-  gap: 10px;
+  grid-template-columns: minmax(140px, 200px) minmax(0, 1fr);
+  gap: 8px;
 
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
@@ -982,43 +931,43 @@ const ManualFinderControls = styled.div`
 `;
 
 const ProvinceSelect = styled.select`
-  min-height: 54px;
-  padding: 0 16px;
-  border: 1px solid #cbd5e1;
-  border-radius: var(--radius-control);
-  color: var(--adaptiveGrey900);
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #191f28;
   background: #ffffff;
+  font-size: 14px;
   appearance: none;
 `;
 
 const ManualSearchField = styled.label`
   display: flex;
-  min-height: 54px;
+  min-height: 44px;
   align-items: center;
-  gap: 10px;
-  padding: 0 16px;
-  border: 1px solid #cbd5e1;
-  border-radius: var(--radius-control);
-  color: var(--adaptiveGrey600);
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #8b95a1;
   background: #ffffff;
 `;
 
 const ManualSearchInput = styled.input`
   width: 100%;
   border: 0;
-  color: var(--adaptiveGrey900);
+  color: #191f28;
   background: transparent;
-  font-size: 0.96rem;
+  font-size: 14px;
   outline: none;
 
   &::placeholder {
-    color: var(--adaptiveGrey500);
+    color: #8b95a1;
   }
 `;
 
 const ManualResultList = styled.div`
   display: grid;
-  gap: 8px;
 `;
 
 const ManualResultButton = styled.button`
@@ -1026,72 +975,59 @@ const ManualResultButton = styled.button`
   width: 100%;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  padding: 16px 18px;
-  border: 1px solid #cbd5e1;
-  border-radius: var(--radius-control);
-  background: #ffffff;
+  gap: 12px;
+  padding: 14px 0;
+  border: 0;
+  border-bottom: 1px solid #f2f4f6;
+  background: transparent;
   text-align: left;
   cursor: pointer;
-  transition:
-    transform 160ms ease,
-    border-color 160ms ease,
-    box-shadow 160ms ease;
 
   &:hover:enabled {
-    transform: translateY(-1px);
-    border-color: var(--adaptiveBlue200);
-    box-shadow: var(--shadow-card);
+    background: #f9fafb;
   }
 
   &:disabled {
     cursor: not-allowed;
-    opacity: 0.72;
+    opacity: 0.6;
   }
 `;
 
 const ManualResultText = styled.div`
   display: grid;
-  gap: 4px;
+  gap: 2px;
 `;
 
 const ManualResultArea = styled.div`
-  font-size: 0.98rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  color: #191f28;
+  font-size: 16px;
+  font-weight: 600;
 `;
 
 const ManualResultMeta = styled.div`
-  color: #4e5968;
-  font-size: 0.9rem;
+  color: #8b95a1;
+  font-size: 14px;
   line-height: 1.4;
 `;
 
 const ManualResultAction = styled.div<{ $selected: boolean }>`
-  min-width: 54px;
-  padding: 7px 10px;
-  border-radius: 999px;
-  color: ${({ $selected }) => ($selected ? "#ffffff" : "#064b9f")};
-  background: ${({ $selected }) => ($selected ? "#3182f6" : "#dbeafe")};
-  font-size: 0.9rem;
-  font-weight: 800;
-  text-align: center;
+  color: ${({ $selected }) => ($selected ? "#191f28" : "#4e5968")};
+  font-size: 14px;
+  font-weight: ${({ $selected }) => ($selected ? 700 : 500)};
   white-space: nowrap;
 `;
 
 const ManualHint = styled.div`
-  color: #4e5968;
-  font-size: 0.9rem;
+  color: #8b95a1;
+  font-size: 14px;
   line-height: 1.5;
   word-break: keep-all;
 `;
 
 const ManualEmptyState = styled.div`
-  padding: 14px 16px;
-  border-radius: 18px;
-  color: var(--adaptiveGrey600);
-  background: var(--adaptiveGreyOpacity50);
-  font-size: 0.9rem;
+  padding: 14px 0;
+  color: #8b95a1;
+  font-size: 14px;
   line-height: 1.5;
 `;
 
@@ -1099,9 +1035,9 @@ const StepActionRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  padding: 16px 0 0;
-  border-top: 1px solid #d8e1ee;
+  gap: 16px;
+  padding-top: 24px;
+  border-top: 1px solid #f2f4f6;
 
   @media (max-width: 640px) {
     align-items: stretch;
@@ -1110,31 +1046,34 @@ const StepActionRow = styled.div`
 `;
 
 const NextStepHint = styled.div`
-  color: #4e5968;
-  font-size: 0.9rem;
-  font-weight: 700;
-  line-height: 1.45;
+  color: #8b95a1;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
 `;
 
 const PrimaryActionButton = styled.button`
   display: inline-flex;
-  min-height: 54px;
-  min-width: 132px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 0 22px;
+  gap: 6px;
+  padding: 0 20px;
   border: 0;
-  border-radius: var(--radius-control);
-  color: var(--white);
-  background: #3182f6;
-  font-size: 0.96rem;
-  font-weight: 800;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #191f28;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+
+  &:hover:enabled {
+    background: #333d4b;
+  }
 
   &:disabled {
     color: #8b95a1;
-    background: #e5e8eb;
+    background: #f2f4f6;
     cursor: not-allowed;
   }
 
@@ -1144,19 +1083,23 @@ const PrimaryActionButton = styled.button`
 `;
 
 const SecondaryActionButton = styled.button`
-  min-height: 48px;
-  padding: 0 16px;
-  border: 0;
-  border-radius: var(--radius-control);
-  color: var(--adaptiveBlue700);
-  background: var(--adaptiveBlue50);
-  font-size: 0.92rem;
-  font-weight: 700;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #191f28;
+  background: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+
+  &:hover:enabled {
+    background: #f9fafb;
+  }
 
   &:disabled {
     cursor: not-allowed;
-    opacity: 0.7;
+    opacity: 0.6;
   }
 
   @media (max-width: 640px) {
@@ -1165,19 +1108,19 @@ const SecondaryActionButton = styled.button`
 `;
 
 const HelperText = styled.div`
-  color: var(--adaptiveBlue700);
-  font-size: 0.92rem;
-  font-weight: 600;
+  color: #3182f6;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 const ErrorText = styled.div`
-  color: var(--adaptiveRed600);
-  font-size: 0.92rem;
-  font-weight: 600;
+  color: #e5484d;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 const Header = styled.div`
-  max-width: 720px;
+  margin-top: 32px;
 `;
 
 const DistrictSummaryCard = styled.div`
@@ -1185,12 +1128,10 @@ const DistrictSummaryCard = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 28px;
-  padding: 20px 22px;
-  border: 1px solid #d8e1ee;
-  border-radius: var(--radius-card);
-  background: #ffffff;
-  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+  margin-bottom: 40px;
+  padding: 16px 0;
+  border-top: 1px solid #f2f4f6;
+  border-bottom: 1px solid #f2f4f6;
 
   @media (max-width: 640px) {
     flex-direction: column;
@@ -1200,142 +1141,111 @@ const DistrictSummaryCard = styled.div`
 
 const DistrictSummaryText = styled.div`
   display: grid;
-  gap: 6px;
+  gap: 4px;
 `;
 
 const ProgressMeta = styled.div`
   display: grid;
-  gap: 10px;
+  gap: 8px;
 `;
 
 const ProgressText = styled.div`
-  color: #2563eb;
-  font-size: 0.92rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  color: #8b95a1;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 const ProgressTitle = styled.h1`
   margin: 0;
-  font-size: 2.75rem;
-  font-weight: 800;
-  line-height: 1.18;
-  letter-spacing: 0;
+  color: #191f28;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.35;
   word-break: keep-all;
 
   @media (max-width: 640px) {
-    font-size: 2rem;
+    font-size: 18px;
   }
 `;
 
 const ProgressBar = styled.div`
-  height: 8px;
+  height: 4px;
   margin-top: 24px;
   border-radius: 999px;
-  background: #d8e1ee;
+  background: #f2f4f6;
   overflow: hidden;
 `;
 
 const ProgressFill = styled.div`
   height: 100%;
   border-radius: inherit;
-  background: #3182f6;
+  background: #191f28;
   transition: width 220ms ease;
 `;
 
 const QuestionStage = styled.div`
-  margin-top: 28px;
+  margin-top: 32px;
 `;
 
 const QuestionCard = styled(motion.div)`
-  min-height: 250px;
-  padding: 30px;
-  border: 1px solid #d8e1ee;
-  border-radius: var(--radius-card);
-  background: #ffffff;
-  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.12);
-
-  @media (max-width: 640px) {
-    min-height: 220px;
-    padding: 22px;
-    border-radius: 20px;
-  }
+  padding: 24px 0;
+  border-top: 1px solid #f2f4f6;
+  border-bottom: 1px solid #f2f4f6;
 `;
 
 const QuestionEyebrow = styled.div`
-  color: #2563eb;
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  color: #8b95a1;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 const QuestionText = styled.p`
-  margin: 18px 0 0;
-  font-size: 2rem;
+  margin: 12px 0 0;
+  color: #191f28;
+  font-size: 24px;
   font-weight: 700;
-  line-height: 1.45;
-  letter-spacing: 0;
+  line-height: 1.4;
   word-break: keep-all;
 
   @media (max-width: 640px) {
-    font-size: 1.45rem;
+    font-size: 18px;
   }
 `;
 
 const AnswerGrid = styled.div`
   display: grid;
-  margin-top: 22px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 10px;
-  padding: 12px;
-  border: 1px solid #d8e1ee;
-  border-radius: var(--radius-card);
-  background: #ffffff;
-  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
-
-  @media (max-width: 960px) {
-    grid-template-columns: 1fr;
-  }
+  margin-top: 32px;
+  grid-template-columns: 1fr;
+  gap: 8px;
 `;
 
 const AnswerButton = styled.button<{ $selected: boolean }>`
   display: flex;
-  min-height: 66px;
+  min-height: 44px;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 18px;
+  padding: 12px 16px;
   border: 1px solid
-    ${({ $selected }) =>
-      $selected ? "#3182f6" : "#d8e1ee"};
-  border-radius: var(--radius-control);
-  color: ${({ $selected }) =>
-    $selected ? "#064b9f" : "var(--adaptiveGrey900)"};
-  background: ${({ $selected }) =>
-    $selected ? "#dbeafe" : "#f8fafc"};
-  font-size: 0.96rem;
-  font-weight: 700;
+    ${({ $selected }) => ($selected ? "#191f28" : "#e5e7eb")};
+  border-radius: 8px;
+  color: #191f28;
+  background: #ffffff;
+  font-size: 16px;
+  font-weight: ${({ $selected }) => ($selected ? 600 : 500)};
   text-align: left;
   cursor: pointer;
   transition:
-    transform 160ms ease,
-    background 160ms ease,
-    border-color 160ms ease;
-  box-shadow: ${({ $selected }) =>
-    $selected ? "0 12px 30px rgba(49, 130, 246, 0.12)" : "none"};
+    border-color 160ms ease,
+    background 160ms ease;
 
   &:hover:enabled {
-    transform: translateY(-1px);
-    border-color: #93c5fd;
-    background: #eff6ff;
+    border-color: #191f28;
+    background: #f9fafb;
   }
 
   &:disabled {
     cursor: not-allowed;
-    opacity: 0.7;
-  }
-
-  @media (max-width: 960px) {
-    min-height: 58px;
+    opacity: 0.6;
   }
 `;

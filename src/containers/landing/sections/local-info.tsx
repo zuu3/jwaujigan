@@ -27,12 +27,10 @@ export function LocalInfoSection() {
             viewport={{ once: true, amount: 0.28 }}
             variants={fadeUp}
           >
-            <SectionEyebrow>Local Info</SectionEyebrow>
+            <SectionEyebrow>정치인 탐색</SectionEyebrow>
             <SectionTitle>우리 동네 정치인을 먼저 보여줍니다</SectionTitle>
             <SectionText>
-              정치가 어렵게 느껴지는 가장 큰 이유는 내 삶과 연결되는 출발점이 없기
-              때문입니다. 좌우지간은 지역구를 기준으로 정치인을 찾고, 어떤
-              사람인지 금방 이해할 수 있게 정리합니다.
+              지역구를 기준으로 정치인을 찾고, 어떤 사람인지 짧게 정리합니다.
             </SectionText>
 
             <Checklist>
@@ -43,10 +41,10 @@ export function LocalInfoSection() {
           </FeatureCopy>
 
           <PreviewPanel
-            initial={{ opacity: 0, y: 18 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
             viewport={{ once: true, amount: 0.25 }}
-            transition={{ duration: 0.55 }}
+            transition={{ duration: 0.4 }}
           >
             <PreviewHeader>
               <PreviewTag>정치인 탐색</PreviewTag>
@@ -60,18 +58,16 @@ export function LocalInfoSection() {
               </PreviewRow>
               <PreviewRow>
                 <PreviewRowLabel>최근 활동</PreviewRowLabel>
-                <PreviewRowValue>발의 법안, 뉴스 언급, 공약 이행 흐름</PreviewRowValue>
+                <PreviewRowValue>발의 법안, 뉴스 언급, 공약 이행</PreviewRowValue>
               </PreviewRow>
               <PreviewRow>
                 <PreviewRowLabel>한눈에 보기</PreviewRowLabel>
-                <PreviewRowValue>
-                  어떤 분야에 강한지, 얼마나 성실한지 쉽게 확인
-                </PreviewRowValue>
+                <PreviewRowValue>강점 분야와 활동 빈도를 정리</PreviewRowValue>
               </PreviewRow>
             </PreviewRows>
 
             <PreviewFooter>
-              <Bookmark size={16} />
+              <Bookmark size={14} />
               관심 정치인은 저장해두고 다시 볼 수 있습니다.
             </PreviewFooter>
           </PreviewPanel>
@@ -83,76 +79,61 @@ export function LocalInfoSection() {
 
 const PreviewRows = styled.div`
   display: grid;
-  gap: 10px;
-  margin-top: 18px;
+  margin-top: 16px;
+  border-top: 1px solid var(--line-soft);
 `;
 
 const PreviewRow = styled.div`
-  padding: 18px;
-  border-radius: 18px;
-  background: var(--surface);
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line-soft);
+
+  &:last-child {
+    border-bottom: none;
+  }
 `;
 
 const PreviewRowLabel = styled.div`
   color: var(--muted);
-  font-size: 0.84rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
 `;
 
 const PreviewRowValue = styled.div`
-  margin-top: 8px;
+  margin-top: 4px;
   color: var(--text);
-  font-size: 0.98rem;
-  font-weight: 600;
-  line-height: 1.6;
-  letter-spacing: -0.02em;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
   word-break: keep-all;
 `;
 
 const PreviewFooter = styled.div`
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 18px;
+  gap: 6px;
+  margin-top: 16px;
   color: var(--muted);
-  font-size: 0.92rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
   word-break: keep-all;
 `;
 
 const Checklist = styled.div`
   display: grid;
-  gap: 12px;
-  margin-top: 28px;
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
 `;
 
 const ChecklistItem = styled.div`
-  position: relative;
-  padding: 18px 20px 18px 42px;
-  border-radius: 18px;
-  background: var(--surface-soft);
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
   color: var(--text);
-  font-size: 0.98rem;
-  font-weight: 600;
-  line-height: 1.6;
-  letter-spacing: -0.02em;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
   word-break: keep-all;
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 24px;
-    left: 20px;
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    background: var(--blue);
-  }
-
-  @media (max-width: 640px) {
-    padding: 16px 18px 16px 38px;
-    font-size: 0.95rem;
-  }
 `;

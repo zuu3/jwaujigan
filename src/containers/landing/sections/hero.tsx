@@ -12,8 +12,6 @@ type HeroSectionProps = {
 export function HeroSection({ isAuthenticated }: HeroSectionProps) {
   return (
     <Hero>
-      <HeroBackground />
-
       <HeroInner>
         <HeroCopy
           initial="hidden"
@@ -21,32 +19,30 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
           variants={{
             hidden: {},
             visible: {
-              transition: { staggerChildren: 0.08 },
+              transition: { staggerChildren: 0.06 },
             },
           }}
         >
-          <Badge variants={fadeUp}>우리 동네 정치를 더 쉽게 보는 방법</Badge>
+          <Eyebrow variants={fadeUp}>우리 동네 정치를 더 쉽게</Eyebrow>
 
           <HeroTitle variants={fadeUp}>
-            정치인을 알고 이슈를 비교하고 내 판단을 만들어갑니다
+            정치인을 알고, 이슈를 비교하고, 판단을 만듭니다
           </HeroTitle>
 
           <HeroText variants={fadeUp}>
-            좌우지간은 우리 지역 정치인 정보와 AI 토론, 이슈 요약을 한 흐름으로
-            보여주는 서비스입니다. 어렵고 멀게 느껴졌던 정치를 더 쉽게, 더 균형
-            있게 이해하도록 돕습니다.
+            지역 정치인 정보와 이슈 요약, AI 토론을 한 흐름으로 보여줍니다.
           </HeroText>
 
           <HeroActions variants={fadeUp}>
             {isAuthenticated ? (
               <PrimaryLinkCta href="/home">
                 서비스 이어서 보기
-                <ArrowRight size={18} />
+                <ArrowRight size={16} />
               </PrimaryLinkCta>
             ) : (
               <PrimaryButtonCta callbackUrl="/onboarding">
                 Google로 시작하기
-                <ArrowRight size={18} />
+                <ArrowRight size={16} />
               </PrimaryButtonCta>
             )}
             <SecondaryCta href="#arena">AI 토론 보기</SecondaryCta>
@@ -54,9 +50,9 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
         </HeroCopy>
 
         <HeroPanel
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.18 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
         >
           <PanelTop>
             <PanelEyebrow>오늘의 흐름</PanelEyebrow>
@@ -69,7 +65,7 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
               <PanelContent>
                 <PanelItemTitle>우리 동네 정치인 찾기</PanelItemTitle>
                 <PanelItemText>
-                  지역구 기준으로 누가 어떤 활동을 하는지 먼저 봅니다.
+                  지역구 기준으로 누가 어떤 활동을 하는지 봅니다.
                 </PanelItemText>
               </PanelContent>
             </PanelListItem>
@@ -79,7 +75,7 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
               <PanelContent>
                 <PanelItemTitle>같은 이슈를 양쪽 관점으로 보기</PanelItemTitle>
                 <PanelItemText>
-                  한쪽 주장만 보지 않고 핵심 차이를 나란히 확인합니다.
+                  핵심 차이를 나란히 확인합니다.
                 </PanelItemText>
               </PanelContent>
             </PanelListItem>
@@ -89,7 +85,7 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
               <PanelContent>
                 <PanelItemTitle>짧게 이해하고 직접 참여하기</PanelItemTitle>
                 <PanelItemText>
-                  요약을 보고, 투표하고, 의견을 남기며 내 판단을 만듭니다.
+                  요약을 보고, 투표하고, 의견을 남깁니다.
                 </PanelItemText>
               </PanelContent>
             </PanelListItem>
@@ -101,39 +97,18 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
 }
 
 const Hero = styled.section`
-  position: relative;
-  overflow: hidden;
-  padding: 72px 24px 56px;
-
-  @media (max-width: 1024px) {
-    padding-top: 56px;
-  }
+  padding: 80px 24px 0;
 
   @media (max-width: 640px) {
-    padding: 44px 20px 32px;
+    padding: 56px 20px 0;
   }
-`;
-
-const HeroBackground = styled.div`
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 20% 20%, rgba(49, 130, 246, 0.1), transparent 28%),
-    radial-gradient(circle at 80% 20%, rgba(255, 152, 0, 0.09), transparent 24%),
-    linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
 `;
 
 const HeroInner = styled(Container)`
-  position: relative;
   display: grid;
   align-items: center;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
-  gap: 48px;
-
-  @media (max-width: 1180px) {
-    gap: 36px;
-    grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
-  }
+  gap: 40px;
 
   @media (max-width: 1100px) {
     grid-template-columns: 1fr;
@@ -149,104 +124,66 @@ const HeroCopy = styled(motion.div)`
   min-width: 0;
 `;
 
-const Badge = styled(motion.div)`
-  display: inline-flex;
-  width: fit-content;
-  padding: 10px 14px;
-  border-radius: 999px;
-  color: var(--blue);
-  background: rgba(49, 130, 246, 0.08);
-  font-size: 0.9rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-
-  @media (max-width: 640px) {
-    font-size: 0.84rem;
-  }
+const Eyebrow = styled(motion.div)`
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 `;
 
 const HeroTitle = styled(motion.h1)`
-  max-width: 11ch;
-  margin: 22px 0 0;
+  margin: 12px 0 0;
   color: var(--text);
-  font-size: clamp(2.6rem, 6vw, 4.8rem);
-  font-weight: 800;
-  line-height: 1.08;
-  letter-spacing: -0.07em;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.03em;
   word-break: keep-all;
   text-wrap: balance;
-
-  @media (max-width: 1100px) {
-    max-width: 12ch;
-  }
-
-  @media (max-width: 640px) {
-    max-width: none;
-    margin-top: 18px;
-    font-size: 2.45rem;
-    line-height: 1.14;
-  }
 `;
 
 const HeroText = styled(motion.p)`
   max-width: 620px;
-  margin: 24px 0 0;
-  color: var(--muted);
-  font-size: 1.04rem;
-  font-weight: 500;
-  line-height: 1.72;
-  letter-spacing: -0.02em;
+  margin: 16px 0 0;
+  color: var(--sub);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
   word-break: keep-all;
   text-wrap: pretty;
-
-  @media (max-width: 640px) {
-    margin-top: 18px;
-    font-size: 0.98rem;
-  }
 `;
 
 const HeroActions = styled(motion.div)`
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 32px;
-
-  @media (max-width: 640px) {
-    margin-top: 24px;
-  }
+  gap: 8px;
+  margin-top: 24px;
 `;
 
 const primaryCtaStyles = `
   display: inline-flex;
-  min-height: 54px;
+  min-height: 48px;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 0 22px;
-  border-radius: 16px;
-  color: #fff;
-  background: var(--blue);
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  gap: 6px;
+  padding: 0 20px;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #191f28;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   border: 0;
   cursor: pointer;
-  transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1),
-              transform 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 140ms ease;
 
   &:hover {
-    opacity: 0.88;
-  }
-
-  &:active {
-    transform: scale(0.97);
-    opacity: 1;
+    opacity: 0.9;
   }
 
   @media (max-width: 640px) {
     width: 100%;
-    min-height: 50px;
-    font-size: 0.96rem;
   }
 `;
 
@@ -260,78 +197,71 @@ const PrimaryButtonCta = styled(GoogleSignInButton)`
 
 const SecondaryCta = styled(Link)`
   display: inline-flex;
-  min-height: 54px;
+  min-height: 48px;
   align-items: center;
   justify-content: center;
-  padding: 0 22px;
+  padding: 0 20px;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 8px;
   color: var(--text);
-  background: var(--surface-soft);
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  transition: background 140ms cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  background: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition: background 140ms ease;
 
   &:hover {
-    background: var(--surface);
-    border-color: #c8cdd4;
+    background: var(--line-soft);
   }
 
   @media (max-width: 640px) {
     width: 100%;
-    min-height: 50px;
-    font-size: 0.96rem;
   }
 `;
 
 const HeroPanel = styled(motion.aside)`
-  padding: 28px;
+  padding: 24px;
   border: 1px solid var(--line);
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.06);
+  border-radius: 8px;
+  background: #ffffff;
 
   @media (max-width: 640px) {
-    padding: 22px;
-    border-radius: 22px;
+    padding: 20px;
   }
 `;
 
 const PanelTop = styled.div`
-  padding-bottom: 18px;
-  border-bottom: 1px solid var(--line);
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line-soft);
 `;
 
 const PanelEyebrow = styled.div`
   color: var(--muted);
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 `;
 
 const PanelTitle = styled.h2`
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   color: var(--text);
-  font-size: 1.38rem;
+  font-size: 18px;
   font-weight: 700;
-  line-height: 1.3;
-  letter-spacing: -0.04em;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
   word-break: keep-all;
 `;
 
 const PanelList = styled.div`
   display: grid;
-  margin-top: 12px;
 `;
 
 const PanelListItem = styled.div`
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 14px;
-  padding: 18px 0;
-  border-bottom: 1px solid var(--line);
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line-soft);
 
   &:last-child {
     padding-bottom: 0;
@@ -341,14 +271,14 @@ const PanelListItem = styled.div`
 
 const PanelLabel = styled.div`
   display: grid;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   place-items: center;
   border-radius: 999px;
-  color: var(--blue);
-  background: rgba(49, 130, 246, 0.08);
-  font-size: 0.86rem;
-  font-weight: 700;
+  color: var(--sub);
+  background: var(--line-soft);
+  font-size: 14px;
+  font-weight: 600;
   flex-shrink: 0;
 `;
 
@@ -358,18 +288,18 @@ const PanelContent = styled.div`
 
 const PanelItemTitle = styled.div`
   color: var(--text);
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   word-break: keep-all;
 `;
 
 const PanelItemText = styled.p`
-  margin: 8px 0 0;
-  color: var(--muted);
-  font-size: 0.94rem;
-  font-weight: 500;
-  line-height: 1.6;
-  letter-spacing: -0.02em;
+  margin: 4px 0 0;
+  color: var(--sub);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
   word-break: keep-all;
 `;

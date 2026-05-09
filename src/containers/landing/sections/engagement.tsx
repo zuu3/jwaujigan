@@ -20,8 +20,8 @@ export function EngagementSection() {
           viewport={{ once: true, amount: 0.35 }}
           variants={fadeUp}
         >
-          <SectionEyebrow>Engagement</SectionEyebrow>
-          <SectionTitle>보고 끝나는 서비스가 아니라, 함께 판단하는 서비스</SectionTitle>
+          <SectionEyebrow>참여</SectionEyebrow>
+          <SectionTitle>보고 끝나지 않고 함께 판단합니다</SectionTitle>
         </SectionHeader>
 
         <EngagementRow>
@@ -52,9 +52,11 @@ export function EngagementSection() {
 
 const EngagementRow = styled.div`
   display: grid;
-  margin-top: 36px;
+  margin-top: 32px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 
   @media (max-width: 960px) {
     grid-template-columns: 1fr;
@@ -62,39 +64,45 @@ const EngagementRow = styled.div`
 `;
 
 const EngagementItem = styled(motion.div)`
-  padding: 28px 24px;
-  border-radius: 24px;
-  background: var(--surface-soft);
+  padding: 24px 20px;
+  border-right: 1px solid var(--line);
+
+  &:last-child {
+    border-right: none;
+  }
 
   @media (max-width: 960px) {
-    padding: 22px 20px;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+
+    &:last-child {
+      border-bottom: none;
+    }
   }
 `;
 
 const EngagementIcon = styled.div`
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   place-items: center;
-  border-radius: 14px;
-  color: var(--blue);
-  background: rgba(49, 130, 246, 0.08);
+  color: var(--sub);
 `;
 
 const EngagementTitle = styled.h3`
-  margin: 18px 0 0;
+  margin: 12px 0 0;
   color: var(--text);
-  font-size: 1.06rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 `;
 
 const EngagementText = styled.p`
-  margin: 10px 0 0;
-  color: var(--muted);
-  font-size: 0.95rem;
-  font-weight: 500;
-  line-height: 1.6;
-  letter-spacing: -0.02em;
+  margin: 6px 0 0;
+  color: var(--sub);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
   word-break: keep-all;
 `;

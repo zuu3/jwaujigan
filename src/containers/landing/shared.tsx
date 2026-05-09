@@ -2,25 +2,25 @@ import styled from "@emotion/styled";
 import { motion, type Variants } from "framer-motion";
 
 export const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    y: 0,
-    transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] },
+    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
   },
 };
 
 export const Page = styled.main`
   min-height: 100vh;
   color: #191f28;
-  background: #fff;
+  background: #ffffff;
   --text: #191f28;
-  --muted: #6b7684;
-  --line: #e5e8eb;
-  --surface: #f8fafb;
-  --surface-soft: #fbfcfd;
+  --sub: #4e5968;
+  --muted: #8b95a1;
+  --line: #e5e7eb;
+  --line-soft: #f2f4f6;
+  --surface: #f2f4f6;
   --blue: #3182f6;
-  --red: #ef6253;
+  --red: #e5484d;
 `;
 
 export const Container = styled.div`
@@ -29,31 +29,24 @@ export const Container = styled.div`
 `;
 
 export const Section = styled.section`
-  padding: 96px 24px 0;
-  scroll-margin-top: 84px;
-
-  @media (max-width: 1024px) {
-    padding-top: 80px;
-  }
+  padding: 80px 24px 0;
+  scroll-margin-top: 64px;
 
   @media (max-width: 640px) {
-    padding: 64px 20px 0;
+    padding: 56px 20px 0;
   }
 `;
 
 export const TintedSection = styled(Section)`
-  background: #fcfdff;
+  background: #ffffff;
+  border-top: 1px solid var(--line-soft);
 `;
 
 export const SlimSection = styled.section`
-  padding: 96px 24px;
-
-  @media (max-width: 1024px) {
-    padding: 80px 24px;
-  }
+  padding: 80px 24px;
 
   @media (max-width: 640px) {
-    padding: 64px 20px;
+    padding: 56px 20px;
   }
 `;
 
@@ -62,34 +55,30 @@ export const SectionHeader = styled(motion.div)`
 `;
 
 export const SectionEyebrow = styled.div`
-  color: var(--blue);
-  font-size: 0.92rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 `;
 
 export const SectionTitle = styled.h2`
-  margin: 14px 0 0;
+  margin: 12px 0 0;
   color: var(--text);
-  font-size: clamp(2rem, 4.5vw, 3.2rem);
-  font-weight: 800;
-  line-height: 1.2;
-  letter-spacing: -0.06em;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.03em;
   word-break: keep-all;
   text-wrap: balance;
-
-  @media (max-width: 640px) {
-    font-size: 2rem;
-  }
 `;
 
 export const SectionText = styled.p`
-  margin: 18px 0 0;
-  color: var(--muted);
-  font-size: 1rem;
-  font-weight: 500;
-  line-height: 1.72;
-  letter-spacing: -0.02em;
+  margin: 16px 0 0;
+  color: var(--sub);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
   word-break: keep-all;
   text-wrap: pretty;
 `;
@@ -98,11 +87,7 @@ export const FeatureLayout = styled.div`
   display: grid;
   align-items: start;
   grid-template-columns: minmax(0, 1fr) minmax(300px, 440px);
-  gap: 48px;
-
-  @media (max-width: 1180px) {
-    gap: 36px;
-  }
+  gap: 40px;
 
   @media (max-width: 1100px) {
     grid-template-columns: 1fr;
@@ -120,73 +105,51 @@ export const FeatureCopy = styled(motion.div)`
 
 export const SimpleList = styled.div`
   display: grid;
-  margin-top: 28px;
+  margin-top: 24px;
   border-top: 1px solid var(--line);
 `;
 
 export const SimpleListItem = styled.div`
-  position: relative;
-  padding: 18px 0 18px 18px;
+  padding: 16px 0;
   border-bottom: 1px solid var(--line);
   color: var(--text);
-  font-size: 0.98rem;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
   line-height: 1.6;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   word-break: keep-all;
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 26px;
-    left: 0;
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
-    background: var(--blue);
-  }
-
-  @media (max-width: 640px) {
-    padding: 16px 0 16px 16px;
-    font-size: 0.95rem;
-  }
 `;
 
 export const PreviewPanel = styled(motion.aside)`
-  padding: 28px;
+  padding: 24px;
   border: 1px solid var(--line);
-  border-radius: 28px;
-  background: #fff;
+  border-radius: 8px;
+  background: #ffffff;
 
   @media (max-width: 640px) {
-    padding: 22px;
-    border-radius: 22px;
+    padding: 20px;
   }
 `;
 
 export const PreviewHeader = styled.div`
   padding-bottom: 16px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--line-soft);
 `;
 
 export const PreviewTag = styled.div`
-  color: var(--blue);
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 `;
 
 export const PreviewHeadline = styled.h3`
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   color: var(--text);
-  font-size: 1.32rem;
+  font-size: 18px;
   font-weight: 700;
-  line-height: 1.3;
-  letter-spacing: -0.04em;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
   word-break: keep-all;
   text-wrap: balance;
-
-  @media (max-width: 640px) {
-    font-size: 1.18rem;
-  }
 `;
