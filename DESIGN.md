@@ -8,7 +8,7 @@ base_ref: toss
 
 ## 1. Visual Theme & Atmosphere
 
-좌우지간 is a political literacy platform built for the generation that gets its news from smartphones, not newspapers. The page opens on a clean white canvas (`#ffffff`) with deep charcoal headings (`#191f28`) and a signature blue (`#3182f6`) — the same cerulean conviction that a political view can be understood without being sold. Two semantic colors define the product's purpose: the primary blue carries progressive framing; the conservative red (`#ef4444`) carries equal visual weight. Neither dominates the interface except in direct political context.
+좌우지간 is a political literacy platform built for the generation that gets its news from smartphones, not newspapers. The page opens on a clean white canvas (`#ffffff`) with deep charcoal headings (`#191f28`) and a signature blue (`#3182f6`) — the same cerulean conviction that a political view can be understood without being sold. Two semantic colors define the product's purpose: the primary blue carries progressive framing; the conservative red (`#e5484d`) carries equal visual weight. Neither dominates the interface except in direct political context.
 
 The **Pretendard** typeface is the quiet hero. Purpose-built for Korean-Latin mixed text, it balances hangul and Latin characters with the same optical care that financial apps apply to numerals. The font ships in 9 weights but the UI exercises restraint, primarily using 400, 600, and 700. No decorative illustration font; political content requires no embellishment beyond the words themselves.
 
@@ -16,11 +16,11 @@ What defines 좌우지간 visually is restraint in a space that isn't restrained
 
 **Key Characteristics:**
 - 좌우지간 Blue (`#3182f6`) as primary interactive color + progressive political indicator
-- 좌우지간 Red (`#ef4444`) as conservative political indicator — equal visual weight, never used as error
+- 좌우지간 Red (`#e5484d`) as conservative political indicator — equal visual weight, never used as error
 - Pretendard with Korean-Latin optical balancing
 - 10-step grey scale with warm undertones
 - Three-tier token architecture: primitive → semantic → component
-- Minimal shadow system — trust comes from clarity, not depth
+- Hairline-first system — trust comes from clarity, not depth (box-shadow 금지)
 - Mobile-first at 375px design baseline
 
 ## 2. Color Palette & Roles
@@ -33,7 +33,7 @@ What defines 좌우지간 visually is restraint in a space that isn't restrained
 - **Dark Charcoal** (`#191f28`): `grey900`. Primary heading color, strongest text. Warm near-black.
 
 ### Political Semantic
-- **Conservative Red** (`#ef4444`): `red.political`. Conservative-leaning political accent — politician party tags, issue position indicators, arena opponent side. Never used for error states.
+- **Conservative Red** (`#e5484d`): `red.political`. Conservative-leaning political accent — politician party tags, issue position indicators, arena opponent side. Never used for error states.
 - **Conservative Light** (`#fef2f2`): `red.politicalLight`. Conservative-side subtle backgrounds, tag fills.
 
 ### Brand (Logo/Marketing Only)
@@ -117,7 +117,7 @@ What defines 좌우지간 visually is restraint in a space that isn't restrained
 **Danger**
 - Background: `#f04452` (red500)
 - Text: `#ffffff`
-- Note: Never use conservative red (`#ef4444`) here — error and political semantics must not overlap
+- Note: Never use conservative red (`#e5484d`) here — error and political semantics must not overlap
 
 ### Cards & Containers
 
@@ -125,9 +125,9 @@ What defines 좌우지간 visually is restraint in a space that isn't restrained
 - Background: `#ffffff`
 - Border: 1px solid `#e5e8eb` (grey200)
 - Radius: 12px
-- Shadow: `0px 2px 8px rgba(0,0,0,0.08)`
+- Shadow: none (1px hairline border only)
 - Layout: Headline (16px weight 600, `#191f28`) + summary (14px weight 400, `#6b7684`) + bottom row (timestamp `#8b95a1` left / political tag right)
-- Political tag: 12px weight 600, blue50 bg + blue500 text for 진보, red.politicalLight bg + `#ef4444` text for 보수
+- Political tag: 12px weight 600, blue50 bg + blue500 text for 진보, red.politicalLight bg + `#e5484d` text for 보수
 
 **Politician Profile Card**
 - Same container as Issue Card
@@ -136,7 +136,7 @@ What defines 좌우지간 visually is restraint in a space that isn't restrained
 **Arena Card**
 - Split-screen structure: blue side (진보 position) | red side (보수 position)
 - Left half: `#e8f3ff` tint, `진보` label 12px weight 600 blue500 top
-- Right half: `#fef2f2` tint, `보수` label 12px weight 600 `#ef4444` top
+- Right half: `#fef2f2` tint, `보수` label 12px weight 600 `#e5484d` top
 - Center divider: 1px `#e5e8eb`
 - Each side: position text 14px weight 400 `#191f28`
 
@@ -156,7 +156,7 @@ What defines 좌우지간 visually is restraint in a space that isn't restrained
 ### Overlays
 - Bottom Sheet: `#ffffff`, 16px top radius
 - Dialog: centered modal, alert and confirm variants
-- Toast: floating notification, subtle shadow, auto-dismiss
+- Toast: floating notification, hairline border, auto-dismiss
 - Tooltip: `#191f28` background, white text, arrow pointer
 
 ## 5. Layout Principles
@@ -210,11 +210,11 @@ What defines 좌우지간 visually is restraint in a space that isn't restrained
 - Use 700 weight for issue headlines and key stats, 400 for body, 600 for emphasis
 - Keep border-radius between 8px–16px for most elements
 - Use blue (`#3182f6` / `#e8f3ff`) for progressive framing only when in direct political context
-- Use red (`#ef4444` / `#fef2f2`) for conservative framing only when in direct political context
+- Use red (`#e5484d` / `#fef2f2`) for conservative framing only when in direct political context
 - Treat both political colors with exactly equal visual weight — neither side is visually privileged
 
 ### Don't
-- Don't use conservative red (`#ef4444`) for error states — that is `#f04452` exclusively
+- Don't use conservative red (`#e5484d`) for error states — that is `#f04452` exclusively
 - Don't use heavy shadows — rely on background color layering, not depth
 - Don't use bold (700) for body text — reserved for headings and key stats
 - Don't mix tabular and variable-width numerals in the same data context
@@ -260,25 +260,25 @@ What defines 좌우지간 visually is restraint in a space that isn't restrained
 - Placeholder: Soft Gray (`#b0b8c1`)
 - Border: Gray 200 (`#e5e8eb`)
 - Progressive accent: Blue (`#3182f6`) / Blue Light (`#e8f3ff`)
-- Conservative accent: Red (`#ef4444`) / Red Light (`#fef2f2`)
+- Conservative accent: Red (`#e5484d`) / Red Light (`#fef2f2`)
 - Error (state only, never political): Red 500 (`#f04452`)
 - Success/Positive: Green (`#03b26c`)
 - Warning: Orange (`#fe9800`)
 
 ### Example Component Prompts
-- "Create an issue card: white bg, 12px radius, 20px padding. Headline 16px weight 600 `#191f28`. Summary 14px weight 400 `#6b7684`. Bottom row: timestamp 12px `#8b95a1` left, political tag right (진보: blue50 bg + blue500 text 12px weight 600 / 보수: `#fef2f2` bg + `#ef4444` text). Shadow `0px 2px 8px rgba(0,0,0,0.08)`."
+- "Create an issue card: white bg, 12px radius, 20px padding. Headline 16px weight 600 `#191f28`. Summary 14px weight 400 `#6b7684`. Bottom row: timestamp 12px `#8b95a1` left, political tag right (진보: blue50 bg + blue500 text 12px weight 600 / 보수: `#fef2f2` bg + `#e5484d` text). Border 1px `#e5e8eb`."
 - "Build a politician profile card: white bg, 12px radius, 20px padding. Left: 40px circle avatar. Right: name 16px weight 700 `#191f28`, party tag 12px weight 600 in political color, stance snippet 13px weight 400 `#6b7684`."
-- "Design an arena battle screen: full-width split. Left half `#e8f3ff` tint, `진보` label 12px weight 600 blue500 top-left. Right half `#fef2f2` tint, `보수` label 12px weight 600 `#ef4444` top-right. Center divider 1px `#e5e8eb`. Each side: position text 14px weight 400 `#191f28`. Bottom: vote button full-width each side (blue500 / `#ef4444` bg, white text, 16px weight 600, 56px height)."
+- "Design an arena battle screen: full-width split. Left half `#e8f3ff` tint, `진보` label 12px weight 600 blue500 top-left. Right half `#fef2f2` tint, `보수` label 12px weight 600 `#e5484d` top-right. Center divider 1px `#e5e8eb`. Each side: position text 14px weight 400 `#191f28`. Bottom: vote button full-width each side (blue500 / `#e5484d` bg, white text, 16px weight 600, 56px height)."
 - "Create a bottom tab bar: white bg, top border 1px `#e5e8eb`. 4 tabs (홈, 이슈, 정치인, 마이페이지). Active: `#3182f6` icon + `#191f28` label 11px weight 500. Inactive: `#b0b8c1` icon + `#8b95a1` label. Height 56px with safe area."
 - "Design an onboarding screen: white bg, full-width 20px padding. One idea per screen. Heading 26px weight 700 `#191f28`. Sub-copy 16px weight 400 `#6b7684`. CTA at bottom: `#3182f6` bg, white text, 16px weight 600, 56px height, 12px radius, full-width."
 
 ### Iteration Guide
 1. Always use the full Pretendard font stack with Korean fallbacks
 2. Primary interactive color is `#3182f6` — in political context this also signals progressive framing
-3. Conservative red is `#ef4444` — never use on error states (that is `#f04452`)
+3. Conservative red is `#e5484d` — never use on error states (that is `#f04452`)
 4. Grey scale has warm undertones: grey900 `#191f28`, grey50 `#f9fafb`
 5. Border-radius: 8px inputs, 12px cards, 16px sheets, pill for filter chips
-6. Shadows are single-layer, pure black opacity, no colored tints
+6. Use hairline borders only (`#e5e8eb` / `#f2f4f6`) — box-shadow 금지
 7. Mobile-first: design at 375px, 20px horizontal padding
 8. Political colors appear only where they carry meaning — never as decoration
 
@@ -299,6 +299,7 @@ What defines 좌우지간 visually is restraint in a space that isn't restrained
 | Arena results | Neutral framing. `A 의견 54% / B 의견 46%` — no winner language, no congratulation. |
 
 **Forbidden phrases.** `불편을 드려 죄송합니다`, `Oops`, `죄송하지만`, any phrase implying editorial alignment (`~라는 주장`, `~측에 따르면`, `사실은`), approximations on statistics (`약 60%`, `200여 석`), any exclamatory framing on political topics, sentences starting with `I'm sorry` in English strings.
+**Voice guardrails.** 사실 진술형/명사형 종결을 유지하고, 마케팅·캐치카피 톤(예: `지금 바로`, `혁신`)은 사용하지 않는다.
 
 ## 11. Brand Narrative
 
@@ -313,7 +314,7 @@ What 좌우지간 refuses: the red-vs-blue war-room palette of legacy political 
 1. **Breathing room for political claims.** Issue headlines get ≥1.5× the surrounding spacing of normal text. A position stated in 20px with 24px margins communicates confidence; the same position crammed at 8px margins looks like a push notification.
 2. **Progressive density.** The home feed is spacious; issue detail and politician profile screens are denser. The deeper the user navigates, the more information per pixel — they've committed to the topic and want facts.
 3. **One position, equal halves.** If a screen shows both progressive and conservative positions, they are equal halves — not hero-and-footnote. Neither side is visually privileged at the component level.
-4. **Blue and red are information, not decoration.** `#3182f6` and `#ef4444` appear only where they carry political meaning or signal interactivity. They never decorate headers, borders, or backgrounds without that specific intent.
+4. **Blue and red are information, not decoration.** `#3182f6` and `#e5484d` appear only where they carry political meaning or signal interactivity. They never decorate headers, borders, or backgrounds without that specific intent.
 5. **Restraint communicates neutrality.** A single accent color on a white surface says "I'm showing you something." Two equal accent colors on a white surface says "I'm showing you both sides." Visual balance is the product's core claim.
 6. **Korean and Latin are co-equal.** Typography stacks and optical weights assume both scripts render simultaneously in the same line.
 7. **Numbers are facts.** Poll percentages, seat counts, and vote shares use 700 weight and tabular numerals. Approximations are forbidden on primary surfaces.
@@ -341,7 +342,7 @@ What 좌우지간 refuses: the red-vs-blue war-room palette of legacy political 
 | **Error (toast)** | `#191f28` background, white 14px 400 text, 3s auto-dismiss. One sentence. No icons. Bottom of screen with 20px inset. |
 | **Error (screen-blocking)** | Reserved for server outage. White screen, centered single-line message in `grey900` 16px weight 600, retry button in blue500. No illustration. |
 | **Success (inline flash)** | Brief flash of `#e8f3ff` (blue50) behind the updated element, 300ms fade to default. For routine actions like saving a preference. |
-| **Arena vote committed** | Dedicated confirmation state — not a toast. The user's chosen side fills with full political color (`#3182f6` or `#ef4444`), result percentages animate in with tabular numerals. This weight is intentional; a political position taken is not a toast moment. |
+| **Arena vote committed** | Dedicated confirmation state — not a toast. The user's chosen side fills with full political color (`#3182f6` or `#e5484d`), result percentages animate in with tabular numerals. This weight is intentional; a political position taken is not a toast moment. |
 | **Skeleton** | `#f2f4f6` blocks at exact final dimensions. 1.2s shimmer as `linear-gradient` with 8% white highlight. Rounded at component radius (8px/12px/16px). Never used on political stats — those show `--`. |
 | **Disabled** | Button opacity drops per `--button-disabled-opacity-color`. Disabled inputs keep `grey200` border so geometry is stable if re-enabled. |
 | **Loading inside pressed button** | Text replaced by 3-dot animation in white. Width unchanged. Cannot double-submit. |
@@ -373,3 +374,10 @@ What 좌우지간 refuses: the red-vs-blue war-room palette of legacy political 
 2. **Bottom-sheet presentation.** Sheets rise from `y+40px` with `motion-standard / ease-enter` and a synchronized backdrop fade from `rgba(2,9,19,0)` to `rgba(2,9,19,0.5)`. Dismissal uses `motion-fast / ease-exit` — leaving feels lighter than entering.
 3. **Arena vote reveal.** On position commit, the result percentages count up over `motion-slow` with `ease-spring`. This is the one place spring easing is licensed. Everywhere else, standard easing.
 4. **Reduce motion.** If `prefers-reduced-motion: reduce`, all `motion-*` tokens collapse to `motion-instant`. Crossfades replace slides. The app stays usable; just less kinetic.
+
+## 16. Forbidden Patterns
+
+- framer-motion y-slide entrance (opacity-only 허용)
+- 본문 텍스트 색칠 (진보/보수 색은 라벨에만)
+- 회색 배경 박스 섹션 (IntroBand류)
+- uppercase eyebrow (한국어)
