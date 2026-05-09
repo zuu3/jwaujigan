@@ -396,7 +396,6 @@ export async function getRecentIssueBills(): Promise<AssemblyIssueBill[]> {
         row.BILL_NAME,
         row.COMMITTEE,
         row.CURR_COMMITTEE,
-        row.PROPOSER,
       ]
         .filter(Boolean)
         .join(" ");

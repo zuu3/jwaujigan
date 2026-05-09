@@ -192,6 +192,24 @@ export type Database = {
           },
         ];
       };
+      generation_locks: {
+        Row: {
+          key: string;
+          locked_at: string;
+          expires_at: string;
+        };
+        Insert: {
+          key: string;
+          locked_at?: string;
+          expires_at: string;
+        };
+        Update: {
+          key?: string;
+          locked_at?: string;
+          expires_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
