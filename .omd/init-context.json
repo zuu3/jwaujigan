@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "base_ref": "toss",
+  "created_at": "2026-05-09",
+  "description": "MZ세대 대상 정치 리터러시 플랫폼. 진보(파랑)/보수(빨강) 두 컬러 축. typography-first, light mode only. 뉴스미디어 aesthetic. 선동적 표현 금지, 담담하고 명확한 보이스. 이슈 요약, 정치인 프로필, 정치 성향 배틀 기능.",
+  "delta_set": {
+    "axes": {
+      "font.family": "Toss Product Sans → Pretendard",
+      "color.secondary.semantic": "added #ef4444 as red.political (conservative) — co-equal with blue500, never error",
+      "domain.context": "fintech → political literacy / news media",
+      "component.card_types": "transaction/financial → issue card, politician card, arena card"
+    },
+    "voiceHints": [
+      "담담하고 명확한 — calm, no editorializing",
+      "선동적 표현 금지 — no framing language",
+      "통계 근삿값 표현 금지 — exact numerals only"
+    ],
+    "warnings": []
+  },
+  "philosophy": {
+    "project_name": "좌우지간",
+    "thesis": "정치를 어렵지 않게, MZ세대의 언어로",
+    "tagline": "선동 없는 정치 정보",
+    "personas": ["정치에 관심 없던 20대", "처음 투표하는 MZ", "균형있는 관점을 원하는 직장인"]
+  }
+}
