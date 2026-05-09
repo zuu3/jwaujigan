@@ -66,14 +66,14 @@ function getResultLabel(result: string | null) {
 
 function getResultTone(result: string | null) {
   if (result === "win") {
-    return "#3182f6";
+    return "#3182F6";
   }
 
   if (result === "lose") {
-    return "#ef4444";
+    return "#E5484D";
   }
 
-  return "var(--adaptiveGrey600)";
+  return "#8B95A1";
 }
 
 function getBattleStats(battleLogs: BattleLogItem[]) {
@@ -123,16 +123,16 @@ export function MyPageContainer({
 
         <Hero>
           <HeroEyebrow>마이페이지</HeroEyebrow>
-          <HeroTitle>내 정치 성향과 토론 기록을 확인하세요</HeroTitle>
+          <HeroTitle>내 정치 성향과 토론 기록</HeroTitle>
           <HeroDescription>
-            지역구, 성향 분석, AI 배틀 기록을 한 곳에서 관리할 수 있습니다.
+            지역구, 성향 분석, AI 배틀 기록을 한 곳에서 관리하세요.
           </HeroDescription>
         </Hero>
 
         <ProfileSection>
           <Avatar aria-hidden="true">
             {profile.image ? (
-              <AvatarImage src={profile.image} alt="" width={72} height={72} />
+              <AvatarImage src={profile.image} alt="" width={56} height={56} />
             ) : (
               getInitial(profile.name, profile.email)
             )}
@@ -141,100 +141,98 @@ export function MyPageContainer({
             <ProfileName>{profile.name ?? "사용자"}</ProfileName>
             <ProfileEmail>{profile.email}</ProfileEmail>
             <DistrictLine>
-              <MapPin size={16} />
+              <MapPin size={14} />
               <span>{profile.district ?? "지역구 미설정"}</span>
             </DistrictLine>
           </ProfileContent>
           <ProfileAction href="/onboarding">
-            <RotateCcw size={16} />
+            <RotateCcw size={14} />
             <span>온보딩 다시 하기</span>
           </ProfileAction>
         </ProfileSection>
 
-        <ContentGrid>
-          <Section>
-            <SectionHeader>
-              <SectionKicker>
-                <BarChart3 size={16} />
-                <span>정치 성향</span>
-              </SectionKicker>
-              {completedAt ? (
-                <SectionDate>{formatDate(completedAt)} 완료</SectionDate>
-              ) : null}
-            </SectionHeader>
+        <Section>
+          <SectionHeader>
+            <SectionKicker>
+              <BarChart3 size={14} />
+              <span>정치 성향</span>
+            </SectionKicker>
+            {completedAt ? (
+              <SectionDate>{formatDate(completedAt)} 완료</SectionDate>
+            ) : null}
+          </SectionHeader>
 
-            {politicalProfile ? (
-              <>
-                <PoliticalType>{politicalProfile.political_type}</PoliticalType>
-                <PoliticalMap profile={politicalProfile} />
-                <SecurityBar score={politicalProfile.security_score} />
-              </>
-            ) : (
-              <EmptyState>
-                <EmptyTitle>정치 성향 분석이 아직 없습니다</EmptyTitle>
-                <EmptyText>
-                  테스트를 완료하면 정치 타입과 3축 점수가 여기에 표시됩니다.
-                </EmptyText>
-                <PrimaryLink href="/onboarding">
-                  성향 테스트 시작하기
-                  <ArrowRight size={16} />
-                </PrimaryLink>
-              </EmptyState>
-            )}
-          </Section>
+          {politicalProfile ? (
+            <>
+              <PoliticalType>{politicalProfile.political_type}</PoliticalType>
+              <PoliticalMap profile={politicalProfile} />
+              <SecurityBar score={politicalProfile.security_score} />
+            </>
+          ) : (
+            <EmptyState>
+              <EmptyTitle>정치 성향 분석이 아직 없습니다</EmptyTitle>
+              <EmptyText>
+                테스트를 완료하면 정치 타입과 3축 점수가 여기에 표시됩니다.
+              </EmptyText>
+              <PrimaryLink href="/onboarding">
+                성향 테스트 시작하기
+                <ArrowRight size={14} />
+              </PrimaryLink>
+            </EmptyState>
+          )}
+        </Section>
 
-          <Section>
-            <SectionHeader>
-              <SectionKicker>
-                <Swords size={16} />
-                <span>배틀 전적</span>
-              </SectionKicker>
-              <SectionDate>전체 {battleLogs.length}전</SectionDate>
-            </SectionHeader>
+        <Section>
+          <SectionHeader>
+            <SectionKicker>
+              <Swords size={14} />
+              <span>배틀 전적</span>
+            </SectionKicker>
+            <SectionDate>전체 {battleLogs.length}전</SectionDate>
+          </SectionHeader>
 
-            <StatsGrid>
-              <StatCard $tone="#3182f6">
-                <StatLabel>승리</StatLabel>
-                <StatValue $tone="#3182f6">{stats.win}</StatValue>
-              </StatCard>
-              <StatCard $tone="#ef4444">
-                <StatLabel>패배</StatLabel>
-                <StatValue $tone="#ef4444">{stats.lose}</StatValue>
-              </StatCard>
-              <StatCard $tone="var(--adaptiveGrey600)">
-                <StatLabel>무승부</StatLabel>
-                <StatValue $tone="var(--adaptiveGrey600)">{stats.draw}</StatValue>
-              </StatCard>
-            </StatsGrid>
+          <StatsGrid>
+            <StatCard>
+              <StatLabel>승리</StatLabel>
+              <StatValue $tone="#3182F6">{stats.win}</StatValue>
+            </StatCard>
+            <StatCard>
+              <StatLabel>패배</StatLabel>
+              <StatValue $tone="#E5484D">{stats.lose}</StatValue>
+            </StatCard>
+            <StatCard>
+              <StatLabel>무승부</StatLabel>
+              <StatValue $tone="#8B95A1">{stats.draw}</StatValue>
+            </StatCard>
+          </StatsGrid>
 
-            {recentBattleLogs.length > 0 ? (
-              <BattleList>
-                {recentBattleLogs.map((log) => (
-                  <BattleItem key={log.id}>
-                    <BattleTopic>{log.topic}</BattleTopic>
-                    <BattleMeta>
-                      <ResultBadge $tone={getResultTone(log.result)}>
-                        {getResultLabel(log.result)}
-                      </ResultBadge>
-                      <span>{formatDate(log.created_at)}</span>
-                    </BattleMeta>
-                  </BattleItem>
-                ))}
-              </BattleList>
-            ) : (
-              <EmptyState>
-                <EmptyTitle>아직 배틀 기록이 없습니다</EmptyTitle>
-                <EmptyText>
-                  AI 토론 배틀을 완료하면 승패 기록이 이곳에 쌓입니다.
-                </EmptyText>
-                <PrimaryLink href="/arena">
-                  배틀 시작하기
-                  <ArrowRight size={16} />
-                </PrimaryLink>
-              </EmptyState>
-            )}
-          </Section>
-        </ContentGrid>
+          {recentBattleLogs.length > 0 ? (
+            <BattleList>
+              {recentBattleLogs.map((log) => (
+                <BattleItem key={log.id}>
+                  <BattleTopic>{log.topic}</BattleTopic>
+                  <BattleMeta>
+                    <ResultBadge $tone={getResultTone(log.result)}>
+                      {getResultLabel(log.result)}
+                    </ResultBadge>
+                    <span>{formatDate(log.created_at)}</span>
+                  </BattleMeta>
+                </BattleItem>
+              ))}
+            </BattleList>
+          ) : (
+            <EmptyState>
+              <EmptyTitle>아직 배틀 기록이 없습니다</EmptyTitle>
+              <EmptyText>
+                AI 토론 배틀을 완료하면 승패 기록이 이곳에 쌓입니다.
+              </EmptyText>
+              <PrimaryLink href="/arena">
+                배틀 시작하기
+                <ArrowRight size={14} />
+              </PrimaryLink>
+            </EmptyState>
+          )}
+        </Section>
       </Shell>
     </Page>
   );
@@ -294,120 +292,50 @@ function PoliticalMap({ profile }: { profile: PoliticalProfile }) {
           role="img"
           aria-label="정치 좌표 그래프"
         >
-          <rect
-            x={CHART_PADDING}
-            y={CHART_PADDING}
-            width={CHART_RANGE}
-            height={CHART_RANGE}
-            fill="#DBEAFE"
-          />
-          <rect
-            x={CHART_CENTER}
-            y={CHART_PADDING}
-            width={CHART_RANGE}
-            height={CHART_RANGE}
-            fill="#FEE2E2"
-          />
-          <rect
-            x={CHART_PADDING}
-            y={CHART_CENTER}
-            width={CHART_RANGE}
-            height={CHART_RANGE}
-            fill="#EFF6FF"
-          />
-          <rect
-            x={CHART_CENTER}
-            y={CHART_CENTER}
-            width={CHART_RANGE}
-            height={CHART_RANGE}
-            fill="#FEF2F2"
-          />
-
-          <text
-            x={CHART_PADDING + CHART_RANGE / 2}
-            y={CHART_PADDING + CHART_RANGE / 2}
-            fontSize={9}
-            fill="var(--adaptiveGrey500)"
-            textAnchor="middle"
-          >
-            진보·개방
-          </text>
-          <text
-            x={CHART_CENTER + CHART_RANGE / 2}
-            y={CHART_PADDING + CHART_RANGE / 2}
-            fontSize={9}
-            fill="var(--adaptiveGrey500)"
-            textAnchor="middle"
-          >
-            보수·개방
-          </text>
-          <text
-            x={CHART_PADDING + CHART_RANGE / 2}
-            y={CHART_CENTER + CHART_RANGE / 2}
-            fontSize={9}
-            fill="var(--adaptiveGrey500)"
-            textAnchor="middle"
-          >
-            진보·전통
-          </text>
-          <text
-            x={CHART_CENTER + CHART_RANGE / 2}
-            y={CHART_CENTER + CHART_RANGE / 2}
-            fontSize={9}
-            fill="var(--adaptiveGrey500)"
-            textAnchor="middle"
-          >
-            보수·전통
-          </text>
-
           <line
             x1={CHART_PADDING}
             y1={CHART_CENTER}
             x2={CHART_SIZE - CHART_PADDING}
             y2={CHART_CENTER}
-            stroke="var(--adaptiveGrey400)"
-            strokeWidth={1.5}
+            stroke="#E5E7EB"
+            strokeWidth={1}
           />
           <line
             x1={CHART_CENTER}
             y1={CHART_PADDING}
             x2={CHART_CENTER}
             y2={CHART_SIZE - CHART_PADDING}
-            stroke="var(--adaptiveGrey400)"
-            strokeWidth={1.5}
+            stroke="#E5E7EB"
+            strokeWidth={1}
           />
-          <circle cx={CHART_PADDING} cy={CHART_CENTER} r={2} fill="var(--adaptiveGrey400)" />
-          <circle cx={CHART_SIZE - CHART_PADDING} cy={CHART_CENTER} r={2} fill="var(--adaptiveGrey400)" />
-          <circle cx={CHART_CENTER} cy={CHART_PADDING} r={2} fill="var(--adaptiveGrey400)" />
-          <circle cx={CHART_CENTER} cy={CHART_SIZE - CHART_PADDING} r={2} fill="var(--adaptiveGrey400)" />
 
-          <text x={CHART_PADDING + 4} y={CHART_CENTER - 6} fontSize={10} fill="var(--adaptiveGrey500)">
+          <text x={CHART_PADDING + 4} y={CHART_CENTER - 6} fontSize={11} fill="#8B95A1">
             진보
           </text>
           <text
             x={CHART_SIZE - CHART_PADDING - 4}
             y={CHART_CENTER - 6}
-            fontSize={10}
-            fill="var(--adaptiveGrey500)"
+            fontSize={11}
+            fill="#8B95A1"
             textAnchor="end"
           >
             보수
           </text>
-          <text x={CHART_CENTER + 4} y={CHART_PADDING + 12} fontSize={10} fill="var(--adaptiveGrey500)">
+          <text x={CHART_CENTER + 4} y={CHART_PADDING + 12} fontSize={11} fill="#8B95A1">
             개방
           </text>
-          <text x={CHART_CENTER + 4} y={CHART_SIZE - CHART_PADDING - 4} fontSize={10} fill="var(--adaptiveGrey500)">
+          <text x={CHART_CENTER + 4} y={CHART_SIZE - CHART_PADDING - 4} fontSize={11} fill="#8B95A1">
             전통
           </text>
 
-          <circle cx={x} cy={y} r={12} fill="#3182f6" stroke="#ffffff" strokeWidth={3} />
+          <circle cx={x} cy={y} r={10} fill="#3182F6" />
           <text
             x={x}
             y={y + 4}
             fontSize={11}
-            fill="#ffffff"
+            fill="#FFFFFF"
             textAnchor="middle"
-            fontWeight={900}
+            fontWeight={700}
           >
             나
           </text>
@@ -423,7 +351,7 @@ function SecurityBar({ score }: { score: number }) {
   const fillRatio = Math.abs(clampedScore) / 100;
   const fillWidth = `${fillRatio * 50}%`;
   const fillLeft = isPositive ? `${50 - fillRatio * 50}%` : "50%";
-  const fillColor = isPositive ? "#3182f6" : "#ef4444";
+  const fillColor = isPositive ? "#3182F6" : "#E5484D";
 
   return (
     <AxisItem>
@@ -445,19 +373,30 @@ function SecurityBar({ score }: { score: number }) {
 
 const Page = styled.main`
   min-height: 100vh;
-  padding: 28px 24px 72px;
-  color: var(--adaptiveGrey900);
-  background: var(--adaptiveBackground);
+  padding: 32px 24px 80px;
+  color: #191F28;
+  background: #FFFFFF;
+  animation: fadeIn 200ms ease-out;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 
   @media (max-width: 640px) {
-    padding: 20px 16px 56px;
+    padding: 24px 16px 64px;
   }
 `;
 
 const Shell = styled.div`
-  display: grid;
-  width: min(100%, 1080px);
-  gap: 22px;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 880px);
+  gap: 40px;
   margin: 0 auto;
 `;
 
@@ -474,15 +413,15 @@ const Header = styled.header`
 `;
 
 const Brand = styled(Link)`
-  color: var(--adaptiveGrey900);
-  font-size: 1.05rem;
-  font-weight: 900;
+  color: #191F28;
+  font-size: 18px;
+  font-weight: 700;
 `;
 
 const HeaderActions = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 `;
 
@@ -491,17 +430,17 @@ const HeaderLink = styled(Link)`
   min-height: 44px;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--adaptiveHairlineBorder);
-  border-radius: var(--radius-control);
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
   padding: 0 14px;
-  color: var(--adaptiveGrey700);
-  background: var(--adaptiveLayeredBackground);
-  font-size: 0.9rem;
-  font-weight: 800;
-  transition: background 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  color: #4E5968;
+  background: #FFFFFF;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 140ms ease-out;
 
   &:hover {
-    background: var(--adaptiveGreyBackground);
+    background: #F2F4F6;
   }
 `;
 
@@ -510,62 +449,58 @@ const HeaderSignOutButton = styled(SignOutButton)`
   min-height: 44px;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--adaptiveHairlineBorder);
-  border-radius: var(--radius-control);
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
   padding: 0 14px;
-  color: var(--adaptiveGrey700);
-  background: var(--adaptiveLayeredBackground);
-  font-size: 0.9rem;
-  font-weight: 800;
+  color: #4E5968;
+  background: #FFFFFF;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background 140ms ease-out;
 
   &:hover {
-    background: var(--adaptiveGreyBackground);
+    background: #F2F4F6;
   }
 `;
 
 const Hero = styled.section`
-  display: grid;
-  gap: 12px;
-  padding: 34px 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 `;
 
 const HeroEyebrow = styled.div`
-  color: var(--adaptiveBlue600);
-  font-size: 0.92rem;
-  font-weight: 900;
+  color: #4E5968;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const HeroTitle = styled.h1`
-  max-width: 780px;
   margin: 0;
-  color: var(--adaptiveGrey900);
-  font-size: clamp(2rem, 5vw, 3.6rem);
-  font-weight: 900;
-  line-height: 1.14;
+  color: #191F28;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.25;
   word-break: keep-all;
 `;
 
 const HeroDescription = styled.p`
-  max-width: 640px;
   margin: 0;
-  color: var(--adaptiveGrey600);
-  font-size: 1rem;
-  font-weight: 650;
-  line-height: 1.7;
+  color: #4E5968;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
 `;
 
 const ProfileSection = styled.section`
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 18px;
-  padding: 22px;
-  border: 1px solid var(--adaptiveHairlineBorder);
-  border-radius: var(--radius-card);
-  background: var(--adaptiveLayeredBackground);
-  box-shadow: var(--shadow-card);
+  gap: 16px;
+  padding: 24px 0;
+  border-top: 1px solid #E5E7EB;
+  border-bottom: 1px solid #E5E7EB;
 
   @media (max-width: 720px) {
     grid-template-columns: auto minmax(0, 1fr);
@@ -574,16 +509,16 @@ const ProfileSection = styled.section`
 
 const Avatar = styled.div`
   display: inline-flex;
-  width: 72px;
-  height: 72px;
+  width: 56px;
+  height: 56px;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   border-radius: 50%;
-  color: var(--white);
-  background: var(--adaptiveBlue500);
-  font-size: 1.6rem;
-  font-weight: 900;
+  color: #FFFFFF;
+  background: #191F28;
+  font-size: 18px;
+  font-weight: 700;
 `;
 
 const AvatarImage = styled(Image)`
@@ -592,23 +527,24 @@ const AvatarImage = styled(Image)`
 `;
 
 const ProfileContent = styled.div`
-  display: grid;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
-  gap: 5px;
+  gap: 4px;
 `;
 
 const ProfileName = styled.h2`
   margin: 0;
-  color: var(--adaptiveGrey900);
-  font-size: 1.45rem;
-  font-weight: 900;
+  color: #191F28;
+  font-size: 18px;
+  font-weight: 700;
 `;
 
 const ProfileEmail = styled.div`
   overflow: hidden;
-  color: var(--adaptiveGrey600);
-  font-size: 0.95rem;
-  font-weight: 700;
+  color: #8B95A1;
+  font-size: 14px;
+  font-weight: 400;
   text-overflow: ellipsis;
 `;
 
@@ -616,9 +552,9 @@ const DistrictLine = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--adaptiveGrey800);
-  font-size: 0.94rem;
-  font-weight: 800;
+  color: #4E5968;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 const ProfileAction = styled(Link)`
@@ -627,13 +563,13 @@ const ProfileAction = styled(Link)`
   align-items: center;
   justify-content: center;
   gap: 6px;
-  border-radius: var(--radius-control);
-  padding: 0 15px;
-  color: var(--white);
-  background: var(--adaptiveBlue500);
-  font-size: 0.92rem;
-  font-weight: 900;
-  transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 8px;
+  padding: 0 16px;
+  color: #FFFFFF;
+  background: #191F28;
+  font-size: 14px;
+  font-weight: 600;
+  transition: opacity 140ms ease-out;
 
   &:hover {
     opacity: 0.88;
@@ -644,25 +580,10 @@ const ProfileAction = styled(Link)`
   }
 `;
 
-const ContentGrid = styled.div`
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  gap: 16px;
-
-  @media (max-width: 940px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
 const Section = styled.section`
-  display: grid;
-  align-content: start;
-  gap: 18px;
-  padding: 22px;
-  border: 1px solid var(--adaptiveHairlineBorder);
-  border-radius: var(--radius-card);
-  background: var(--adaptiveLayeredBackground);
-  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 `;
 
 const SectionHeader = styled.div`
@@ -670,37 +591,37 @@ const SectionHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #E5E7EB;
 `;
 
 const SectionKicker = styled.div`
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  color: var(--adaptiveGrey900);
-  font-size: 0.95rem;
-  font-weight: 900;
+  gap: 8px;
+  color: #191F28;
+  font-size: 18px;
+  font-weight: 700;
 `;
 
 const SectionDate = styled.div`
-  color: var(--adaptiveGrey500);
-  font-size: 0.84rem;
-  font-weight: 800;
+  color: #8B95A1;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 const PoliticalType = styled.div`
-  color: var(--adaptiveGrey900);
-  font-size: clamp(1.7rem, 4vw, 2.45rem);
-  font-weight: 900;
-  line-height: 1.18;
+  color: #191F28;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.3;
   word-break: keep-all;
 `;
 
 const MapPanel = styled.div`
-  display: grid;
-  gap: 14px;
-  padding: 18px;
-  border-radius: var(--radius-control);
-  background: var(--adaptiveGreyBackground);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 `;
 
 const MapHeader = styled.div`
@@ -716,25 +637,21 @@ const MapHeader = styled.div`
 `;
 
 const MapTitle = styled.div`
-  color: var(--adaptiveGrey900);
-  font-size: 0.96rem;
-  font-weight: 900;
+  color: #191F28;
+  font-size: 16px;
+  font-weight: 600;
 `;
 
 const MapSummary = styled.div`
-  color: var(--adaptiveGrey600);
-  font-size: 0.84rem;
-  font-weight: 850;
+  color: #4E5968;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 const ChartFrame = styled.div`
   width: 100%;
   max-width: 360px;
   margin: 0 auto;
-  border: 1px solid var(--adaptiveHairlineBorder);
-  border-radius: var(--radius-control);
-  background: var(--adaptiveLayeredBackground);
-  overflow: hidden;
 
   & > svg {
     display: block;
@@ -742,8 +659,9 @@ const ChartFrame = styled.div`
 `;
 
 const AxisItem = styled.div`
-  display: grid;
-  gap: 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 `;
 
 const AxisHeader = styled.div`
@@ -754,23 +672,23 @@ const AxisHeader = styled.div`
 `;
 
 const AxisTitle = styled.div`
-  color: var(--adaptiveGrey800);
-  font-size: 0.92rem;
-  font-weight: 900;
+  color: #191F28;
+  font-size: 16px;
+  font-weight: 600;
 `;
 
 const AxisScore = styled.div`
-  color: var(--adaptiveGrey600);
-  font-size: 0.86rem;
-  font-weight: 900;
+  color: #4E5968;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const AxisTrack = styled.div`
   position: relative;
-  height: 14px;
+  height: 8px;
   overflow: hidden;
   border-radius: 999px;
-  background: var(--adaptiveGreyBackground);
+  background: #F2F4F6;
 `;
 
 const AxisCenter = styled.div`
@@ -778,8 +696,8 @@ const AxisCenter = styled.div`
   top: 0;
   bottom: 0;
   left: 50%;
-  width: 2px;
-  background: var(--adaptiveHairlineBorder);
+  width: 1px;
+  background: #E5E7EB;
 `;
 
 const AxisFill = styled("div", {
@@ -799,46 +717,49 @@ const AxisLabels = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: var(--adaptiveGrey500);
-  font-size: 0.8rem;
-  font-weight: 800;
+  color: #8B95A1;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 0;
+  border-top: 1px solid #E5E7EB;
+  border-bottom: 1px solid #E5E7EB;
+`;
+
+const StatCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 16px;
+  border-right: 1px solid #E5E7EB;
+
+  &:last-of-type {
+    border-right: 0;
+  }
 `;
 
 const StatLabel = styled.div`
-  color: var(--adaptiveGrey600);
-  font-size: 0.82rem;
-  font-weight: 900;
+  color: #8B95A1;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 const StatValue = styled("div", {
   shouldForwardProp: (prop) => prop !== "$tone",
 })<{ $tone: string }>`
   color: ${({ $tone }) => $tone};
-  font-size: 1.85rem;
-  font-weight: 900;
+  font-size: 24px;
+  font-weight: 700;
   line-height: 1;
 `;
 
-const StatCard = styled("div", {
-  shouldForwardProp: (prop) => prop !== "$tone",
-})<{ $tone: string }>`
-  display: grid;
-  gap: 8px;
-  padding: 16px;
-  border-radius: var(--radius-control);
-  background: var(--adaptiveGreyBackground);
-  box-shadow: inset 0 0 0 1px var(--adaptiveHairlineBorder);
-`;
-
 const BattleList = styled.div`
-  display: grid;
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
 `;
 
 const BattleItem = styled.div`
@@ -846,8 +767,8 @@ const BattleItem = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--adaptiveHairlineBorder);
+  padding: 16px 0;
+  border-bottom: 1px solid #F2F4F6;
 
   &:last-of-type {
     border-bottom: 0;
@@ -860,10 +781,10 @@ const BattleItem = styled.div`
 `;
 
 const BattleTopic = styled.div`
-  color: var(--adaptiveGrey900);
-  font-size: 0.96rem;
-  font-weight: 850;
-  line-height: 1.45;
+  color: #191F28;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
   word-break: keep-all;
 `;
 
@@ -871,46 +792,40 @@ const BattleMeta = styled.div`
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 9px;
-  color: var(--adaptiveGrey500);
-  font-size: 0.82rem;
-  font-weight: 800;
+  gap: 12px;
+  color: #8B95A1;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 const ResultBadge = styled("span", {
   shouldForwardProp: (prop) => prop !== "$tone",
 })<{ $tone: string }>`
-  display: inline-flex;
-  min-height: 26px;
-  align-items: center;
-  border-radius: 999px;
-  padding: 0 9px;
   color: ${({ $tone }) => $tone};
-  background: var(--adaptiveGreyBackground);
-  font-size: 0.78rem;
-  font-weight: 900;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const EmptyState = styled.div`
-  display: grid;
-  gap: 10px;
-  padding: 20px;
-  border-radius: var(--radius-control);
-  background: var(--adaptiveGreyBackground);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 32px 0;
+  border-top: 1px solid #E5E7EB;
 `;
 
 const EmptyTitle = styled.h3`
   margin: 0;
-  color: var(--adaptiveGrey900);
-  font-size: 1.08rem;
-  font-weight: 900;
+  color: #191F28;
+  font-size: 18px;
+  font-weight: 700;
 `;
 
 const EmptyText = styled.p`
   margin: 0;
-  color: var(--adaptiveGrey600);
-  font-size: 0.92rem;
-  font-weight: 650;
+  color: #4E5968;
+  font-size: 14px;
+  font-weight: 400;
   line-height: 1.6;
 `;
 
@@ -921,13 +836,13 @@ const PrimaryLink = styled(Link)`
   align-items: center;
   justify-content: center;
   gap: 6px;
-  border-radius: var(--radius-control);
-  padding: 0 14px;
-  color: var(--white);
-  background: var(--adaptiveBlue500);
-  font-size: 0.9rem;
-  font-weight: 900;
-  transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 8px;
+  padding: 0 16px;
+  color: #FFFFFF;
+  background: #191F28;
+  font-size: 14px;
+  font-weight: 600;
+  transition: opacity 140ms ease-out;
 
   &:hover {
     opacity: 0.88;

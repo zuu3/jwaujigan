@@ -21,11 +21,10 @@ export function OverviewSection() {
           viewport={{ once: true, amount: 0.35 }}
           variants={fadeUp}
         >
-          <SectionEyebrow>Why Jwaujigan</SectionEyebrow>
-          <SectionTitle>정치를 어렵지 않게 시작하도록 만드는 서비스</SectionTitle>
+          <SectionEyebrow>서비스 소개</SectionEyebrow>
+          <SectionTitle>정치를 어렵지 않게 시작합니다</SectionTitle>
           <SectionText>
-            서비스가 해야 할 일은 많아 보이는 기능을 나열하는 게 아니라,
-            사용자가 바로 이해할 수 있는 흐름을 만드는 것입니다.
+            많은 기능을 나열하지 않고, 바로 이해할 수 있는 흐름을 만듭니다.
           </SectionText>
         </SectionHeader>
 
@@ -59,9 +58,11 @@ export function OverviewSection() {
 
 const ValueRow = styled.div`
   display: grid;
-  margin-top: 42px;
+  margin-top: 40px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 
   @media (max-width: 960px) {
     grid-template-columns: 1fr;
@@ -71,24 +72,30 @@ const ValueRow = styled.div`
 const ValueItem = styled(motion.div)`
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 16px;
-  padding: 26px 24px;
-  border-radius: 24px;
-  background: var(--surface-soft);
+  gap: 12px;
+  padding: 24px 20px;
+  border-right: 1px solid var(--line);
+
+  &:last-child {
+    border-right: none;
+  }
 
   @media (max-width: 960px) {
-    padding: 22px 20px;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+
+    &:last-child {
+      border-bottom: none;
+    }
   }
 `;
 
 const ValueIcon = styled.div`
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   place-items: center;
-  border-radius: 14px;
-  color: var(--blue);
-  background: rgba(49, 130, 246, 0.08);
+  color: var(--sub);
 `;
 
 const ValueTextGroup = styled.div`
@@ -98,17 +105,17 @@ const ValueTextGroup = styled.div`
 const ValueTitle = styled.h3`
   margin: 0;
   color: var(--text);
-  font-size: 1.08rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 `;
 
 const ValueDescription = styled.p`
-  margin: 10px 0 0;
-  color: var(--muted);
-  font-size: 0.95rem;
-  font-weight: 500;
-  line-height: 1.6;
-  letter-spacing: -0.02em;
+  margin: 6px 0 0;
+  color: var(--sub);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
   word-break: keep-all;
 `;

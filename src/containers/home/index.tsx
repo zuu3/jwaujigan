@@ -3,7 +3,7 @@
 import styled from "@emotion/styled";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, ChevronDown, ExternalLink, MapPin, Zap } from "lucide-react";
+import { ArrowRight, ChevronDown, ExternalLink, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -68,28 +68,25 @@ function getOnboardingCopy({
     return {
       label: "지역구와 성향 분석이 필요해요",
       action: "설정 이어가기",
-      title: "내 지역구와 성향을 먼저 정리해 보세요",
-      description:
-        "지역구를 저장하고 성향 분석을 마치면 맞춤 의원 정보와 배틀 진입 흐름이 더 정확해집니다.",
+      title: "지역구와 정치 성향을 먼저 정리해 볼까요?",
+      description: "지역구와 성향을 저장하면 의원·이슈가 더 정확해져요.",
     };
   }
 
   if (needsDistrict) {
     return {
       label: "지역구 설정이 필요해요",
-      action: "지역구 설정하기",
-      title: "내 지역구를 먼저 설정해 보세요",
-      description:
-        "지역구를 저장하면 현재 선거구 기준 의원 정보를 바로 불러올 수 있습니다.",
+      action: "지역구 설정",
+      title: "내 지역구를 먼저 설정해 볼까요?",
+      description: "지역구를 저장하면 현재 선거구 의원을 바로 볼 수 있어요.",
     };
   }
 
   return {
     label: "성향 분석을 완료해 주세요",
     action: "성향 분석 이어가기",
-    title: "내 정치 성향을 마무리해 보세요",
-    description:
-      "성향 분석을 마치면 홈에서 더 자연스럽게 토론 주제와 추천 흐름을 이어갈 수 있습니다.",
+    title: "정치 성향 분석을 마무리해 볼까요?",
+    description: "성향 분석을 마치면 토론 진입이 더 자연스러워져요.",
   };
 }
 
@@ -170,22 +167,28 @@ export function HomeContainer({ session }: HomeContainerProps) {
 
   const politicians = politiciansQuery.data?.politicians ?? [];
   const issues = issuesQuery.data?.issues ?? [];
-  const politicianCountLabel =
-    politicians.length > 0 ? `${politicians.length}명 확인` : "의원 정보 대기 중";
-  const issueCountLabel = issues.length > 0 ? `${issues.length}건 반영` : "이슈 수집 중";
+
+  const introTitle = needsOnboarding
+    ? onboardingCopy.title
+    : district
+      ? `${district} 의원 정보와 오늘의 쟁점을 정리했어요.`
+      : "오늘의 쟁점을 한눈에 정리했어요.";
+  const introEyebrow = displayName ? `오늘, ${displayName}님` : "오늘";
+  const introText = needsOnboarding ? onboardingCopy.description : null;
+
   const primaryAction = needsOnboarding
     ? { href: "/onboarding", label: onboardingCopy.action }
-    : { href: "/arena", label: "AI 배틀 시작하기" };
+    : { href: "/arena", label: "AI 배틀 시작" };
   const secondaryAction = needsDistrict
     ? { href: "/onboarding", label: "지역구 설정" }
-    : { href: "#local-politicians", label: "의원 보기" };
+    : { href: "#local-politicians", label: "내 의원 보기" };
 
   return (
     <Page>
       <MotionHeader
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.28 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
       >
         <Brand href="/">좌우지간</Brand>
 
@@ -196,19 +199,16 @@ export function HomeContainer({ session }: HomeContainerProps) {
         </HeaderNav>
 
         <HeaderActions>
-          <ProfileChip>
+          <ProfileInline>
             <Avatar aria-hidden="true">
               {displayImage ? (
-                <AvatarImage src={displayImage} alt="" width={38} height={38} />
+                <AvatarImage src={displayImage} alt="" width={32} height={32} />
               ) : (
                 getProfileInitial(displayName, displayEmail)
               )}
             </Avatar>
-            <ProfileMeta>
-              <ProfileName>{displayName ?? "사용자"}</ProfileName>
-              <ProfileEmail>{displayEmail ?? ""}</ProfileEmail>
-            </ProfileMeta>
-          </ProfileChip>
+            <ProfileName>{displayName ?? "사용자"}</ProfileName>
+          </ProfileInline>
 
           <MyPageLink href="/mypage">마이페이지</MyPageLink>
           <HeaderSignOutButton callbackUrl="/">로그아웃</HeaderSignOutButton>
@@ -217,89 +217,81 @@ export function HomeContainer({ session }: HomeContainerProps) {
 
       <Main>
         <MotionIntro
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.32, delay: 0.04 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
         >
-          <IntroBand>
-            <IntroCopy>
-              <IntroEyebrow>
-                {district ? `${district} 기준 홈 브리핑` : "맞춤 홈 브리핑"}
-              </IntroEyebrow>
-              <IntroTitle>
-                {displayName ? `${displayName}님, ` : ""}
-                {needsOnboarding
-                  ? onboardingCopy.title
-                  : "오늘 확인할 정치 이슈와 지역구 의원을 바로 볼 수 있어요"}
-              </IntroTitle>
-              <IntroText>{onboardingCopy.description}</IntroText>
-              <IntroActions>
-                <PrimaryActionLink href={primaryAction.href}>
-                  {primaryAction.label}
-                  <ArrowRight size={16} />
-                </PrimaryActionLink>
-                <SecondaryActionLink href={secondaryAction.href}>
-                  {secondaryAction.label}
-                </SecondaryActionLink>
-              </IntroActions>
-            </IntroCopy>
+          <IntroCopy>
+            <IntroEyebrow>{introEyebrow}</IntroEyebrow>
+            <IntroTitle>{introTitle}</IntroTitle>
+            {introText ? <IntroText>{introText}</IntroText> : null}
+            <IntroActions>
+              <PrimaryActionLink href={primaryAction.href}>
+                {primaryAction.label}
+                <ArrowRight size={16} />
+              </PrimaryActionLink>
+              <SecondaryActionLink href={secondaryAction.href}>
+                {secondaryAction.label}
+              </SecondaryActionLink>
+            </IntroActions>
+          </IntroCopy>
 
-            <IntroStats aria-label="홈 상태 요약">
-              <StatItem>
-                <StatLabel>지역구</StatLabel>
-                <StatValue>{district ?? "미설정"}</StatValue>
-              </StatItem>
-              <StatItem>
-                <StatLabel>성향 분석</StatLabel>
-                <StatValue>{hasPoliticalProfile ? "완료" : "미완료"}</StatValue>
-              </StatItem>
-              <StatItem>
-                <StatLabel>내 지역구 의원</StatLabel>
-                <StatValue>{district ? politicianCountLabel : "설정 필요"}</StatValue>
-              </StatItem>
-              <StatItem>
-                <StatLabel>핫이슈</StatLabel>
-                <StatValue>{issueCountLabel}</StatValue>
-              </StatItem>
-            </IntroStats>
-          </IntroBand>
+          <IntroStatsDivider />
+          <IntroStats aria-label="홈 상태 요약">
+            <StatItem>
+              <StatLabel>지역구</StatLabel>
+              <StatValue>{district ?? "미설정"}</StatValue>
+            </StatItem>
+            <StatItem>
+              <StatLabel>성향 분석</StatLabel>
+              <StatValue>{hasPoliticalProfile ? "완료" : "미완료"}</StatValue>
+            </StatItem>
+            <StatItem>
+              <StatLabel>내 의원</StatLabel>
+              <StatValue>
+                {district ? `${politicians.length}명` : "설정 필요"}
+              </StatValue>
+            </StatItem>
+            <StatItem>
+              <StatLabel>핫이슈</StatLabel>
+              <StatValue>{issues.length > 0 ? `${issues.length}건` : "수집 중"}</StatValue>
+            </StatItem>
+          </IntroStats>
         </MotionIntro>
 
         <MotionSection
           id="local-politicians"
-          initial={{ opacity: 0, y: 22 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.34, delay: 0.1 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
         >
           <SectionHeader>
             <SectionMeta>
-              <SectionEyebrow>내 지역구 의원</SectionEyebrow>
-              <SectionTitle>
-                {district ? district : "지역구를 먼저 설정해 주세요"}
-              </SectionTitle>
+              <SectionTitleRow>
+                <SectionTitle>내 지역구 의원</SectionTitle>
+                <SectionSubtle>
+                  {district ? district : "지역구 설정 필요"}
+                </SectionSubtle>
+              </SectionTitleRow>
             </SectionMeta>
             {needsOnboarding ? (
               <SectionHeaderAside>
-                <CompactNotice>
-                  <CompactNoticeLabel>{onboardingCopy.label}</CompactNoticeLabel>
-                  <CompactNoticeAction href="/onboarding">
-                    {onboardingCopy.action}
-                    <ArrowRight size={15} />
-                  </CompactNoticeAction>
-                </CompactNotice>
+                <CompactNoticeAction href="/onboarding">
+                  {onboardingCopy.label}
+                  <ArrowRight size={14} />
+                </CompactNoticeAction>
               </SectionHeaderAside>
             ) : null}
           </SectionHeader>
 
           {district ? (
             politiciansQuery.isLoading ? (
-              <EmptyCard>의원 정보를 불러오는 중입니다.</EmptyCard>
+              <EmptyCard>의원 정보를 불러오는 중이에요.</EmptyCard>
             ) : politiciansQuery.isError ? (
               <EmptyCard>
-                <EmptyCardTitle>의원 정보를 불러오지 못했습니다.</EmptyCardTitle>
+                <EmptyCardTitle>의원 정보를 불러오지 못했어요.</EmptyCardTitle>
                 <EmptyCardText>
-                  잠시 후 다시 시도해 주세요. 문제가 계속되면 지역구 설정 상태도 함께
-                  확인하는 편이 안전합니다.
+                  잠시 후 다시 시도해 주세요. 계속되면 지역구 설정도 확인해 주세요.
                 </EmptyCardText>
                 <RetryButton
                   type="button"
@@ -331,7 +323,7 @@ export function HomeContainer({ session }: HomeContainerProps) {
                       <PoliticianBody>
                         <PoliticianInline>
                           <PoliticianName>{politician.name}</PoliticianName>
-                          <PoliticianDivider />
+                          <DotDivider aria-hidden="true">·</DotDivider>
                           <PartyInline>
                             {party.src ? (
                               <PartyLogo
@@ -345,14 +337,14 @@ export function HomeContainer({ session }: HomeContainerProps) {
                               <PartyTextBadge $tone={partyTone}>{party.label}</PartyTextBadge>
                             )}
                           </PartyInline>
-                          <PoliticianDivider />
+                          <DotDivider aria-hidden="true">·</DotDivider>
                           <PoliticianMeta>
-                            <MapPin size={13} />
+                            <MapPin size={14} />
                             <span>{politician.district}</span>
                           </PoliticianMeta>
                           {politician.reelection ? (
                             <>
-                              <PoliticianDivider />
+                              <DotDivider aria-hidden="true">·</DotDivider>
                               <PoliticianTag>{politician.reelection}</PoliticianTag>
                             </>
                           ) : null}
@@ -374,11 +366,11 @@ export function HomeContainer({ session }: HomeContainerProps) {
                             {expandedPoliticianId === politician.id
                               ? "상세 닫기"
                               : "홈에서 바로 보기"}
-                            <ArrowRight size={15} />
+                            <ArrowRight size={14} />
                           </InlineActionButton>
                           <DetailLink href={`/politicians/${politician.id}`}>
                             상세 페이지
-                            <ArrowRight size={15} />
+                            <ArrowRight size={14} />
                           </DetailLink>
                         </PoliticianActions>
 
@@ -386,11 +378,11 @@ export function HomeContainer({ session }: HomeContainerProps) {
                           <PoliticianInlineDetail>
                             {politicianDetailQuery.isLoading ? (
                               <InlineDetailText>
-                                상세 정보를 불러오는 중입니다.
+                                상세 정보를 불러오는 중이에요.
                               </InlineDetailText>
                             ) : politicianDetailQuery.isError ? (
                               <InlineDetailText>
-                                상세 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+                                상세 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.
                               </InlineDetailText>
                             ) : politicianDetailQuery.data ? (
                               <>
@@ -442,10 +434,9 @@ export function HomeContainer({ session }: HomeContainerProps) {
               </PoliticianList>
             ) : (
               <EmptyCard>
-                <EmptyCardTitle>등록된 지역구 의원 정보를 찾지 못했습니다.</EmptyCardTitle>
+                <EmptyCardTitle>이 지역구로 등록된 의원이 없어요.</EmptyCardTitle>
                 <EmptyCardText>
-                  현재 저장된 지역구와 일치하는 결과가 없습니다. 온보딩에서 지역구를 다시
-                  설정한 뒤 다시 확인해 보세요.
+                  온보딩에서 지역구를 다시 설정해 주세요.
                 </EmptyCardText>
               </EmptyCard>
             )
@@ -453,37 +444,35 @@ export function HomeContainer({ session }: HomeContainerProps) {
             <DistrictPromptCard>
               <PromptTitle>{onboardingCopy.title}</PromptTitle>
               <PromptText>{onboardingCopy.description}</PromptText>
-              <PromptLink href="/onboarding">지역구 설정하기</PromptLink>
+              <PromptLink href="/onboarding">지역구 설정</PromptLink>
             </DistrictPromptCard>
           )}
         </MotionSection>
 
         <MotionSection
           id="hot-issues"
-          initial={{ opacity: 0, y: 22 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.34, delay: 0.16 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
         >
           <SectionHeader>
             <SectionMeta>
-              <SectionEyebrow>오늘의 핫이슈</SectionEyebrow>
-              <SectionTitle>오늘 나온 쟁점을 빠르게 훑어봅니다</SectionTitle>
+              <SectionTitleRow>
+                <SectionTitle>오늘의 핫이슈</SectionTitle>
+                {!issuesQuery.isLoading && issues.length > 0 ? (
+                  <SectionCount>{issues.length}건</SectionCount>
+                ) : null}
+              </SectionTitleRow>
             </SectionMeta>
-            {!issuesQuery.isLoading && issues.length > 0 ? (
-              <IssueSectionBadge>{issues.length}개 이슈</IssueSectionBadge>
-            ) : null}
           </SectionHeader>
 
           <IssueLayout>
             {issuesQuery.isLoading ? (
-              <EmptyCard>핫이슈를 불러오는 중입니다.</EmptyCard>
+              <EmptyCard>핫이슈를 불러오는 중이에요.</EmptyCard>
             ) : issuesQuery.isError ? (
               <EmptyCard>
-                <EmptyCardTitle>핫이슈를 불러오지 못했습니다.</EmptyCardTitle>
-                <EmptyCardText>
-                  잠시 후 다시 시도해 주세요. 국회 공공데이터 또는 이슈 생성 과정에서
-                  문제가 발생했을 수 있습니다.
-                </EmptyCardText>
+                <EmptyCardTitle>핫이슈를 불러오지 못했어요.</EmptyCardTitle>
+                <EmptyCardText>잠시 후 다시 시도해 주세요.</EmptyCardText>
                 <RetryButton
                   type="button"
                   onClick={() => {
@@ -532,11 +521,11 @@ export function HomeContainer({ session }: HomeContainerProps) {
                         <IssueComparisonList>
                           <IssueComparisonRow>
                             <IssueLabel $tone="blue">진보</IssueLabel>
-                            <IssueText $tone="blue">{issue.progressive}</IssueText>
+                            <IssueText>{issue.progressive}</IssueText>
                           </IssueComparisonRow>
                           <IssueComparisonRow>
                             <IssueLabel $tone="red">보수</IssueLabel>
-                            <IssueText $tone="red">{issue.conservative}</IssueText>
+                            <IssueText>{issue.conservative}</IssueText>
                           </IssueComparisonRow>
                         </IssueComparisonList>
                       </IssueExpanded>
@@ -546,9 +535,9 @@ export function HomeContainer({ session }: HomeContainerProps) {
               })
             ) : (
               <EmptyCard>
-                <EmptyCardTitle>지금 보여드릴 핫이슈가 없습니다.</EmptyCardTitle>
+                <EmptyCardTitle>오늘은 아직 핫이슈가 없어요.</EmptyCardTitle>
                 <EmptyCardText>
-                  국회 최신 법안을 다시 수집해 올 때까지 잠시 기다려 주세요.
+                  최신 법안을 수집 중이에요. 잠시 뒤 다시 들러주세요.
                 </EmptyCardText>
               </EmptyCard>
             )}
@@ -557,20 +546,13 @@ export function HomeContainer({ session }: HomeContainerProps) {
 
         <MotionBattleBanner
           id="battle-banner"
-          initial={{ opacity: 0, y: 22 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.34, delay: 0.22 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
         >
           <BannerCopy>
-            <BannerEyebrow>
-              <Zap size={16} />
-              <span>AI 배틀</span>
-            </BannerEyebrow>
-            <BannerTitle>AI가 대신 싸워드립니다</BannerTitle>
-            <BannerText>
-              같은 이슈를 진보와 보수 시각으로 번갈아 보면서 내 판단 기준을 빠르게
-              잡아보세요.
-            </BannerText>
+            <BannerEyebrow>AI 배틀</BannerEyebrow>
+            <BannerTitle>같은 이슈, 두 시각으로 빠르게 비교해 보세요.</BannerTitle>
           </BannerCopy>
 
           <BannerLink href="/arena">
@@ -587,10 +569,10 @@ const Page = styled.main`
   min-height: 100vh;
   padding: 24px 24px 80px;
   background: #ffffff;
-  color: #111827;
+  color: #191f28;
 
   @media (max-width: 768px) {
-    padding: 16px 16px 56px;
+    padding: 20px 20px 56px;
   }
 `;
 
@@ -601,6 +583,8 @@ const MotionHeader = styled(motion.header)`
   justify-content: space-between;
   gap: 16px;
   margin: 0 auto;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f2f4f6;
 
   @media (max-width: 768px) {
     align-items: flex-start;
@@ -610,17 +594,17 @@ const MotionHeader = styled(motion.header)`
 
 const Brand = styled(Link)`
   color: #191f28;
-  font-size: 1.04rem;
-  font-weight: 900;
+  font-size: 18px;
+  font-weight: 800;
   letter-spacing: -0.04em;
 `;
 
 const HeaderNav = styled.nav`
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 24px;
   margin-left: auto;
-  margin-right: 12px;
+  margin-right: 16px;
 
   @media (max-width: 960px) {
     display: none;
@@ -628,48 +612,42 @@ const HeaderNav = styled.nav`
 `;
 
 const HeaderNavLink = styled(Link)`
-  color: #6b7684;
-  font-size: 0.9rem;
-  font-weight: 700;
+  color: #4e5968;
+  font-size: 14px;
+  font-weight: 600;
   letter-spacing: -0.02em;
+  transition: color 140ms cubic-bezier(0.16, 1, 0.3, 1);
 
-  &:not(:last-of-type)::after {
-    content: "|";
-    margin-left: 6px;
-    color: #c3c6cb;
+  &:hover {
+    color: #191f28;
   }
 `;
 
 const HeaderActions = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
 `;
 
-const ProfileChip = styled.div`
-  display: flex;
+const ProfileInline = styled.div`
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
-  padding: 9px 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid #ebebeb;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+  gap: 10px;
 `;
 
 const Avatar = styled.div`
   display: inline-flex;
-  width: 38px;
-  height: 38px;
+  width: 32px;
+  height: 32px;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   border-radius: 999px;
   color: #1d4ed8;
   background: rgba(49, 130, 246, 0.12);
-  font-size: 0.95rem;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 700;
 `;
 
 const AvatarImage = styled(Image)`
@@ -677,23 +655,10 @@ const AvatarImage = styled(Image)`
   border-radius: 999px;
 `;
 
-const ProfileMeta = styled.div`
-  display: grid;
-  gap: 2px;
-`;
-
 const ProfileName = styled.div`
-  font-size: 0.92rem;
-  font-weight: 700;
-`;
-
-const ProfileEmail = styled.div`
-  max-width: 180px;
-  overflow: hidden;
-  color: #6b7684;
-  font-size: 0.82rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: #191f28;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const MyPageLink = styled(Link)`
@@ -701,17 +666,13 @@ const MyPageLink = styled(Link)`
   min-height: 44px;
   align-items: center;
   justify-content: center;
-  padding: 0 15px;
-  border-radius: 999px;
-  color: #1d4ed8;
-  background: rgba(49, 130, 246, 0.1);
-  border: 1px solid #ebebeb;
-  font-size: 0.9rem;
-  font-weight: 700;
-  transition: background 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  color: #4e5968;
+  font-size: 14px;
+  font-weight: 600;
+  transition: color 140ms cubic-bezier(0.16, 1, 0.3, 1);
 
   &:hover {
-    background: rgba(49, 130, 246, 0.16);
+    color: #191f28;
   }
 `;
 
@@ -720,18 +681,16 @@ const HeaderSignOutButton = styled(SignOutButton)`
   min-height: 44px;
   align-items: center;
   justify-content: center;
-  padding: 0 15px;
-  border-radius: 999px;
-  color: #191f28;
-  background: #ffffff;
-  border: 1px solid #d7dde5;
-  font-size: 0.9rem;
-  font-weight: 700;
+  color: #8b95a1;
+  background: transparent;
+  border: 0;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: color 140ms cubic-bezier(0.16, 1, 0.3, 1);
 
   &:hover {
-    background: #f3f4f6;
+    color: #4e5968;
   }
 `;
 
@@ -739,47 +698,41 @@ const Main = styled.div`
   display: grid;
   width: min(100%, 720px);
   gap: 0;
-  margin: 20px auto 0;
+  margin: 32px auto 0;
 `;
 
 const MotionIntro = styled(motion.div)`
   display: grid;
-`;
-
-const IntroBand = styled.section`
-  display: grid;
-  gap: 14px;
-  padding: 28px 24px;
-  background: #f8f9fa;
+  gap: 0;
+  padding-bottom: 40px;
 `;
 
 const IntroCopy = styled.div`
   display: grid;
-  gap: 10px;
+  gap: 8px;
 `;
 
 const IntroEyebrow = styled.div`
-  color: #9ca3af;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  color: #8b95a1;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
 `;
 
 const IntroTitle = styled.h1`
-  margin: 0 0 6px;
-  font-size: 18px;
+  margin: 0;
+  font-size: 24px;
   font-weight: 700;
   line-height: 1.4;
   letter-spacing: -0.03em;
-  color: #111827;
+  color: #191f28;
   word-break: keep-all;
 `;
 
 const IntroText = styled.p`
   margin: 0;
-  color: #6b7280;
-  font-size: 13px;
+  color: #4e5968;
+  font-size: 16px;
   font-weight: 400;
   line-height: 1.6;
   word-break: keep-all;
@@ -787,9 +740,10 @@ const IntroText = styled.p`
 
 const IntroActions = styled.div`
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-top: 2px;
+  align-items: center;
+  margin-top: 8px;
 `;
 
 const PrimaryActionLink = styled(Link)`
@@ -798,16 +752,16 @@ const PrimaryActionLink = styled(Link)`
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 0 14px;
-  border-radius: 6px;
+  padding: 0 16px;
+  border-radius: 8px;
   color: #ffffff;
-  background: #111827;
-  font-size: 12px;
+  background: #191f28;
+  font-size: 14px;
   font-weight: 600;
   transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1);
 
   &:hover {
-    opacity: 0.82;
+    opacity: 0.86;
   }
 `;
 
@@ -816,58 +770,64 @@ const SecondaryActionLink = styled(Link)`
   min-height: 44px;
   align-items: center;
   justify-content: center;
-  padding: 0 14px;
-  border-radius: 6px;
-  color: #374151;
+  color: #4e5968;
   background: transparent;
-  border: 1px solid #d1d5db;
-  font-size: 12px;
+  border: 0;
+  font-size: 14px;
   font-weight: 600;
-  transition: background 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: color 140ms cubic-bezier(0.16, 1, 0.3, 1);
 
   &:hover {
-    background: #f9fafb;
+    color: #191f28;
+    text-decoration: underline;
+    text-underline-offset: 4px;
   }
+`;
+
+const IntroStatsDivider = styled.hr`
+  margin: 32px 0 20px;
+  height: 1px;
+  border: 0;
+  background: #e5e7eb;
 `;
 
 const IntroStats = styled.div`
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0;
-  padding-top: 2px;
-`;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
 
-const StatLabel = styled.span`
-  color: #6b7280;
-  font-size: 12px;
-  font-weight: 400;
-`;
-
-const StatValue = styled.span`
-  color: #374151;
-  font-size: 12px;
-  font-weight: 600;
-  word-break: keep-all;
+  @media (max-width: 540px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 16px;
+  }
 `;
 
 const StatItem = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+  display: grid;
+  gap: 4px;
+`;
 
-  &:not(:last-of-type)::after {
-    content: "|";
-    margin: 0 8px;
-    color: #d1d5db;
-    font-weight: 400;
-  }
+const StatLabel = styled.span`
+  color: #8b95a1;
+  font-size: 14px;
+  font-weight: 500;
+`;
+
+const StatValue = styled.span`
+  color: #191f28;
+  font-size: 16px;
+  font-weight: 600;
+  word-break: keep-all;
 `;
 
 const MotionSection = styled(motion.section)`
   display: grid;
   gap: 0;
-  padding-top: 24px;
+  padding-top: 40px;
+
+  @media (max-width: 768px) {
+    padding-top: 32px;
+  }
 `;
 
 const SectionHeader = styled.div`
@@ -875,13 +835,14 @@ const SectionHeader = styled.div`
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  padding: 10px 0 12px;
+  padding: 16px 0;
   border-top: 1px solid #e5e7eb;
   margin-bottom: 4px;
 
   @media (max-width: 768px) {
     align-items: flex-start;
     flex-direction: column;
+    gap: 8px;
   }
 `;
 
@@ -890,22 +851,33 @@ const SectionMeta = styled.div`
   gap: 4px;
 `;
 
-const SectionEyebrow = styled.div`
-  color: #9ca3af;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+const SectionTitleRow = styled.div`
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
 `;
 
 const SectionTitle = styled.h2`
   margin: 0;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
   line-height: 1.4;
-  letter-spacing: -0.02em;
-  color: #111827;
+  letter-spacing: -0.03em;
+  color: #191f28;
   word-break: keep-all;
+`;
+
+const SectionSubtle = styled.span`
+  color: #8b95a1;
+  font-size: 14px;
+  font-weight: 500;
+`;
+
+const SectionCount = styled.span`
+  color: #4e5968;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const SectionHeaderAside = styled.div`
@@ -917,44 +889,21 @@ const SectionHeaderAside = styled.div`
   }
 `;
 
-const CompactNotice = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0;
-  background: transparent;
-  border: 0;
-
-  @media (max-width: 768px) {
-    width: 100%;
-    justify-content: space-between;
-  }
-`;
-
-const CompactNoticeLabel = styled.div`
-  color: #9a3412;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0;
-  white-space: nowrap;
-`;
-
 const CompactNoticeAction = styled(Link)`
   display: inline-flex;
   align-items: center;
   gap: 6px;
   min-height: 44px;
-  padding: 0 12px;
-  border-radius: 999px;
-  color: #191f28;
-  background: #f3f4f6;
-  font-size: 12px;
-  font-weight: 600;
+  color: #4e5968;
+  background: transparent;
+  border: 0;
+  font-size: 14px;
+  font-weight: 500;
   white-space: nowrap;
-  transition: background 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: color 140ms cubic-bezier(0.16, 1, 0.3, 1);
 
   &:hover {
-    background: #e8eaed;
+    color: #191f28;
   }
 `;
 
@@ -968,7 +917,7 @@ const PoliticianImageWrap = styled.div`
   height: 32px;
   overflow: hidden;
   border-radius: 999px;
-  background: #f3f4f6;
+  background: #f2f4f6;
   flex-shrink: 0;
 `;
 
@@ -983,23 +932,27 @@ const PoliticianFallback = styled.div`
   height: 100%;
   align-items: center;
   justify-content: center;
-  color: #6b7684;
-  font-size: 0.84rem;
-  font-weight: 800;
+  color: #4e5968;
+  font-size: 14px;
+  font-weight: 700;
 `;
 
 const PoliticianRow = styled.article`
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr);
-  gap: 10px;
+  gap: 12px;
   align-items: start;
-  padding: 12px 0;
-  border-bottom: 1px solid #f3f4f6;
+  padding: 16px 0;
+  border-bottom: 1px solid #f2f4f6;
+
+  &:last-of-type {
+    border-bottom: 0;
+  }
 `;
 
 const PoliticianBody = styled.div`
   display: grid;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
 `;
 
@@ -1011,22 +964,23 @@ const PoliticianInline = styled.div`
 `;
 
 const PoliticianName = styled.div`
-  font-size: 14px;
+  color: #191f28;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.03em;
 `;
 
-const PoliticianDivider = styled.div`
-  width: 1px;
-  height: 12px;
-  background: #d1d5db;
+const DotDivider = styled.span`
+  color: #c5cad1;
+  font-size: 14px;
+  line-height: 1;
 `;
 
 const PartyTextBadge = styled.div<{ $tone: "blue" | "red" | "neutral" }>`
   display: inline-flex;
   color: ${({ $tone }) =>
-    $tone === "blue" ? "#3182f6" : $tone === "red" ? "#ef4444" : "#6b7280"};
-  font-size: 11px;
+    $tone === "blue" ? "#3182f6" : $tone === "red" ? "#e5484d" : "#8b95a1"};
+  font-size: 14px;
   font-weight: 600;
 `;
 
@@ -1039,30 +993,34 @@ const PartyInline = styled.div`
 const PartyLogo = styled.img`
   display: block;
   width: auto;
-  height: 12px;
+  height: 14px;
   flex-shrink: 0;
 `;
 
 const PoliticianMeta = styled.div`
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  color: #6b7280;
-  font-size: 12px;
+  gap: 4px;
+  color: #8b95a1;
+  font-size: 14px;
   font-weight: 400;
   min-width: 0;
+
+  svg {
+    flex-shrink: 0;
+  }
 `;
 
 const PoliticianTag = styled.div`
   display: inline-flex;
-  color: #6b7280;
-  font-size: 12px;
+  color: #8b95a1;
+  font-size: 14px;
   font-weight: 400;
 `;
 
 const PoliticianSubtext = styled.div`
-  color: #6b7684;
-  font-size: 12px;
+  color: #8b95a1;
+  font-size: 14px;
   line-height: 1.6;
   word-break: keep-all;
 `;
@@ -1073,7 +1031,7 @@ const DetailLink = styled(Link)`
   align-items: center;
   gap: 4px;
   color: #3182f6;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   transition: opacity 120ms cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -1085,7 +1043,7 @@ const DetailLink = styled(Link)`
 const PoliticianActions = styled.div`
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   flex-wrap: wrap;
 `;
 
@@ -1097,7 +1055,7 @@ const InlineActionButton = styled.button`
   border: 0;
   color: #3182f6;
   background: transparent;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: opacity 120ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -1109,15 +1067,15 @@ const InlineActionButton = styled.button`
 
 const PoliticianInlineDetail = styled.div`
   display: grid;
-  gap: 12px;
-  padding: 14px 0 2px;
+  gap: 16px;
+  padding: 16px 0 4px;
   border-top: 1px solid #e5e7eb;
 `;
 
 const InlineDetailGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 18px;
+  gap: 12px 24px;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -1130,23 +1088,24 @@ const InlineDetailItem = styled.div`
 `;
 
 const InlineDetailLabel = styled.div`
-  color: #6b7684;
-  font-size: 0.78rem;
-  font-weight: 700;
+  color: #8b95a1;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const InlineDetailValue = styled.div`
   color: #191f28;
-  font-size: 0.9rem;
-  line-height: 1.45;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
   word-break: break-word;
 `;
 
 const InlineDetailText = styled.p`
   margin: 0;
-  color: #6b7684;
-  font-size: 0.88rem;
-  line-height: 1.55;
+  color: #8b95a1;
+  font-size: 14px;
+  line-height: 1.6;
 `;
 
 const InlineExternalLink = styled.a`
@@ -1155,27 +1114,28 @@ const InlineExternalLink = styled.a`
   align-items: center;
   gap: 6px;
   color: #191f28;
-  font-size: 0.86rem;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const EmptyCard = styled.div`
   display: grid;
   gap: 8px;
-  padding: 20px 0;
-  color: #6b7280;
+  padding: 32px 0;
+  color: #8b95a1;
 `;
 
 const EmptyCardTitle = styled.div`
-  color: #111827;
-  font-size: 14px;
+  color: #191f28;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.02em;
 `;
 
 const EmptyCardText = styled.p`
   margin: 0;
-  color: #6b7684;
+  color: #8b95a1;
+  font-size: 14px;
   line-height: 1.7;
   word-break: keep-all;
 `;
@@ -1186,31 +1146,33 @@ const RetryButton = styled.button`
   min-height: 44px;
   align-items: center;
   justify-content: center;
-  padding: 0 14px;
-  border-radius: 6px;
+  padding: 0 16px;
+  border-radius: 8px;
   color: #ffffff;
-  background: #111827;
+  background: #191f28;
   border: 0;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  margin-top: 8px;
   transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1);
 
   &:hover {
-    opacity: 0.82;
+    opacity: 0.86;
   }
 `;
 
 const DistrictPromptCard = styled.div`
   display: grid;
   gap: 12px;
-  padding: 18px 0;
+  padding: 24px 0;
   border-bottom: 1px solid #e5e7eb;
 `;
 
 const PromptTitle = styled.div`
-  font-size: 1.18rem;
-  font-weight: 800;
+  color: #191f28;
+  font-size: 18px;
+  font-weight: 700;
   line-height: 1.4;
   letter-spacing: -0.03em;
   word-break: keep-all;
@@ -1218,8 +1180,9 @@ const PromptTitle = styled.div`
 
 const PromptText = styled.p`
   margin: 0;
-  color: #6b7684;
-  line-height: 1.7;
+  color: #4e5968;
+  font-size: 16px;
+  line-height: 1.6;
   word-break: keep-all;
 `;
 
@@ -1229,16 +1192,16 @@ const PromptLink = styled(Link)`
   min-height: 44px;
   align-items: center;
   justify-content: center;
-  padding: 0 14px;
-  border-radius: 6px;
+  padding: 0 16px;
+  border-radius: 8px;
   color: #ffffff;
-  background: #111827;
-  font-size: 12px;
+  background: #191f28;
+  font-size: 14px;
   font-weight: 600;
   transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1);
 
   &:hover {
-    opacity: 0.82;
+    opacity: 0.86;
   }
 `;
 
@@ -1249,33 +1212,19 @@ const IssueLayout = styled.div`
 
 const IssueItem = styled.div`
   display: grid;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid #f2f4f6;
 
   &:last-of-type {
     border-bottom: 0;
   }
 `;
 
-const IssueSectionBadge = styled.div`
-  display: inline-flex;
-  min-height: 32px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 12px;
-  border-radius: 999px;
-  color: #4e5968;
-  background: #f3f4f6;
-  border: 0;
-  font-size: 12px;
-  font-weight: 600;
-`;
-
 const IssueRow = styled.article`
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr) auto;
+  grid-template-columns: 80px minmax(0, 1fr) auto;
   gap: 16px;
   align-items: start;
-  padding: 14px 0;
+  padding: 16px 0;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -1284,10 +1233,10 @@ const IssueRow = styled.article`
 `;
 
 const IssueRowMeta = styled.div`
-  color: #9ca3af;
-  font-size: 11px;
-  font-weight: 400;
-  padding-top: 2px;
+  color: #8b95a1;
+  font-size: 14px;
+  font-weight: 500;
+  padding-top: 4px;
 `;
 
 const IssueRowBody = styled.div`
@@ -1297,18 +1246,18 @@ const IssueRowBody = styled.div`
 
 const IssueTitle = styled.h3`
   margin: 0;
-  font-size: 14px;
+  color: #191f28;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.4;
   letter-spacing: -0.02em;
-  color: #111827;
   word-break: keep-all;
 `;
 
 const IssueSummary = styled.p`
   margin: 0;
-  color: #6b7280;
-  font-size: 12px;
+  color: #4e5968;
+  font-size: 14px;
   line-height: 1.7;
   word-break: keep-all;
 `;
@@ -1317,12 +1266,14 @@ const IssueActions = styled.div`
   display: grid;
   align-content: start;
   justify-items: end;
-  gap: 8px;
+  gap: 12px;
   min-width: 108px;
 
   @media (max-width: 768px) {
     justify-items: start;
     min-width: 0;
+    grid-auto-flow: column;
+    gap: 16px;
   }
 `;
 
@@ -1331,12 +1282,11 @@ const IssueToggleButton = styled.button`
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
-  width: 108px;
   padding: 0;
-  color: #6b7684;
+  color: #4e5968;
   background: transparent;
   border: 0;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: color 120ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -1346,7 +1296,6 @@ const IssueToggleButton = styled.button`
   }
 
   @media (max-width: 768px) {
-    width: auto;
     justify-content: flex-start;
   }
 `;
@@ -1364,9 +1313,8 @@ const IssueTopLink = styled(Link)`
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
-  width: 108px;
   color: #191f28;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   transition: opacity 120ms cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -1376,7 +1324,6 @@ const IssueTopLink = styled(Link)`
 
   @media (max-width: 768px) {
     justify-content: flex-start;
-    width: auto;
   }
 `;
 
@@ -1387,33 +1334,33 @@ const IssueComparisonList = styled.div`
 
 const IssueComparisonRow = styled.div`
   display: grid;
-  gap: 4px;
-  padding: 8px 0;
+  gap: 6px;
+  padding: 12px 0;
 
   &:not(:last-of-type) {
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid #f2f4f6;
   }
 `;
 
 const IssueLabel = styled.div<{ $tone: "blue" | "red" }>`
-  color: ${({ $tone }) => ($tone === "blue" ? "#3182f6" : "#ef4444")};
-  font-size: 11px;
+  color: ${({ $tone }) => ($tone === "blue" ? "#3182f6" : "#e5484d")};
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0;
+  letter-spacing: -0.01em;
 `;
 
-const IssueText = styled.p<{ $tone: "blue" | "red" }>`
+const IssueText = styled.p`
   margin: 0;
-  color: ${({ $tone }) => ($tone === "blue" ? "#3182f6" : "#ef4444")};
-  font-size: 12px;
-  line-height: 1.6;
+  color: #191f28;
+  font-size: 16px;
+  line-height: 1.7;
   word-break: keep-all;
 `;
 
 const IssueExpanded = styled.div`
-  padding: 10px 0 12px 16px;
-  margin-left: 88px;
-  border-left: 2px solid #e5e7eb;
+  padding: 12px 0 16px 16px;
+  margin-left: 96px;
+  border-left: 1px solid #e5e7eb;
 
   @media (max-width: 768px) {
     margin-left: 0;
@@ -1422,52 +1369,41 @@ const IssueExpanded = styled.div`
 
 const MotionBattleBanner = styled(motion.section)`
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 20px;
-  margin-top: 24px;
-  padding: 24px;
-  border-radius: 12px;
-  color: #ffffff;
-  background: #111827;
+  gap: 24px;
+  margin-top: 40px;
+  padding-top: 40px;
+  border-top: 1px solid #e5e7eb;
 
   @media (max-width: 768px) {
     align-items: flex-start;
     flex-direction: column;
+    margin-top: 32px;
+    padding-top: 32px;
   }
 `;
 
 const BannerCopy = styled.div`
   display: grid;
-  gap: 6px;
+  gap: 8px;
+  max-width: 480px;
 `;
 
 const BannerEyebrow = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #9ca3af;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  color: #8b95a1;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
 `;
 
 const BannerTitle = styled.h2`
   margin: 0;
-  font-size: 20px;
+  color: #191f28;
+  font-size: 24px;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.4;
   letter-spacing: -0.03em;
-  color: #ffffff;
-  word-break: keep-all;
-`;
-
-const BannerText = styled.p`
-  margin: 0;
-  color: #9ca3af;
-  font-size: 13px;
-  line-height: 1.6;
   word-break: keep-all;
 `;
 
@@ -1477,17 +1413,17 @@ const BannerLink = styled(Link)`
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 0 18px;
+  padding: 0 20px;
   border-radius: 8px;
-  color: #111827;
-  background: #ffffff;
-  font-size: 13px;
+  color: #ffffff;
+  background: #3182f6;
+  font-size: 14px;
   font-weight: 600;
   flex-shrink: 0;
   white-space: nowrap;
   transition: background 140ms cubic-bezier(0.16, 1, 0.3, 1);
 
   &:hover {
-    background: #f3f4f6;
+    background: #1b64da;
   }
 `;

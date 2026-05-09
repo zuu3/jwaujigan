@@ -38,14 +38,14 @@ export function PoliticianDetailContainer({
           </BackLink>
         </TopBar>
 
-        <HeroCard>
+        <Hero>
           <HeroImageWrap>
             {politician.image ? (
               <Image
                 src={politician.image}
                 alt={politician.name}
                 fill
-                sizes="(max-width: 860px) 100vw, 40vw"
+                sizes="(max-width: 860px) 100vw, 220px"
                 style={{ objectFit: "cover" }}
                 priority
               />
@@ -86,41 +86,41 @@ export function PoliticianDetailContainer({
               {politician.committee ?? "현재 위원회 정보가 등록되지 않았습니다."}
             </HeroDescription>
           </HeroBody>
-        </HeroCard>
+        </Hero>
 
         <ContentGrid>
           <MainSection>
-            <SectionCard>
+            <Section>
               <SectionTitle>기본 정보</SectionTitle>
-              <InfoGrid>
-                <InfoItem>
+              <InfoList>
+                <InfoRow>
                   <InfoLabel>직책</InfoLabel>
                   <InfoValue>{politician.jobTitle ?? "-"}</InfoValue>
-                </InfoItem>
-                <InfoItem>
+                </InfoRow>
+                <InfoRow>
                   <InfoLabel>소속 정당</InfoLabel>
                   <InfoValue>{party.label}</InfoValue>
-                </InfoItem>
-                <InfoItem>
+                </InfoRow>
+                <InfoRow>
                   <InfoLabel>출생일</InfoLabel>
                   <InfoValue>{politician.birthDate ?? "-"}</InfoValue>
-                </InfoItem>
-                <InfoItem>
+                </InfoRow>
+                <InfoRow>
                   <InfoLabel>성별</InfoLabel>
                   <InfoValue>{politician.gender ?? "-"}</InfoValue>
-                </InfoItem>
-                <InfoItem>
+                </InfoRow>
+                <InfoRow>
                   <InfoLabel>당선 대수</InfoLabel>
                   <InfoValue>{politician.terms ?? "-"}</InfoValue>
-                </InfoItem>
-                <InfoItem>
+                </InfoRow>
+                <InfoRow>
                   <InfoLabel>의원회관</InfoLabel>
                   <InfoValue>{politician.office ?? "-"}</InfoValue>
-                </InfoItem>
-              </InfoGrid>
-            </SectionCard>
+                </InfoRow>
+              </InfoList>
+            </Section>
 
-            <SectionCard>
+            <Section>
               <SectionTitle>약력</SectionTitle>
               {biographyLines.length > 0 ? (
                 <BiographyList>
@@ -131,11 +131,11 @@ export function PoliticianDetailContainer({
               ) : (
                 <EmptyText>공개된 약력 정보가 없습니다.</EmptyText>
               )}
-            </SectionCard>
+            </Section>
           </MainSection>
 
           <AsideSection>
-            <SectionCard>
+            <Section>
               <SectionTitle>연락처</SectionTitle>
               <ContactList>
                 <ContactItem>
@@ -176,7 +176,7 @@ export function PoliticianDetailContainer({
                   </ContactContent>
                 </ContactItem>
               </ContactList>
-            </SectionCard>
+            </Section>
           </AsideSection>
         </ContentGrid>
       </Shell>
@@ -186,19 +186,25 @@ export function PoliticianDetailContainer({
 
 const Page = styled.main`
   min-height: 100vh;
-  padding: 28px 24px 56px;
-  background: #f8f8f6;
+  padding: 32px 24px 64px;
+  background: #ffffff;
   color: #191f28;
+  animation: fade 200ms ease-out;
+
+  @keyframes fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
 
   @media (max-width: 768px) {
-    padding: 20px 16px 40px;
+    padding: 24px 16px 48px;
   }
 `;
 
 const Shell = styled.div`
   display: grid;
-  width: min(100%, 1160px);
-  gap: 18px;
+  width: min(100%, 1080px);
+  gap: 40px;
   margin: 0 auto;
 `;
 
@@ -212,24 +218,20 @@ const BackLink = styled(Link)`
   align-items: center;
   gap: 6px;
   color: #4e5968;
-  font-size: 0.92rem;
-  font-weight: 700;
-  transition: color 120ms cubic-bezier(0.16, 1, 0.3, 1);
+  font-size: 14px;
+  font-weight: 600;
 
   &:hover {
     color: #191f28;
   }
 `;
 
-const HeroCard = styled.section`
+const Hero = styled.section`
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: 160px minmax(0, 1fr);
   gap: 24px;
-  padding: 22px;
-  border: 1px solid #ebebeb;
-  border-radius: 30px;
-  background: #ffffff;
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.05);
+  padding-bottom: 40px;
+  border-bottom: 1px solid #f2f4f6;
 
   @media (max-width: 860px) {
     grid-template-columns: 1fr;
@@ -239,16 +241,14 @@ const HeroCard = styled.section`
 const HeroImageWrap = styled.div`
   position: relative;
   overflow: hidden;
-  height: 280px;
-  border-radius: 24px;
-  background: #eef3f8;
+  width: 160px;
+  height: 160px;
+  border-radius: 8px;
+  background: #f2f4f6;
 
   @media (max-width: 860px) {
-    height: 320px;
-  }
-
-  @media (max-width: 640px) {
-    height: 260px;
+    width: 120px;
+    height: 120px;
   }
 `;
 
@@ -257,22 +257,22 @@ const HeroFallback = styled.div`
   width: 100%;
   height: 100%;
   place-items: center;
-  color: #5b6b7f;
-  font-size: 3rem;
-  font-weight: 800;
+  color: #8b95a1;
+  font-size: 32px;
+  font-weight: 700;
 `;
 
 const HeroBody = styled.div`
   display: grid;
   align-content: center;
-  gap: 14px;
+  gap: 12px;
   min-width: 0;
 `;
 
 const HeroMeta = styled.span`
-  color: #6b7684;
-  font-size: 0.85rem;
-  font-weight: 700;
+  color: #8b95a1;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 const HeroTitleRow = styled.div`
@@ -284,10 +284,10 @@ const HeroTitleRow = styled.div`
 
 const HeroTitle = styled.h1`
   margin: 0;
-  color: #111827;
-  font-size: clamp(2rem, 3vw, 2.8rem);
-  font-weight: 900;
-  letter-spacing: -0.04em;
+  color: #191f28;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 `;
 
 const PartyBox = styled.div`
@@ -297,202 +297,187 @@ const PartyBox = styled.div`
 
 const PartyLogo = styled.img`
   width: auto;
-  height: 22px;
+  height: 20px;
   object-fit: contain;
 `;
 
 const PartyFallback = styled.span`
   display: inline-flex;
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: #f3f4f6;
-  color: #374151;
-  font-size: 0.84rem;
-  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #f2f4f6;
+  color: #4e5968;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const SubTitleRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
 `;
 
 const SubText = styled.span`
-  color: #6b7280;
-  font-size: 0.95rem;
+  color: #8b95a1;
+  font-size: 14px;
 `;
 
 const HeroTags = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 `;
 
 const InfoTag = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 9px 12px;
-  border-radius: 999px;
-  background: #f8fafc;
-  color: #334155;
-  font-size: 0.88rem;
-  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #f2f4f6;
+  color: #4e5968;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 const SimpleTag = styled.span`
   display: inline-flex;
   align-items: center;
-  padding: 9px 12px;
-  border-radius: 999px;
-  background: #f3f4f6;
-  color: #4b5563;
-  font-size: 0.86rem;
-  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #f2f4f6;
+  color: #4e5968;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 const HeroDescription = styled.p`
   margin: 0;
-  color: #4b5563;
-  font-size: 1rem;
-  line-height: 1.65;
+  color: #4e5968;
+  font-size: 16px;
+  line-height: 1.6;
 `;
 
 const ContentGrid = styled.div`
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 18px;
+  gap: 40px;
   align-items: start;
 
   @media (max-width: 960px) {
     grid-template-columns: 1fr;
+    gap: 40px;
   }
 `;
 
 const MainSection = styled.div`
   display: grid;
-  gap: 18px;
+  gap: 40px;
 `;
 
 const AsideSection = styled.aside`
   display: grid;
 `;
 
-const SectionCard = styled.section`
+const Section = styled.section`
   display: grid;
-  gap: 18px;
-  padding: 24px;
-  border: 1px solid #ebebeb;
-  border-radius: 28px;
-  background: #ffffff;
-
-  @media (max-width: 768px) {
-    padding: 20px;
-  }
+  gap: 16px;
 `;
 
 const SectionTitle = styled.h2`
   margin: 0;
-  color: #111827;
-  font-size: 1.1rem;
-  font-weight: 800;
-`;
-
-const InfoGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const InfoItem = styled.div`
-  display: grid;
-  gap: 6px;
-  padding: 14px 16px;
-  border-radius: 18px;
-  background: #f8fafc;
-`;
-
-const InfoLabel = styled.span`
-  color: #6b7280;
-  font-size: 0.82rem;
+  color: #191f28;
+  font-size: 18px;
   font-weight: 700;
 `;
 
+const InfoList = styled.div`
+  display: grid;
+  border-top: 1px solid #f2f4f6;
+`;
+
+const InfoRow = styled.div`
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f2f4f6;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+`;
+
+const InfoLabel = styled.span`
+  color: #8b95a1;
+  font-size: 14px;
+  font-weight: 500;
+`;
+
 const InfoValue = styled.span`
-  color: #111827;
-  font-size: 0.96rem;
-  line-height: 1.55;
+  color: #191f28;
+  font-size: 16px;
+  line-height: 1.5;
   word-break: break-word;
 `;
 
 const BiographyList = styled.ul`
   display: grid;
-  gap: 12px;
   margin: 0;
   padding: 0;
   list-style: none;
+  border-top: 1px solid #f2f4f6;
 `;
 
 const BiographyItem = styled.li`
-  position: relative;
-  padding-left: 16px;
-  color: #374151;
-  font-size: 0.98rem;
-  line-height: 1.7;
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 11px;
-    left: 0;
-    width: 6px;
-    height: 6px;
-    border-radius: 999px;
-    background: #d1d5db;
-  }
+  padding: 14px 0;
+  border-bottom: 1px solid #f2f4f6;
+  color: #191f28;
+  font-size: 16px;
+  line-height: 1.6;
 `;
 
 const EmptyText = styled.p`
   margin: 0;
-  color: #6b7280;
-  font-size: 0.95rem;
+  color: #8b95a1;
+  font-size: 14px;
 `;
 
 const ContactList = styled.div`
   display: grid;
-  gap: 14px;
+  border-top: 1px solid #f2f4f6;
 `;
 
 const ContactItem = styled.div`
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-columns: 28px minmax(0, 1fr);
   gap: 12px;
   align-items: start;
+  padding: 14px 0;
+  border-bottom: 1px solid #f2f4f6;
 `;
 
 const ContactIcon = styled.div`
   display: grid;
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   place-items: center;
-  border-radius: 12px;
-  background: #f3f4f6;
-  color: #4b5563;
+  color: #8b95a1;
 `;
 
 const ContactContent = styled.div`
   display: grid;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
 `;
 
 const ExternalAnchor = styled.a`
-  color: #2563eb;
-  font-size: 0.94rem;
-  line-height: 1.6;
+  color: #3182f6;
+  font-size: 16px;
+  line-height: 1.5;
   word-break: break-all;
+
+  &:hover {
+    text-decoration: underline;
+  }
 `;

@@ -48,27 +48,27 @@ function getStanceLabel(stance: Stance) {
 }
 
 function getStanceTone(stance: Stance) {
-  return stance === "progressive" ? "#3182f6" : "#ef4444";
+  return stance === "progressive" ? "#3182F6" : "#E5484D";
 }
 
 function getResultCopy(result: DebateResult) {
   if (result.winner === "progressive") {
     return {
       title: "진보 AI가 우세했습니다",
-      color: "#3182f6",
+      color: "#3182F6",
     };
   }
 
   if (result.winner === "conservative") {
     return {
       title: "보수 AI가 우세했습니다",
-      color: "#ef4444",
+      color: "#E5484D",
     };
   }
 
   return {
     title: "팽팽한 승부였습니다",
-    color: "var(--adaptiveGrey700)",
+    color: "#4E5968",
   };
 }
 
@@ -246,11 +246,11 @@ export function ArenaIssueDetail({ issue }: IssueDetailProps) {
 
           <ContextGrid>
             <ContextBox>
-              <ContextLabel $tone="#3182f6">진보 관점</ContextLabel>
+              <ContextLabel $tone="#3182F6">진보 관점</ContextLabel>
               <ContextText>{issue.progressive}</ContextText>
             </ContextBox>
             <ContextBox>
-              <ContextLabel $tone="#ef4444">보수 관점</ContextLabel>
+              <ContextLabel $tone="#E5484D">보수 관점</ContextLabel>
               <ContextText>{issue.conservative}</ContextText>
             </ContextBox>
           </ContextGrid>
@@ -258,13 +258,13 @@ export function ArenaIssueDetail({ issue }: IssueDetailProps) {
           <StanceActions>
             <StanceButton
               href={`/arena/${issue.id}/battle?stance=progressive`}
-              $tone="#3182f6"
+              $tone="#3182F6"
             >
               진보 AI 응원하기
             </StanceButton>
             <StanceButton
               href={`/arena/${issue.id}/battle?stance=conservative`}
-              $tone="#ef4444"
+              $tone="#E5484D"
             >
               보수 AI 응원하기
             </StanceButton>
@@ -638,7 +638,13 @@ export function ArenaBattle({
                 message.role === "user" ? getStanceTone(stance) : getStanceTone(message.role)
               }
             >
-              <MessageLabel>
+              <MessageLabel
+                $tone={
+                  message.role === "user"
+                    ? getStanceTone(stance)
+                    : getStanceTone(message.role)
+                }
+              >
                 {message.role === "user"
                   ? `내 의견 · ${getStanceLabel(stance)}`
                   : `${getStanceLabel(message.role)} AI`}
@@ -649,7 +655,9 @@ export function ArenaBattle({
 
           {streamingText ? (
             <MessageBubble $role={streamingRole} $tone={getStanceTone(streamingRole)}>
-              <MessageLabel>{getStanceLabel(streamingRole)} AI</MessageLabel>
+              <MessageLabel $tone={getStanceTone(streamingRole)}>
+                {getStanceLabel(streamingRole)} AI
+              </MessageLabel>
               <MessageText>
                 {streamingText}
                 <Cursor aria-hidden="true" />
@@ -752,19 +760,25 @@ export function ArenaBattle({
 
 const Page = styled.main`
   min-height: 100vh;
-  padding: 28px 24px 64px;
-  color: var(--adaptiveGrey900);
-  background: var(--adaptiveBackground);
+  padding: 32px 24px 80px;
+  color: #191F28;
+  background: #FFFFFF;
+  animation: fadeIn 200ms ease-out;
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
 
   @media (max-width: 640px) {
-    padding: 20px 16px 48px;
+    padding: 24px 16px 64px;
   }
 `;
 
 const Shell = styled.div`
   display: grid;
   width: min(100%, 1120px);
-  gap: 22px;
+  gap: 40px;
   margin: 0 auto;
 `;
 
@@ -773,25 +787,27 @@ const TopNav = styled.nav`
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #F2F4F6;
 `;
 
 const Brand = styled(Link)`
-  color: var(--adaptiveGrey900);
-  font-size: 1.05rem;
-  font-weight: 900;
+  color: #191F28;
+  font-size: 18px;
+  font-weight: 700;
 `;
 
 const HomeLink = styled(Link)`
   display: inline-flex;
-  min-height: 40px;
+  min-height: 44px;
   align-items: center;
-  border: 1px solid var(--adaptiveHairlineBorder);
-  border-radius: var(--radius-control);
-  padding: 0 14px;
-  color: var(--adaptiveGrey700);
-  background: var(--adaptiveLayeredBackground);
-  font-size: 0.9rem;
-  font-weight: 700;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 0 16px;
+  color: #4E5968;
+  background: #FFFFFF;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const LoginBanner = styled.div`
@@ -799,10 +815,10 @@ const LoginBanner = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px 18px;
-  border: 1px solid var(--adaptiveBlue100);
-  border-radius: var(--radius-card);
-  background: var(--adaptiveBlue50);
+  padding: 16px 20px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  background: #FFFFFF;
 
   @media (max-width: 640px) {
     align-items: stretch;
@@ -812,60 +828,60 @@ const LoginBanner = styled.div`
 
 const BannerText = styled.p`
   margin: 0;
-  color: var(--adaptiveBlue800);
-  font-size: 0.95rem;
-  font-weight: 700;
+  color: #4E5968;
+  font-size: 14px;
+  font-weight: 500;
   line-height: 1.55;
 `;
 
 const BannerAction = styled(Link)`
   display: inline-flex;
-  min-height: 40px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-control);
-  padding: 0 14px;
-  color: var(--white);
-  background: var(--adaptiveBlue500);
-  font-size: 0.9rem;
-  font-weight: 800;
+  border-radius: 8px;
+  padding: 0 16px;
+  color: #FFFFFF;
+  background: #3182F6;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const Hero = styled.section`
   display: grid;
-  gap: 12px;
-  padding: 36px 0 12px;
+  gap: 16px;
 `;
 
 const HeroEyebrow = styled.div`
-  color: var(--adaptiveBlue600);
-  font-size: 0.92rem;
-  font-weight: 800;
+  color: #4E5968;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const HeroTitle = styled.h1`
   max-width: 780px;
   margin: 0;
-  color: var(--adaptiveGrey900);
-  font-size: clamp(2rem, 5vw, 3.8rem);
-  font-weight: 900;
-  line-height: 1.15;
+  color: #191F28;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
   word-break: keep-all;
 `;
 
 const HeroDescription = styled.p`
   max-width: 640px;
   margin: 0;
-  color: var(--adaptiveGrey600);
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 1.7;
+  color: #4E5968;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
 `;
 
 const IssueGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: 16px;
 
   @media (max-width: 980px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -878,45 +894,41 @@ const IssueGrid = styled.div`
 
 const IssueCard = styled(Link)`
   display: grid;
-  min-height: 236px;
+  min-height: 200px;
   align-content: start;
   gap: 12px;
-  padding: 22px;
-  border: 1px solid var(--adaptiveHairlineBorder);
-  border-radius: var(--radius-card);
-  background: var(--adaptiveLayeredBackground);
-  box-shadow: var(--shadow-card);
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease;
+  padding: 24px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  background: #FFFFFF;
+  transition: border-color 200ms ease;
 
   &:hover {
-    border-color: var(--adaptiveBlue200);
-    transform: translateY(-2px);
+    border-color: #191F28;
   }
 `;
 
 const IssueCardMeta = styled.div`
-  color: var(--adaptiveBlue600);
-  font-size: 0.82rem;
-  font-weight: 800;
+  color: #8B95A1;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const IssueCardTitle = styled.h2`
   margin: 0;
-  color: var(--adaptiveGrey900);
-  font-size: 1.2rem;
-  font-weight: 900;
-  line-height: 1.35;
+  color: #191F28;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
   word-break: keep-all;
 `;
 
 const IssueCardSummary = styled.p`
   margin: 0;
-  color: var(--adaptiveGrey600);
-  font-size: 0.95rem;
-  font-weight: 600;
-  line-height: 1.65;
+  color: #4E5968;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
 `;
 
 const IssueCardFooter = styled.div`
@@ -925,26 +937,33 @@ const IssueCardFooter = styled.div`
   justify-content: space-between;
   gap: 12px;
   margin-top: auto;
-  color: var(--adaptiveGrey800);
-  font-size: 0.9rem;
-  font-weight: 800;
+  padding-top: 12px;
+  border-top: 1px solid #F2F4F6;
+  color: #191F28;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const EmptyPanel = styled.div`
-  padding: 28px;
-  border: 1px solid var(--adaptiveHairlineBorder);
-  border-radius: var(--radius-card);
-  background: var(--adaptiveLayeredBackground);
+  padding: 32px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  background: #FFFFFF;
 `;
 
 const EmptyTitle = styled.h2`
   margin: 0;
-  font-size: 1.2rem;
+  color: #191F28;
+  font-size: 18px;
+  font-weight: 700;
 `;
 
 const EmptyText = styled.p`
   margin: 8px 0 0;
-  color: var(--adaptiveGrey600);
+  color: #4E5968;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
 `;
 
 const BackLink = styled(Link)`
@@ -952,44 +971,40 @@ const BackLink = styled(Link)`
   width: fit-content;
   align-items: center;
   gap: 6px;
-  color: var(--adaptiveGrey600);
-  font-size: 0.92rem;
-  font-weight: 800;
+  color: #4E5968;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const DetailPanel = styled.section`
   display: grid;
-  gap: 22px;
-  padding: 28px;
-  border: 1px solid var(--adaptiveHairlineBorder);
-  border-radius: var(--radius-card);
-  background: var(--adaptiveLayeredBackground);
-  box-shadow: var(--shadow-card);
+  gap: 24px;
 `;
 
 const DetailTitle = styled.h1`
   max-width: 860px;
   margin: 0;
-  color: var(--adaptiveGrey900);
-  font-size: clamp(1.8rem, 4vw, 3rem);
-  font-weight: 900;
-  line-height: 1.22;
+  color: #191F28;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
   word-break: keep-all;
 `;
 
 const DetailSummary = styled.p`
   max-width: 760px;
   margin: 0;
-  color: var(--adaptiveGrey600);
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 1.72;
+  color: #4E5968;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
 `;
 
 const ContextGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 16px;
 
   @media (max-width: 760px) {
     grid-template-columns: 1fr;
@@ -999,30 +1014,31 @@ const ContextGrid = styled.div`
 const ContextBox = styled.div`
   display: grid;
   gap: 8px;
-  padding: 18px;
-  border-radius: var(--radius-control);
-  background: var(--adaptiveGreyBackground);
+  padding: 20px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  background: #FFFFFF;
 `;
 
 const ContextLabel = styled("div", {
   shouldForwardProp: (prop) => prop !== "$tone",
 })<{ $tone: string }>`
   color: ${({ $tone }) => $tone};
-  font-size: 0.88rem;
-  font-weight: 900;
+  font-size: 14px;
+  font-weight: 700;
 `;
 
 const ContextText = styled.p`
   margin: 0;
-  color: var(--adaptiveGrey700);
-  font-size: 0.94rem;
-  font-weight: 600;
-  line-height: 1.65;
+  color: #4E5968;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
 `;
 
 const StanceActions = styled.div`
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 `;
 
@@ -1030,23 +1046,24 @@ const StanceButton = styled(Link, {
   shouldForwardProp: (prop) => prop !== "$tone",
 })<{ $tone: string }>`
   display: inline-flex;
-  min-height: 48px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-control);
-  padding: 0 18px;
-  color: #ffffff;
+  border-radius: 8px;
+  padding: 0 20px;
+  color: #FFFFFF;
   background: ${({ $tone }) => $tone};
-  font-size: 0.98rem;
-  font-weight: 900;
+  font-size: 16px;
+  font-weight: 600;
 `;
 
 const BattlePage = styled(Page)`
-  padding-bottom: 48px;
+  padding-bottom: 64px;
 `;
 
 const BattleShell = styled(Shell)`
   max-width: 900px;
+  gap: 40px;
 `;
 
 const BattleHeader = styled.div`
@@ -1060,17 +1077,18 @@ const RoundBadge = styled.div`
   display: inline-flex;
   min-height: 36px;
   align-items: center;
+  border: 1px solid #E5E7EB;
   border-radius: 999px;
-  padding: 0 13px;
-  color: var(--adaptiveGrey800);
-  background: var(--adaptiveGreyBackground);
-  font-size: 0.88rem;
-  font-weight: 900;
+  padding: 0 14px;
+  color: #4E5968;
+  background: #FFFFFF;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const BattleTitleBlock = styled.section`
   display: grid;
-  gap: 10px;
+  gap: 12px;
 `;
 
 const BattleKicker = styled.div`
@@ -1078,41 +1096,40 @@ const BattleKicker = styled.div`
   width: fit-content;
   align-items: center;
   gap: 6px;
-  color: var(--adaptiveBlue600);
-  font-size: 0.9rem;
-  font-weight: 900;
+  color: #4E5968;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const BattleTitle = styled.h1`
   margin: 0;
-  color: var(--adaptiveGrey900);
-  font-size: clamp(1.45rem, 4vw, 2.4rem);
-  font-weight: 900;
-  line-height: 1.25;
+  color: #191F28;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
   word-break: keep-all;
 `;
 
 const BattleSummary = styled.p`
   margin: 0;
-  color: var(--adaptiveGrey600);
-  font-size: 0.98rem;
-  font-weight: 600;
-  line-height: 1.65;
+  color: #4E5968;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
 `;
 
 const ChatPanel = styled.section`
   display: grid;
   min-height: 360px;
   align-content: start;
-  gap: 12px;
-  padding: 20px;
-  border: 1px solid var(--adaptiveHairlineBorder);
-  border-radius: var(--radius-card);
-  background: var(--adaptiveLayeredBackground);
-  box-shadow: var(--shadow-card);
+  gap: 16px;
+  padding: 24px 0;
+  border-top: 1px solid #F2F4F6;
+  border-bottom: 1px solid #F2F4F6;
 
   @media (max-width: 640px) {
-    padding: 14px;
+    padding: 16px 0;
   }
 `;
 
@@ -1125,31 +1142,27 @@ const MessageBubble = styled("div", {
   gap: 6px;
   justify-self: ${({ $role }) =>
     $role === "conservative" || $role === "user" ? "end" : "start"};
-  border-radius: 18px;
-  padding: 13px 15px;
-  color: ${({ $role }) =>
-    $role === "conservative" || $role === "user"
-      ? "var(--white)"
-      : "var(--adaptiveGrey900)"};
-  background: ${({ $role, $tone }) =>
-    $role === "conservative" || $role === "user"
-      ? $tone
-      : "var(--adaptiveBlue50)"};
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: #191F28;
+  background: #FFFFFF;
 
   @media (max-width: 640px) {
     max-width: 92%;
   }
 `;
 
-const MessageLabel = styled.div`
-  opacity: 0.78;
-  font-size: 0.75rem;
-  font-weight: 900;
+const MessageLabel = styled.div<{ $tone?: string }>`
+  color: ${({ $tone }) => $tone ?? "#4E5968"};
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const MessageText = styled.div`
-  font-size: 0.96rem;
-  font-weight: 700;
+  color: #191F28;
+  font-size: 14px;
+  font-weight: 400;
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: keep-all;
@@ -1157,11 +1170,11 @@ const MessageText = styled.div`
 
 const Cursor = styled.span`
   display: inline-block;
-  width: 7px;
-  height: 1.05em;
+  width: 6px;
+  height: 1em;
   margin-left: 2px;
-  background: currentColor;
-  vertical-align: -0.16em;
+  background: #191F28;
+  vertical-align: -0.14em;
   animation: blink 0.9s steps(2, start) infinite;
 
   @keyframes blink {
@@ -1174,19 +1187,14 @@ const Cursor = styled.span`
 const EmptyChat = styled.div`
   align-self: center;
   justify-self: center;
-  color: var(--adaptiveGrey500);
-  font-size: 0.95rem;
-  font-weight: 800;
+  color: #8B95A1;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 const Composer = styled.section`
   display: grid;
-  gap: 10px;
-  padding: 16px;
-  border: 1px solid var(--adaptiveBlue200);
-  border-radius: var(--radius-card);
-  background: var(--adaptiveLayeredBackground);
-  box-shadow: var(--shadow-card);
+  gap: 12px;
 `;
 
 const ComposerMeta = styled.div`
@@ -1194,9 +1202,9 @@ const ComposerMeta = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  color: var(--adaptiveGrey600);
-  font-size: 0.86rem;
-  font-weight: 800;
+  color: #8B95A1;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 const ComposerActions = styled.div`
@@ -1209,22 +1217,29 @@ const ComposerActions = styled.div`
 const ArgumentInput = styled.textarea`
   width: 100%;
   resize: vertical;
-  border: 1px solid var(--adaptiveHairlineBorder);
-  border-radius: var(--radius-control);
-  padding: 14px;
-  color: var(--adaptiveGrey900);
-  background: var(--adaptiveGreyBackground);
-  font-size: 0.96rem;
-  font-weight: 650;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: #191F28;
+  background: #FFFFFF;
+  font-size: 16px;
+  font-weight: 400;
   line-height: 1.6;
+  transition: border-color 200ms ease;
+
+  &:focus {
+    outline: none;
+    border-color: #3182F6;
+  }
 
   &:disabled {
-    color: var(--adaptiveGrey500);
+    color: #8B95A1;
+    background: #F2F4F6;
     cursor: not-allowed;
   }
 
   &::placeholder {
-    color: var(--adaptiveGrey500);
+    color: #8B95A1;
   }
 `;
 
@@ -1232,58 +1247,70 @@ const SubmitButton = styled("button", {
   shouldForwardProp: (prop) => prop !== "$tone",
 })<{ $tone: string }>`
   display: inline-flex;
-  min-height: 46px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: var(--radius-control);
-  padding: 0 18px;
-  color: var(--white);
-  background: ${({ $tone }) => $tone};
-  font-size: 0.96rem;
-  font-weight: 900;
+  border-radius: 8px;
+  padding: 0 20px;
+  color: #FFFFFF;
+  background: #3182F6;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 10px 22px ${({ $tone }) => `${$tone}33`};
+  transition: opacity 200ms ease;
+
+  &:hover {
+    opacity: 0.92;
+  }
 
   &:disabled {
-    color: var(--adaptiveGrey600);
-    background: #e5e7eb;
-    box-shadow: none;
+    color: #8B95A1;
+    background: #F2F4F6;
     cursor: not-allowed;
   }
 `;
 
 const SecondaryButton = styled.button`
   display: inline-flex;
-  min-height: 46px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--adaptiveHairlineBorder);
-  border-radius: var(--radius-control);
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
   padding: 0 16px;
-  color: var(--adaptiveGrey800);
-  background: var(--adaptiveLayeredBackground);
-  font-size: 0.94rem;
-  font-weight: 900;
+  color: #4E5968;
+  background: #FFFFFF;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+  transition: border-color 200ms ease;
+
+  &:hover {
+    border-color: #191F28;
+  }
 `;
 
 const StatusPanel = styled.div`
   padding: 16px;
-  border-radius: var(--radius-control);
-  color: var(--adaptiveBlue700);
-  background: var(--adaptiveBlue50);
-  font-size: 0.94rem;
-  font-weight: 800;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  color: #4E5968;
+  background: #FFFFFF;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.6;
 `;
 
 const ErrorPanel = styled.div`
   padding: 16px;
-  border-radius: var(--radius-control);
-  color: var(--adaptiveRed700);
-  background: var(--adaptiveRed50);
-  font-size: 0.94rem;
-  font-weight: 800;
+  border: 1px solid #E5484D;
+  border-radius: 8px;
+  color: #E5484D;
+  background: #FFFFFF;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.6;
 `;
 
 const ResultCard = styled("section", {
@@ -1291,25 +1318,25 @@ const ResultCard = styled("section", {
 })<{ $tone: string }>`
   display: grid;
   gap: 12px;
-  padding: 22px;
-  border: 1px solid ${({ $tone }) => $tone};
-  border-radius: var(--radius-card);
-  background: var(--adaptiveLayeredBackground);
-  box-shadow: var(--shadow-card);
+  padding: 24px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  background: #FFFFFF;
 `;
 
 const ResultTitle = styled.h2`
   margin: 0;
-  color: var(--adaptiveGrey900);
-  font-size: 1.45rem;
-  font-weight: 900;
+  color: #191F28;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 `;
 
 const ResultReason = styled.p`
   margin: 0;
-  color: var(--adaptiveGrey600);
-  font-size: 0.98rem;
-  font-weight: 700;
+  color: #4E5968;
+  font-size: 16px;
+  font-weight: 400;
   line-height: 1.6;
 `;
 
@@ -1317,37 +1344,46 @@ const ResultActions = styled.div`
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  margin-top: 4px;
+  margin-top: 8px;
 `;
 
 const ResultButton = styled.button`
   display: inline-flex;
-  min-height: 42px;
-  min-width: 104px;
+  min-height: 44px;
+  min-width: 120px;
   align-items: center;
   justify-content: center;
   gap: 6px;
   border: 0;
-  border-radius: var(--radius-control);
-  padding: 0 14px;
-  color: #ffffff;
-  background: #3182f6;
-  font-size: 0.92rem;
-  font-weight: 900;
+  border-radius: 8px;
+  padding: 0 16px;
+  color: #FFFFFF;
+  background: #3182F6;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 10px 22px rgba(49, 130, 246, 0.22);
+  transition: opacity 200ms ease;
+
+  &:hover {
+    opacity: 0.92;
+  }
 `;
 
 const ResultLink = styled(Link)`
   display: inline-flex;
-  min-height: 42px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--adaptiveHairlineBorder);
-  border-radius: var(--radius-control);
-  padding: 0 14px;
-  color: var(--adaptiveGrey800);
-  background: var(--adaptiveLayeredBackground);
-  font-size: 0.92rem;
-  font-weight: 900;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 0 16px;
+  color: #4E5968;
+  background: #FFFFFF;
+  font-size: 14px;
+  font-weight: 600;
+  transition: border-color 200ms ease;
+
+  &:hover {
+    border-color: #191F28;
+  }
 `;
