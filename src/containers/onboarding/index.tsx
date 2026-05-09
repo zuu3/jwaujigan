@@ -3,11 +3,11 @@
 import styled from "@emotion/styled";
 import { useFunnel } from "@use-funnel/browser";
 import { AnimatePresence, motion } from "framer-motion";
+import { TargetCursor } from "@/components/cursor/target-cursor";
 import { ArrowRight, Crosshair, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useMemo, useState } from "react";
 import { FullScreenLoader } from "@/components/loading/full-screen-loader";
-import { TargetCursor } from "@/components/cursor/target-cursor";
 import {
   DISTRICT_AREA_OPTIONS,
   DISTRICT_PROVINCES,
@@ -1226,22 +1226,18 @@ const AnswerButton = styled.button<{ $selected: boolean }>`
   justify-content: space-between;
   gap: 12px;
   padding: 12px 16px;
-  border: 1px solid
-    ${({ $selected }) => ($selected ? "#191f28" : "#e5e7eb")};
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   color: #191f28;
-  background: #ffffff;
+  background: ${({ $selected }) => ($selected ? "#f4f6f8" : "#ffffff")};
   font-size: 16px;
   font-weight: ${({ $selected }) => ($selected ? 600 : 500)};
   text-align: left;
   cursor: pointer;
-  transition:
-    border-color 160ms ease,
-    background 160ms ease;
+  transition: background 140ms ease;
 
   &:hover:enabled {
-    border-color: #191f28;
-    background: #f9fafb;
+    background: #f4f6f8;
   }
 
   &:disabled {
