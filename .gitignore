@@ -46,3 +46,5 @@ next-env.d.ts
 .codex/
 .opencode/
 skills-lock.json
+test-results/
+playwright-report/
