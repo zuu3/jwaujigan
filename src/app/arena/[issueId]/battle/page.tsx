@@ -21,9 +21,9 @@ export default async function BattlePage({
     searchParams,
     auth(),
   ]);
-  const stance = query.stance;
+  const stance = query.stance as "progressive" | "conservative" | "watch" | undefined;
 
-  if (stance !== "progressive" && stance !== "conservative") {
+  if (stance !== "progressive" && stance !== "conservative" && stance !== "watch") {
     redirect(`/arena/${issueId}`);
   }
 
