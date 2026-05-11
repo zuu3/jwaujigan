@@ -1,9 +1,10 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { ArrowRight, BarChart3, MapPin, RotateCcw, Swords } from "lucide-react";
+import { Activity, ArrowRight, BarChart3, Bell, MapPin, RotateCcw, Swords } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 
 export type MyPageProfile = {
@@ -28,6 +29,30 @@ export type BattleLogItem = {
   topic: string;
   result: string | null;
   created_at: string;
+};
+
+type FollowedPolitician = {
+  id: string;
+  name: string;
+  image: string | null;
+  followed_at: string;
+};
+
+type ActivityItem = {
+  type: "issue_vote" | "battle_vote" | "orientation_test";
+  label: string;
+  created_at: string;
+};
+
+type ActivitySummary = {
+  total_issues: number;
+  vote_ratio: { progressive: number; conservative: number; neutral: number };
+  last_orientation: { type: string; date: string } | null;
+};
+
+type ActivityResponse = {
+  summary: ActivitySummary;
+  activities: ActivityItem[];
 };
 
 type MyPageContainerProps = {
@@ -101,6 +126,18 @@ function clampScore(score: number) {
   return Math.max(-100, Math.min(100, score));
 }
 
+function getActivityTypeLabel(type: ActivityItem["type"]) {
+  if (type === "issue_vote") return "이슈 투표";
+  if (type === "battle_vote") return "배틀 판정";
+  return "성향 분석";
+}
+
+function getActivityTypeTone(type: ActivityItem["type"]) {
+  if (type === "issue_vote") return "#3182f6";
+  if (type === "battle_vote") return "#e5484d";
+  return "#03b26c";
+}
+
 export function MyPageContainer({
   profile,
   politicalProfile,
@@ -109,6 +146,27 @@ export function MyPageContainer({
   const stats = getBattleStats(battleLogs);
   const recentBattleLogs = battleLogs.slice(0, 5);
   const completedAt = politicalProfile?.completed_at ?? null;
+  const [activityData, setActivityData] = useState<ActivityResponse | null>(null);
+  const [followedPoliticians, setFollowedPoliticians] = useState<FollowedPolitician[] | null>(null);
+  const [politicalDetailOpen, setPoliticalDetailOpen] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/politicians/follows", { signal: controller.signal })
+      .then((r) => r.json() as Promise<{ follows: FollowedPolitician[] }>)
+      .then(({ follows }) => setFollowedPoliticians(follows))
+      .catch(() => null);
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/me/activity", { signal: controller.signal })
+      .then((r) => r.json() as Promise<ActivityResponse>)
+      .then(setActivityData)
+      .catch(() => null);
+    return () => controller.abort();
+  }, []);
 
   return (
     <Page>
@@ -164,18 +222,34 @@ export function MyPageContainer({
 
           {politicalProfile ? (
             <>
-              <PoliticalType>{politicalProfile.political_type}</PoliticalType>
-              <PoliticalMap profile={politicalProfile} />
-              <SecurityBar score={politicalProfile.security_score} />
+              <PoliticalTypeHero>
+                <PoliticalTypeBadge>나의 정치 성향</PoliticalTypeBadge>
+                <PoliticalType>{politicalProfile.political_type}</PoliticalType>
+              </PoliticalTypeHero>
+              <PoliticalDetail>
+                <PoliticalDetailToggle
+                  type="button"
+                  onClick={() => setPoliticalDetailOpen((o) => !o)}
+                  aria-expanded={politicalDetailOpen}
+                >
+                  {politicalDetailOpen ? "상세 좌표 접기" : "상세 좌표 보기"}
+                </PoliticalDetailToggle>
+                {politicalDetailOpen ? (
+                  <>
+                    <PoliticalMap profile={politicalProfile} />
+                    <SecurityBar score={politicalProfile.security_score} />
+                  </>
+                ) : null}
+              </PoliticalDetail>
             </>
           ) : (
             <EmptyState>
-              <EmptyTitle>정치 성향 분석이 아직 없습니다</EmptyTitle>
+              <EmptyTitle>나의 정치 성향이 궁금하지 않으세요?</EmptyTitle>
               <EmptyText>
-                테스트를 완료하면 정치 타입과 3축 점수가 여기에 표시됩니다.
+                12문항에 답하면 경제·사회·안보 3축으로 분석한 나만의 성향 타입이 나옵니다.
               </EmptyText>
               <PrimaryLink href="/onboarding">
-                성향 테스트 시작하기
+                3분 성향 테스트 시작하기
                 <ArrowRight size={14} />
               </PrimaryLink>
             </EmptyState>
@@ -191,50 +265,208 @@ export function MyPageContainer({
             <SectionDate>전체 {battleLogs.length}전</SectionDate>
           </SectionHeader>
 
-          <StatsGrid>
-            <StatCard>
-              <StatLabel>승리</StatLabel>
-              <StatValue $tone="#3182F6">{stats.win}</StatValue>
-            </StatCard>
-            <StatCard>
-              <StatLabel>패배</StatLabel>
-              <StatValue $tone="#E5484D">{stats.lose}</StatValue>
-            </StatCard>
-            <StatCard>
-              <StatLabel>무승부</StatLabel>
-              <StatValue $tone="#8B95A1">{stats.draw}</StatValue>
-            </StatCard>
-          </StatsGrid>
-
           {recentBattleLogs.length > 0 ? (
-            <BattleList>
-              {recentBattleLogs.map((log) => (
-                <BattleItem key={log.id}>
-                  <BattleTopic>{log.topic}</BattleTopic>
-                  <BattleMeta>
-                    <ResultBadge $tone={getResultTone(log.result)}>
-                      {getResultLabel(log.result)}
-                    </ResultBadge>
-                    <span>{formatDate(log.created_at)}</span>
-                  </BattleMeta>
-                </BattleItem>
-              ))}
-            </BattleList>
+            <>
+              <StatsRow>
+                <StatItem>
+                  <StatItemLabel>승리</StatItemLabel>
+                  <StatItemValue $tone="#3182F6">{stats.win}</StatItemValue>
+                </StatItem>
+                <StatSep aria-hidden="true">·</StatSep>
+                <StatItem>
+                  <StatItemLabel>패배</StatItemLabel>
+                  <StatItemValue $tone="#E5484D">{stats.lose}</StatItemValue>
+                </StatItem>
+                <StatSep aria-hidden="true">·</StatSep>
+                <StatItem>
+                  <StatItemLabel>무승부</StatItemLabel>
+                  <StatItemValue $tone="#8B95A1">{stats.draw}</StatItemValue>
+                </StatItem>
+              </StatsRow>
+              <BattleList>
+                {recentBattleLogs.map((log) => (
+                  <BattleItem key={log.id}>
+                    <BattleTopic>{log.topic}</BattleTopic>
+                    <BattleMeta>
+                      <ResultBadge $tone={getResultTone(log.result)}>
+                        {getResultLabel(log.result)}
+                      </ResultBadge>
+                      <span>{formatDate(log.created_at)}</span>
+                    </BattleMeta>
+                  </BattleItem>
+                ))}
+              </BattleList>
+            </>
           ) : (
             <EmptyState>
               <EmptyTitle>아직 배틀 기록이 없습니다</EmptyTitle>
               <EmptyText>
-                AI 토론 배틀을 완료하면 승패 기록이 이곳에 쌓입니다.
+                이슈에 투표한 뒤 진보 AI와 보수 AI의 논쟁을 직접 판정해 보세요.
               </EmptyText>
-              <PrimaryLink href="/arena">
-                배틀 시작하기
+              <PrimaryLink href="/home">
+                이슈 보러 가기
                 <ArrowRight size={14} />
               </PrimaryLink>
             </EmptyState>
           )}
         </Section>
+
+        <Section>
+          <SectionHeader>
+            <SectionKicker>
+              <Bell size={14} />
+              <span>팔로잉</span>
+            </SectionKicker>
+            {followedPoliticians && followedPoliticians.length > 0 ? (
+              <SectionDate>{followedPoliticians.length}명</SectionDate>
+            ) : null}
+          </SectionHeader>
+
+          {followedPoliticians === null ? (
+            <FollowSkeleton>
+              <SkeletonBlock $h={52} />
+              <SkeletonBlock $h={52} />
+            </FollowSkeleton>
+          ) : followedPoliticians.length === 0 ? (
+            <EmptyState>
+              <EmptyTitle>관심 정치인을 추가해 보세요</EmptyTitle>
+              <EmptyText>
+                팔로우한 정치인이 관련 이슈에 등장하면 홈 피드에서 바로 확인할 수 있습니다.
+              </EmptyText>
+              <PrimaryLink href="/home">
+                정치인 검색하기
+                <ArrowRight size={14} />
+              </PrimaryLink>
+            </EmptyState>
+          ) : (
+            <FollowGrid>
+              {followedPoliticians.map((p) => (
+                <FollowCard key={p.id} href={`/politicians/${p.id}`}>
+                  <FollowAvatar aria-hidden="true">
+                    {p.image ? (
+                      <FollowAvatarImage
+                        src={p.image}
+                        alt=""
+                        width={44}
+                        height={44}
+                      />
+                    ) : (
+                      p.name[0]
+                    )}
+                  </FollowAvatar>
+                  <FollowName>{p.name}</FollowName>
+                  <FollowDate>{formatDate(p.followed_at)}</FollowDate>
+                </FollowCard>
+              ))}
+            </FollowGrid>
+          )}
+        </Section>
+
+        <Section>
+          <SectionHeader>
+            <SectionKicker>
+              <Activity size={14} />
+              <span>내 활동</span>
+            </SectionKicker>
+            {activityData ? (
+              <SectionDate>총 {activityData.summary.total_issues}개 이슈 참여</SectionDate>
+            ) : null}
+          </SectionHeader>
+
+          {activityData ? (
+            activityData.summary.total_issues === 0 ? (
+              <EmptyState>
+                <EmptyTitle>아직 참여한 이슈가 없습니다</EmptyTitle>
+                <EmptyText>
+                  이슈에 투표하거나 배틀을 완료하면 나의 정치 활동 흐름이 여기에 쌓입니다.
+                </EmptyText>
+                <PrimaryLink href="/home">
+                  오늘의 핫이슈 보기
+                  <ArrowRight size={14} />
+                </PrimaryLink>
+              </EmptyState>
+            ) : (
+              <>
+                <ActivitySummaryCard>
+                  <SummaryBlock>
+                    <SummaryLabel>이슈 참여</SummaryLabel>
+                    <SummaryValue>{activityData.summary.total_issues}</SummaryValue>
+                  </SummaryBlock>
+                  <SummaryDivider />
+                  <SummaryBlock>
+                    <SummaryLabel>투표 성향</SummaryLabel>
+                    <VoteRatioBar ratio={activityData.summary.vote_ratio} />
+                  </SummaryBlock>
+                  {activityData.summary.last_orientation ? (
+                    <>
+                      <SummaryDivider />
+                      <SummaryBlock>
+                        <SummaryLabel>마지막 성향</SummaryLabel>
+                        <SummaryOrientationType>
+                          {activityData.summary.last_orientation.type}
+                        </SummaryOrientationType>
+                        <SummaryDate>
+                          {formatDate(activityData.summary.last_orientation.date)}
+                        </SummaryDate>
+                      </SummaryBlock>
+                    </>
+                  ) : null}
+                </ActivitySummaryCard>
+
+                <Timeline as="ul">
+                  {activityData.activities.map((item, i) => (
+                    <TimelineItem as="li" key={`${item.type}-${item.created_at}-${i}`}>
+                      <TimelineDot $tone={getActivityTypeTone(item.type)} aria-hidden="true" />
+                      <TimelineContent>
+                        <TimelineTypeBadge $tone={getActivityTypeTone(item.type)}>
+                          {getActivityTypeLabel(item.type)}
+                        </TimelineTypeBadge>
+                        <TimelineLabel>{item.label}</TimelineLabel>
+                        <TimelineDate>{formatDate(item.created_at)}</TimelineDate>
+                      </TimelineContent>
+                    </TimelineItem>
+                  ))}
+                </Timeline>
+              </>
+            )
+          ) : (
+            <ActivitySkeleton>
+              <SkeletonBlock $h={80} />
+              <SkeletonBlock $h={52} />
+              <SkeletonBlock $h={52} />
+              <SkeletonBlock $h={52} />
+            </ActivitySkeleton>
+          )}
+        </Section>
       </Shell>
     </Page>
+  );
+}
+
+function VoteRatioBar({
+  ratio,
+}: {
+  ratio: { progressive: number; conservative: number; neutral: number };
+}) {
+  const total = ratio.progressive + ratio.conservative + ratio.neutral;
+  if (total === 0) return <SummaryValue style={{ fontSize: 14, color: "#8b95a1" }}>투표 없음</SummaryValue>;
+  const pPct = Math.round((ratio.progressive / total) * 100);
+  const cPct = Math.round((ratio.conservative / total) * 100);
+  const nPct = 100 - pPct - cPct;
+
+  return (
+    <VoteRatioWrap>
+      <VoteRatioTrack>
+        {pPct > 0 && <VoteRatioSegment $color="#3182f6" $pct={pPct} />}
+        {nPct > 0 && <VoteRatioSegment $color="#b0b8c1" $pct={nPct} />}
+        {cPct > 0 && <VoteRatioSegment $color="#e5484d" $pct={cPct} />}
+      </VoteRatioTrack>
+      <VoteRatioLegend>
+        <VoteRatioLegendItem $color="#3182f6">진보 {pPct}%</VoteRatioLegendItem>
+        <VoteRatioLegendItem $color="#b0b8c1">중립 {nPct}%</VoteRatioLegendItem>
+        <VoteRatioLegendItem $color="#e5484d">보수 {cPct}%</VoteRatioLegendItem>
+      </VoteRatioLegend>
+    </VoteRatioWrap>
   );
 }
 
@@ -385,6 +617,10 @@ const Page = styled.main`
     to {
       opacity: 1;
     }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
   }
 
   @media (max-width: 640px) {
@@ -610,6 +846,49 @@ const SectionDate = styled.div`
   font-weight: 500;
 `;
 
+const PoliticalTypeHero = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px 0 8px;
+`;
+
+const PoliticalTypeBadge = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  color: #8b95a1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+`;
+
+const PoliticalDetail = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const PoliticalDetailToggle = styled.button`
+  align-self: flex-start;
+  padding: 6px 12px;
+  border: 1px solid #e5e8eb;
+  border-radius: 9999px;
+  background: transparent;
+  color: #6b7684;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 140ms ease-out;
+
+  &:hover {
+    background: #f2f4f6;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #3182f6;
+    outline-offset: 2px;
+  }
+`;
+
 const PoliticalType = styled.div`
   color: #191F28;
   font-size: 24px;
@@ -722,39 +1001,46 @@ const AxisLabels = styled.div`
   font-weight: 500;
 `;
 
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0;
+const StatsRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 0;
   border-top: 1px solid #E5E7EB;
   border-bottom: 1px solid #E5E7EB;
-`;
 
-const StatCard = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 20px 16px;
-  border-right: 1px solid #E5E7EB;
-
-  &:last-of-type {
-    border-right: 0;
+  @media (max-width: 480px) {
+    gap: 12px;
   }
 `;
 
-const StatLabel = styled.div`
+const StatItem = styled.div`
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+`;
+
+const StatItemLabel = styled.span`
   color: #8B95A1;
   font-size: 14px;
   font-weight: 500;
 `;
 
-const StatValue = styled("div", {
+const StatItemValue = styled("span", {
   shouldForwardProp: (prop) => prop !== "$tone",
 })<{ $tone: string }>`
   color: ${({ $tone }) => $tone};
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
+`;
+
+const StatSep = styled.span`
+  color: #E5E7EB;
+  font-size: 16px;
+  font-weight: 400;
+  user-select: none;
 `;
 
 const BattleList = styled.div`
@@ -846,5 +1132,252 @@ const PrimaryLink = styled(Link)`
 
   &:hover {
     opacity: 0.88;
+  }
+`;
+
+/* ── Activity Section ─────────────────────────────────── */
+
+const ActivitySummaryCard = styled.div`
+  display: flex;
+  gap: 0;
+  border: 1px solid #e5e8eb;
+  border-radius: 12px;
+  overflow: hidden;
+
+  @media (max-width: 560px) {
+    flex-direction: column;
+  }
+`;
+
+const SummaryBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  padding: 20px;
+`;
+
+const SummaryDivider = styled.div`
+  width: 1px;
+  background: #e5e8eb;
+  flex-shrink: 0;
+
+  @media (max-width: 560px) {
+    width: auto;
+    height: 1px;
+  }
+`;
+
+const SummaryLabel = styled.div`
+  color: #8b95a1;
+  font-size: 12px;
+  font-weight: 600;
+`;
+
+const SummaryValue = styled.div`
+  color: #191f28;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+`;
+
+const SummaryOrientationType = styled.div`
+  color: #191f28;
+  font-size: 15px;
+  font-weight: 700;
+  word-break: keep-all;
+`;
+
+const SummaryDate = styled.div`
+  color: #8b95a1;
+  font-size: 12px;
+  font-weight: 500;
+`;
+
+const VoteRatioWrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+const VoteRatioTrack = styled.div`
+  display: flex;
+  height: 8px;
+  border-radius: 9999px;
+  overflow: hidden;
+  gap: 2px;
+`;
+
+const VoteRatioSegment = styled.div<{ $color: string; $pct: number }>`
+  flex: ${({ $pct }) => $pct};
+  background: ${({ $color }) => $color};
+`;
+
+const VoteRatioLegend = styled.div`
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+`;
+
+const VoteRatioLegendItem = styled.span<{ $color: string }>`
+  font-size: 11px;
+  font-weight: 600;
+  color: ${({ $color }) => $color};
+  font-variant-numeric: tabular-nums;
+`;
+
+const Timeline = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding-left: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+`;
+
+const TimelineItem = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 0;
+
+  &:not(:last-of-type) {
+    border-bottom: 1px solid #f2f4f6;
+  }
+`;
+
+const TimelineDot = styled.div<{ $tone: string }>`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: ${({ $tone }) => $tone};
+  flex-shrink: 0;
+  margin-top: 6px;
+`;
+
+const TimelineContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+`;
+
+const TimelineTypeBadge = styled.span<{ $tone: string }>`
+  display: inline-block;
+  width: fit-content;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: ${({ $tone }) => $tone}18;
+  color: ${({ $tone }) => $tone};
+`;
+
+const TimelineLabel = styled.div`
+  color: #191f28;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  word-break: keep-all;
+`;
+
+const TimelineDate = styled.div`
+  color: #8b95a1;
+  font-size: 12px;
+  font-weight: 500;
+`;
+
+/* ── Follow Section ───────────────────────────────────── */
+
+const FollowGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+`;
+
+const FollowCard = styled(Link)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 12px 16px;
+  border: 1px solid #e5e8eb;
+  border-radius: 12px;
+  text-align: center;
+  transition: background 140ms ease-out;
+
+  &:hover {
+    background: #f9fafb;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #3182f6;
+    outline-offset: 2px;
+  }
+`;
+
+const FollowAvatar = styled.div`
+  display: flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #191f28;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+`;
+
+const FollowAvatarImage = styled(Image)`
+  object-fit: cover;
+  border-radius: 50%;
+`;
+
+const FollowName = styled.div`
+  color: #191f28;
+  font-size: 14px;
+  font-weight: 600;
+  word-break: keep-all;
+`;
+
+const FollowDate = styled.div`
+  color: #8b95a1;
+  font-size: 11px;
+  font-weight: 500;
+`;
+
+const FollowSkeleton = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+`;
+
+const ActivitySkeleton = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const SkeletonBlock = styled.div<{ $h: number }>`
+  height: ${({ $h }) => $h}px;
+  border-radius: 8px;
+  background: #f2f4f6;
+  animation: shimmer 1.2s linear infinite;
+
+  @keyframes shimmer {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
   }
 `;
