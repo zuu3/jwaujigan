@@ -1,9 +1,9 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { ArrowLeft, ArrowRight, RotateCcw, Swords } from "lucide-react";
+import { ArrowLeft, ArrowRight, RotateCcw, Share2, Swords } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, memo } from "react";
 import type { CachedArenaBattle } from "@/lib/arena";
 import type { HotIssue } from "@/types/issue";
 
@@ -18,6 +18,7 @@ export type DebateResult = {
 };
 
 type Stance = "progressive" | "conservative";
+type BattleStance = Stance | "watch";
 type BattlePhase =
   | "ai-turn"
   | "between-turns"
@@ -34,9 +35,11 @@ type IssueDetailProps = {
   issue: HotIssue;
 };
 
+type VerdictCounts = { progressive: number; conservative: number; draw: number; total: number };
+
 type BattleProps = {
   issue: HotIssue;
-  stance: Stance;
+  stance: BattleStance;
   isAuthenticated: boolean;
   initialCachedBattle: CachedArenaBattle | null;
 };
@@ -230,6 +233,50 @@ export function ArenaIndex({ issues, isAuthenticated }: ArenaIndexProps) {
   );
 }
 
+const IssueOpinionSnapshot = memo(function IssueOpinionSnapshot({ issueId }: { issueId: string }) {
+  const [counts, setCounts] = useState<VerdictCounts | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`/api/arena/verdict?issueId=${issueId}`, { signal: controller.signal })
+      .then((r) => r.json() as Promise<{ counts: VerdictCounts }>)
+      .then(({ counts: c }) => { if (c.total > 0) setCounts(c); })
+      .catch((e: unknown) => { if (e instanceof Error && e.name !== "AbortError") console.error(e); });
+    return () => controller.abort();
+  }, [issueId]);
+
+  if (!counts) return null;
+
+  const bars: { side: keyof Omit<VerdictCounts, "total">; label: string; color: string; tint: string }[] = [
+    { side: "progressive", label: "진보 AI 우세", color: "#3182f6", tint: "#e8f3ff" },
+    { side: "draw",        label: "무승부",       color: "#4e5968", tint: "#f2f4f6" },
+    { side: "conservative",label: "보수 AI 우세", color: "#e5484d", tint: "#fef2f2" },
+  ];
+
+  return (
+    <OpinionSnapshot>
+      <OpinionSnapshotHeader>
+        <OpinionSnapshotTitle>여론 현황</OpinionSnapshotTitle>
+        <OpinionSnapshotMeta>배틀 참여자 {counts.total.toLocaleString()}명의 판정</OpinionSnapshotMeta>
+      </OpinionSnapshotHeader>
+      <OpinionBarList>
+        {bars.map(({ side, label, color, tint }) => {
+          const pct = Math.round((counts[side] / counts.total) * 100);
+          return (
+            <OpinionBarRow key={side}>
+              <OpinionBarLabel $color={color}>{label}</OpinionBarLabel>
+              <OpinionBarTrack $tint={tint}>
+                <OpinionBarFill $color={color} $pct={pct} />
+              </OpinionBarTrack>
+              <OpinionBarPct>{pct}%</OpinionBarPct>
+            </OpinionBarRow>
+          );
+        })}
+      </OpinionBarList>
+    </OpinionSnapshot>
+  );
+});
+
 export function ArenaIssueDetail({ issue }: IssueDetailProps) {
   return (
     <Page>
@@ -255,6 +302,8 @@ export function ArenaIssueDetail({ issue }: IssueDetailProps) {
             </ContextBox>
           </ContextGrid>
 
+          <IssueOpinionSnapshot issueId={issue.id} />
+
           <StanceActions>
             <StanceButton
               href={`/arena/${issue.id}/battle?stance=progressive`}
@@ -268,6 +317,9 @@ export function ArenaIssueDetail({ issue }: IssueDetailProps) {
             >
               보수 AI 응원하기
             </StanceButton>
+            <WatchButton href={`/arena/${issue.id}/battle?stance=watch`}>
+              그냥 구경하기
+            </WatchButton>
           </StanceActions>
         </DetailPanel>
       </Shell>
@@ -289,6 +341,10 @@ export function ArenaBattle({
   const [argument, setArgument] = useState("");
   const [result, setResult] = useState<DebateResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [verdictCounts, setVerdictCounts] = useState<VerdictCounts | null>(null);
+  const [userVerdict, setUserVerdict] = useState<string | null>(null);
+  const [verdictLoading, setVerdictLoading] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const startedRef = useRef(false);
   const runningTurnRef = useRef<number | null>(null);
   const messagesRef = useRef<DebateMessage[]>([]);
@@ -523,6 +579,15 @@ export function ArenaBattle({
             void saveBattleLog(judged.winner, nextMessages);
           }
 
+          // 판정 투표 초기 데이터 로드
+          void fetch(`/api/arena/verdict?issueId=${issue.id}`)
+            .then((r) => r.json() as Promise<{ counts: VerdictCounts; user_verdict: string | null }>)
+            .then(({ counts, user_verdict }) => {
+              setVerdictCounts(counts);
+              setUserVerdict(user_verdict);
+            })
+            .catch(() => null);
+
           return;
         }
 
@@ -621,7 +686,7 @@ export function ArenaBattle({
         <BattleTitleBlock>
           <BattleKicker>
             <Swords size={16} />
-            <span>{getStanceLabel(stance)} AI 응원 중</span>
+            <span>{stance === "watch" ? "AI 배틀 구경 중" : `${getStanceLabel(stance)} AI 응원 중`}</span>
           </BattleKicker>
           <BattleTitle>{issue.title}</BattleTitle>
           <BattleSummary>{issue.summary}</BattleSummary>
@@ -629,40 +694,48 @@ export function ArenaBattle({
 
         {error ? <ErrorPanel>{error}</ErrorPanel> : null}
 
-        <ChatPanel>
+        <ChatPanel aria-live="polite" aria-label="AI 토론 내용">
           {messages.map((message, index) => (
-            <MessageBubble
+            <MessageRow
               key={`${message.role}-${index}-${message.content}`}
               $role={message.role}
-              $tone={
-                message.role === "user" ? getStanceTone(stance) : getStanceTone(message.role)
-              }
             >
-              <MessageLabel
+              <MessageBubble
+                $role={message.role}
                 $tone={
                   message.role === "user"
-                    ? getStanceTone(stance)
+                    ? getStanceTone(stance === "watch" ? "progressive" : stance)
                     : getStanceTone(message.role)
                 }
               >
-                {message.role === "user"
-                  ? `내 의견 · ${getStanceLabel(stance)}`
-                  : `${getStanceLabel(message.role)} AI`}
-              </MessageLabel>
-              <MessageText>{message.content}</MessageText>
-            </MessageBubble>
+                <MessageLabel
+                  $tone={
+                    message.role === "user"
+                      ? getStanceTone(stance === "watch" ? "progressive" : stance)
+                      : getStanceTone(message.role)
+                  }
+                >
+                  {message.role === "user"
+                    ? `내 의견`
+                    : `${getStanceLabel(message.role)} AI`}
+                </MessageLabel>
+                <MessageText>{message.content}</MessageText>
+              </MessageBubble>
+            </MessageRow>
           ))}
 
           {streamingText ? (
-            <MessageBubble $role={streamingRole} $tone={getStanceTone(streamingRole)}>
-              <MessageLabel $tone={getStanceTone(streamingRole)}>
-                {getStanceLabel(streamingRole)} AI
-              </MessageLabel>
-              <MessageText>
-                {streamingText}
-                <Cursor aria-hidden="true" />
-              </MessageText>
-            </MessageBubble>
+            <MessageRow $role={streamingRole}>
+              <MessageBubble $role={streamingRole} $tone={getStanceTone(streamingRole)}>
+                <MessageLabel $tone={getStanceTone(streamingRole)}>
+                  {getStanceLabel(streamingRole)} AI
+                </MessageLabel>
+                <MessageText>
+                  {streamingText}
+                  <Cursor aria-hidden="true" />
+                </MessageText>
+              </MessageBubble>
+            </MessageRow>
           ) : null}
 
           {messages.length === 0 && !streamingText ? (
@@ -681,26 +754,121 @@ export function ArenaBattle({
         ) : null}
 
         {phase === "result" && result && resultCopy ? (
-          <ResultCard $tone={resultCopy.color}>
-            <ResultTitle>{resultCopy.title}</ResultTitle>
-            <ResultReason>{result.reason}</ResultReason>
-            <ResultActions>
-              <ResultButton type="button" onClick={() => void startBattle()}>
-                <RotateCcw size={16} />
-                <span>다시 도전</span>
-              </ResultButton>
-              <ResultLink href="/arena">다른 이슈</ResultLink>
-            </ResultActions>
-          </ResultCard>
-        ) : (
+          <>
+            <ResultCard $tone={resultCopy.color}>
+              <ResultTitle>{resultCopy.title}</ResultTitle>
+              <ResultReason>{result.reason}</ResultReason>
+              <ResultActions>
+                <ResultButton type="button" onClick={() => void startBattle()}>
+                  <RotateCcw size={16} />
+                  <span>다시 도전</span>
+                </ResultButton>
+                <ResultLink href="/arena">다른 이슈</ResultLink>
+                <ShareButton
+                  type="button"
+                  $copied={shareCopied}
+                  onClick={async () => {
+                    const url = `${window.location.origin}/arena/${issue.id}`;
+                    const shareData = {
+                      title: `${issue.title} | 좌우지간 AI 배틀`,
+                      text: resultCopy.title,
+                      url,
+                    };
+                    if (navigator.share && navigator.canShare?.(shareData)) {
+                      await navigator.share(shareData);
+                    } else {
+                      await navigator.clipboard.writeText(url);
+                      setShareCopied(true);
+                      setTimeout(() => setShareCopied(false), 2000);
+                    }
+                  }}
+                >
+                  <Share2 size={15} />
+                  <span>{shareCopied ? "복사됨" : "공유"}</span>
+                </ShareButton>
+              </ResultActions>
+            </ResultCard>
+
+            <VerdictSection>
+              <VerdictLabel>당신의 판정은?</VerdictLabel>
+              <VerdictButtons>
+                {(
+                  [
+                    { side: "progressive", label: "진보 AI 우세", color: "#3182f6", tint: "#e8f3ff" },
+                    { side: "draw", label: "비겼음", color: "#4e5968", tint: "#f2f4f6" },
+                    { side: "conservative", label: "보수 AI 우세", color: "#e5484d", tint: "#fef2f2" },
+                  ] as const
+                ).map(({ side, label, color, tint }) => (
+                  <VerdictButton
+                    key={side}
+                    type="button"
+                    $color={color}
+                    $tint={tint}
+                    $selected={userVerdict === side}
+                    $loading={verdictLoading}
+                    disabled={verdictLoading || !isAuthenticated}
+                    onClick={async () => {
+                      if (!isAuthenticated || verdictLoading) return;
+                      setVerdictLoading(true);
+                      try {
+                        const res = await fetch("/api/arena/verdict", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ issueId: issue.id, side }),
+                        });
+                        const data = await res.json() as { counts: VerdictCounts; user_verdict: string | null };
+                        setVerdictCounts(data.counts);
+                        setUserVerdict(data.user_verdict);
+                      } finally {
+                        setVerdictLoading(false);
+                      }
+                    }}
+                  >
+                    {label}
+                  </VerdictButton>
+                ))}
+              </VerdictButtons>
+
+              {verdictCounts && verdictCounts.total > 0 ? (
+                <VerdictBars>
+                  {(
+                    [
+                      { side: "progressive", label: "진보", color: "#3182f6", tint: "#e8f3ff" },
+                      { side: "draw", label: "무승부", color: "#4e5968", tint: "#f2f4f6" },
+                      { side: "conservative", label: "보수", color: "#e5484d", tint: "#fef2f2" },
+                    ] as const
+                  ).map(({ side, label, color, tint }) => {
+                    const pct = verdictCounts.total === 0 ? 0 : Math.round((verdictCounts[side] / verdictCounts.total) * 100);
+                    return (
+                      <VerdictBarRow key={side}>
+                        <VerdictBarLabel $color={userVerdict === side ? color : "#b0b8c1"}>{label}</VerdictBarLabel>
+                        <VerdictBarTrack $tint={tint}>
+                          <VerdictBarFill $color={color} $pct={pct} />
+                        </VerdictBarTrack>
+                        <VerdictBarPct $active={userVerdict === side}>{pct}%</VerdictBarPct>
+                      </VerdictBarRow>
+                    );
+                  })}
+                  <VerdictTotal>총 {verdictCounts.total.toLocaleString()}명 참여</VerdictTotal>
+                </VerdictBars>
+              ) : null}
+
+              {!isAuthenticated ? (
+                <VerdictLoginNote>로그인하면 판정 투표에 참여할 수 있어요.</VerdictLoginNote>
+              ) : null}
+            </VerdictSection>
+          </>
+        ) : stance === "watch" ? null : (
           <Composer>
             <ComposerMeta>
-              <span>내 의견 개입</span>
-              <span>
+              <label htmlFor="argument-input">내 의견 개입</label>
+              <span aria-hidden="true">
                 {argument.length} / {MAX_ARGUMENT_LENGTH}
               </span>
             </ComposerMeta>
             <ArgumentInput
+              id="argument-input"
+              aria-describedby="argument-counter"
               value={argument}
               onChange={(event) => setArgument(event.target.value.slice(0, MAX_ARGUMENT_LENGTH))}
               onKeyDown={(event) => {
@@ -1057,6 +1225,161 @@ const StanceButton = styled(Link, {
   font-weight: 600;
 `;
 
+const ShareButton = styled.button<{ $copied: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid ${({ $copied }) => ($copied ? "#03b26c" : "#e5e8eb")};
+  background: ${({ $copied }) => ($copied ? "#e6f9f1" : "transparent")};
+  color: ${({ $copied }) => ($copied ? "#03b26c" : "#6b7684")};
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 150ms;
+
+  &:hover {
+    border-color: #3182f6;
+    color: #3182f6;
+  }
+`;
+
+const WatchButton = styled(Link)`
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 0 20px;
+  color: #6b7684;
+  background: transparent;
+  border: 1px solid #e5e8eb;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+
+  &:hover {
+    background: #f2f4f6;
+  }
+`;
+
+/* ── Verdict Vote ─────────────────────────────────────── */
+
+const VerdictSection = styled.div`
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e5e8eb;
+  background: #fafafa;
+`;
+
+const VerdictLabel = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: #191f28;
+`;
+
+const VerdictButtons = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+
+  @media (max-width: 400px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const VerdictButton = styled.button<{
+  $color: string;
+  $tint: string;
+  $selected: boolean;
+  $loading: boolean;
+}>`
+  padding: 10px 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 150ms;
+  border: 1.5px solid ${({ $selected, $color }) => ($selected ? $color : "#e5e8eb")};
+  background: ${({ $selected, $tint }) => ($selected ? $tint : "transparent")};
+  color: ${({ $selected, $color }) => ($selected ? $color : "#6b7684")};
+  opacity: ${({ $loading }) => ($loading ? 0.6 : 1)};
+
+  &:hover:not(:disabled) {
+    border-color: ${({ $color }) => $color};
+    color: ${({ $color }) => $color};
+    background: ${({ $tint }) => $tint};
+  }
+
+  &:focus-visible {
+    outline: 2px solid #3182f6;
+    outline-offset: 2px;
+  }
+`;
+
+const VerdictBars = styled.div`
+  display: grid;
+  gap: 8px;
+`;
+
+const VerdictBarRow = styled.div`
+  display: grid;
+  grid-template-columns: 36px 1fr 40px;
+  align-items: center;
+  gap: 8px;
+`;
+
+const VerdictBarLabel = styled.span<{ $color: string }>`
+  font-size: 12px;
+  font-weight: 600;
+  color: ${({ $color }) => $color};
+`;
+
+const VerdictBarTrack = styled.div<{ $tint: string }>`
+  height: 6px;
+  border-radius: 9999px;
+  background: ${({ $tint }) => $tint};
+  overflow: hidden;
+`;
+
+const VerdictBarFill = styled.div<{ $color: string; $pct: number }>`
+  height: 100%;
+  border-radius: 9999px;
+  background: ${({ $color }) => $color};
+  transform: scaleX(${({ $pct }) => $pct / 100});
+  transform-origin: left;
+  transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
+
+const VerdictBarPct = styled.span<{ $active: boolean }>`
+  font-size: 12px;
+  font-weight: ${({ $active }) => ($active ? 700 : 400)};
+  color: ${({ $active }) => ($active ? "#191f28" : "#8b95a1")};
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+`;
+
+const VerdictTotal = styled.div`
+  font-size: 12px;
+  color: #8b95a1;
+  text-align: right;
+`;
+
+const VerdictLoginNote = styled.div`
+  font-size: 13px;
+  color: #8b95a1;
+`;
+
 const BattlePage = styled(Page)`
   padding-bottom: 64px;
 `;
@@ -1133,15 +1456,21 @@ const ChatPanel = styled.section`
   }
 `;
 
+const MessageRow = styled("div", {
+  shouldForwardProp: (prop) => prop !== "$role",
+})<{ $role: DebateMessage["role"] }>`
+  display: flex;
+  justify-content: ${({ $role }) =>
+    $role === "conservative" || $role === "user" ? "flex-end" : "flex-start"};
+`;
+
 const MessageBubble = styled("div", {
   shouldForwardProp: (prop) => prop !== "$role" && prop !== "$tone",
 })<{ $role: DebateMessage["role"]; $tone: string }>`
-  display: grid;
-  width: fit-content;
+  display: flex;
+  flex-direction: column;
   max-width: min(78%, 620px);
   gap: 6px;
-  justify-self: ${({ $role }) =>
-    $role === "conservative" || $role === "user" ? "end" : "start"};
   border: 1px solid #E5E7EB;
   border-radius: 8px;
   padding: 14px 16px;
@@ -1178,9 +1507,12 @@ const Cursor = styled.span`
   animation: blink 0.9s steps(2, start) infinite;
 
   @keyframes blink {
-    50% {
-      opacity: 0;
-    }
+    50% { opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    opacity: 1;
   }
 `;
 
@@ -1386,4 +1718,80 @@ const ResultLink = styled(Link)`
   &:hover {
     border-color: #191F28;
   }
+`;
+
+/* ── Issue Opinion Snapshot ───────────────────────────── */
+
+const OpinionSnapshot = styled.div`
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid #e5e8eb;
+  border-radius: 12px;
+  background: #f9fafb;
+`;
+
+const OpinionSnapshotHeader = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+`;
+
+const OpinionSnapshotTitle = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: #191f28;
+`;
+
+const OpinionSnapshotMeta = styled.div`
+  font-size: 12px;
+  color: #8b95a1;
+  font-variant-numeric: tabular-nums;
+`;
+
+const OpinionBarList = styled.div`
+  display: grid;
+  gap: 8px;
+`;
+
+const OpinionBarRow = styled.div`
+  display: grid;
+  grid-template-columns: 88px 1fr 36px;
+  align-items: center;
+  gap: 10px;
+`;
+
+const OpinionBarLabel = styled.span<{ $color: string }>`
+  font-size: 12px;
+  font-weight: 600;
+  color: ${({ $color }) => $color};
+`;
+
+const OpinionBarTrack = styled.div<{ $tint: string }>`
+  height: 6px;
+  border-radius: 9999px;
+  background: ${({ $tint }) => $tint};
+  overflow: hidden;
+`;
+
+const OpinionBarFill = styled.div<{ $color: string; $pct: number }>`
+  height: 100%;
+  border-radius: 9999px;
+  background: ${({ $color }) => $color};
+  transform: scaleX(${({ $pct }) => $pct / 100});
+  transform-origin: left;
+  transition: transform 400ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
+
+const OpinionBarPct = styled.span`
+  font-size: 12px;
+  font-weight: 700;
+  color: #191f28;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 `;
