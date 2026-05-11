@@ -59,6 +59,9 @@ export async function buildIssueFromBill(bill: AssemblyIssueBill): Promise<Issue
     source_url: bill.sourceUrl,
     bill_id: bill.billId,
     published_at: bill.publishedAt,
+    proposer: bill.proposer,
+    committee: bill.committee,
+    bill_status: bill.billStatus,
     expires_at: expiresAt,
   };
 }
