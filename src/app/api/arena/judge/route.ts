@@ -47,25 +47,52 @@ function formatHistory(history: DebateMessage[]) {
     .join("\n");
 }
 
-function parseJudgeResponse(text: string): JudgeResponse {
-  const cleaned = text
+function extractJson(text: string): string {
+  const stripped = text
     .trim()
     .replace(/^```(?:json)?/i, "")
     .replace(/```$/i, "")
     .trim();
-  const parsed = JSON.parse(cleaned) as Partial<JudgeResponse>;
-  const winner =
-    parsed.winner === "progressive" ||
-    parsed.winner === "conservative" ||
-    parsed.winner === "draw"
-      ? parsed.winner
-      : "draw";
-  const reason =
-    typeof parsed.reason === "string" && parsed.reason.trim()
-      ? normalizeReason(parsed.reason.trim())
-      : "논거의 우열이 명확하지 않았습니다.";
+  const match = stripped.match(/\{[\s\S]*\}/);
+  if (match) return match[0];
+  return stripped;
+}
 
-  return { winner, reason };
+function resolveWinner(raw: unknown): JudgeResponse["winner"] | null {
+  if (raw === "progressive" || raw === "conservative" || raw === "draw") return raw;
+  if (raw === "진보") return "progressive";
+  if (raw === "보수") return "conservative";
+  if (raw === "무승부") return "draw";
+  if (typeof raw === "string") {
+    const lower = raw.toLowerCase();
+    if (lower.includes("progressive")) return "progressive";
+    if (lower.includes("conservative")) return "conservative";
+  }
+  return null;
+}
+
+function parseJudgeResponse(text: string): JudgeResponse {
+  console.log("[judge] raw response:", text);
+  try {
+    const cleaned = extractJson(text);
+    const parsed = JSON.parse(cleaned) as Record<string, unknown>;
+    const winner = resolveWinner(parsed.winner) ?? resolveWinner(parsed.result) ?? "draw";
+    const reason =
+      typeof parsed.reason === "string" && parsed.reason.trim()
+        ? normalizeReason(parsed.reason.trim())
+        : "논거의 우열이 명확하지 않았습니다.";
+    console.log("[judge] parsed:", { winner, reason });
+    return { winner, reason };
+  } catch {
+    const lower = text.toLowerCase();
+    const winner: JudgeResponse["winner"] =
+      lower.includes("progressive") ? "progressive" :
+      lower.includes("conservative") ? "conservative" :
+      lower.includes("진보") ? "progressive" :
+      lower.includes("보수") ? "conservative" :
+      "draw";
+    return { winner, reason: "논거의 우열이 명확하지 않았습니다." };
+  }
 }
 
 function normalizeReason(reason: string) {
@@ -95,8 +122,13 @@ export async function POST(request: Request) {
     formatHistory(body.history),
     "",
     "논리성, 근거, 설득력 기준으로 판정해줘.",
-    "반드시 JSON으로만 응답:",
-    '{ "winner": "progressive" | "conservative" | "draw", "reason": "완결된 판정 이유 45자 이내" }',
+    "아래 JSON 형식으로만 응답하고 다른 텍스트는 절대 출력하지 마:",
+    '{',
+    '  "winner": "progressive" 또는 "conservative" 또는 "draw",',
+    '  "reason": "판정 이유를 한국어로 45자 이내"',
+    '}',
+    "",
+    "winner 값은 반드시 영어로: progressive(진보 우세), conservative(보수 우세), draw(무승부)",
   ].join("\n");
 
   try {
