@@ -1,7 +1,7 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { ArrowLeft, ArrowRight, RotateCcw, Share2, Swords } from "lucide-react";
+import { ArrowLeft, ArrowRight, ExternalLink, RotateCcw, Share2, Swords } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, memo } from "react";
 import type { CachedArenaBattle } from "@/lib/arena";
@@ -277,7 +277,25 @@ const IssueOpinionSnapshot = memo(function IssueOpinionSnapshot({ issueId }: { i
   );
 });
 
+function formatPublishedAt(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return null;
+  return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}.`;
+}
+
+function BillStatusBadge({ status }: { status: string | null }) {
+  if (!status) return null;
+  const color =
+    status === "통과" ? "#03b26c" :
+    status === "폐기" ? "#8b95a1" :
+    "#fe9800";
+  return <BillStatusChip $color={color}>{status}</BillStatusChip>;
+}
+
 export function ArenaIssueDetail({ issue }: IssueDetailProps) {
+  const hasMeta = issue.proposer || issue.committee || issue.bill_status || issue.published_at;
+
   return (
     <Page>
       <Shell>
@@ -287,9 +305,44 @@ export function ArenaIssueDetail({ issue }: IssueDetailProps) {
         </BackLink>
 
         <DetailPanel>
-          <HeroEyebrow>응원할 입장 선택</HeroEyebrow>
+          <HeroEyebrow>AI 배틀 이슈</HeroEyebrow>
           <DetailTitle>{issue.title}</DetailTitle>
           <DetailSummary>{issue.summary}</DetailSummary>
+
+          {hasMeta ? (
+            <BillMetaRow>
+              {issue.proposer ? (
+                <BillMetaItem>
+                  <BillMetaLabel>제안자</BillMetaLabel>
+                  <BillMetaValue>{issue.proposer}</BillMetaValue>
+                </BillMetaItem>
+              ) : null}
+              {issue.committee ? (
+                <BillMetaItem>
+                  <BillMetaLabel>소관위원회</BillMetaLabel>
+                  <BillMetaValue>{issue.committee}</BillMetaValue>
+                </BillMetaItem>
+              ) : null}
+              {issue.published_at ? (
+                <BillMetaItem>
+                  <BillMetaLabel>제안일</BillMetaLabel>
+                  <BillMetaValue>{formatPublishedAt(issue.published_at)}</BillMetaValue>
+                </BillMetaItem>
+              ) : null}
+              {issue.bill_status ? (
+                <BillMetaItem>
+                  <BillMetaLabel>법안 상태</BillMetaLabel>
+                  <BillStatusBadge status={issue.bill_status} />
+                </BillMetaItem>
+              ) : null}
+              {issue.source_url ? (
+                <BillMetaSourceLink href={issue.source_url} target="_blank" rel="noopener noreferrer">
+                  원문 보기
+                  <ExternalLink size={13} />
+                </BillMetaSourceLink>
+              ) : null}
+            </BillMetaRow>
+          ) : null}
 
           <ContextGrid>
             <ContextBox>
@@ -1142,6 +1195,66 @@ const BackLink = styled(Link)`
   color: #4E5968;
   font-size: 14px;
   font-weight: 600;
+`;
+
+const BillMetaRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  padding: 16px 20px;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  background: #f9fafb;
+`;
+
+const BillMetaItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const BillMetaLabel = styled.span`
+  color: #8b95a1;
+  font-size: 12px;
+  font-weight: 600;
+`;
+
+const BillMetaValue = styled.span`
+  color: #4e5968;
+  font-size: 12px;
+  font-weight: 400;
+`;
+
+const BillStatusChip = styled("span", {
+  shouldForwardProp: (prop) => prop !== "$color",
+})<{ $color: string }>`
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: ${({ $color }) => `${$color}18`};
+  color: ${({ $color }) => $color};
+  font-size: 12px;
+  font-weight: 600;
+`;
+
+const BillMetaSourceLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  color: #3182f6;
+  font-size: 12px;
+  font-weight: 600;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 480px) {
+    margin-left: 0;
+  }
 `;
 
 const DetailPanel = styled.section`

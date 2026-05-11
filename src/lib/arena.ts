@@ -19,6 +19,9 @@ type IssueRow = {
   summary: string;
   progressive: string;
   conservative: string;
+  source_url: string | null;
+  bill_id: string | null;
+  published_at: string | null;
   proposer: string | null;
   committee: string | null;
   bill_status: string | null;
@@ -33,9 +36,6 @@ export type CachedArenaBattle = {
 function mapIssueRow(row: IssueRow): HotIssue {
   return {
     ...row,
-    source_url: null,
-    bill_id: null,
-    published_at: null,
     vote_counts: { progressive: 0, conservative: 0, neutral: 0, total: 0 },
     user_vote: null,
   };
@@ -95,7 +95,7 @@ export async function getArenaIssues() {
   const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("issues")
-    .select("id, title, summary, progressive, conservative, proposer, committee, bill_status, created_at")
+    .select("id, title, summary, progressive, conservative, source_url, bill_id, published_at, proposer, committee, bill_status, created_at")
     .gt("expires_at", now)
     .order("created_at", { ascending: false })
     .limit(6);
@@ -113,7 +113,7 @@ export async function getArenaIssueById(issueId: string) {
   const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("issues")
-    .select("id, title, summary, progressive, conservative, proposer, committee, bill_status, created_at")
+    .select("id, title, summary, progressive, conservative, source_url, bill_id, published_at, proposer, committee, bill_status, created_at")
     .eq("id", issueId)
     .gt("expires_at", now)
     .maybeSingle();
