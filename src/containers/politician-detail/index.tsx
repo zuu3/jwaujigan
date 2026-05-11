@@ -1,15 +1,37 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { ArrowLeft, ExternalLink, Mail, MapPin, Phone } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, ExternalLink, Mail, MapPin, Phone } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import type { PoliticianDetail } from "@/lib/assembly";
 import { getPartyPresentation } from "@/lib/parties";
 
 type PoliticianDetailContainerProps = {
   politician: PoliticianDetail;
 };
+
+const HTML_ENTITIES: Record<string, string> = {
+  "&amp;": "&",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&quot;": '"',
+  "&#39;": "'",
+  "&middot;": "·",
+  "&nbsp;": " ",
+  "&lsquo;": "'",
+  "&rsquo;": "'",
+  "&ldquo;": '"',
+  "&rdquo;": '"',
+  "&ndash;": "–",
+  "&mdash;": "—",
+};
+
+function decodeHtmlEntities(text: string) {
+  return text
+    .replace(/&[a-z]+;|&#\d+;/gi, (entity) => HTML_ENTITIES[entity] ?? entity);
+}
 
 function formatBiography(value: string | null) {
   if (!value) {
@@ -18,7 +40,7 @@ function formatBiography(value: string | null) {
 
   return value
     .split(/\r?\n+/)
-    .map((line) => line.trim())
+    .map((line) => decodeHtmlEntities(line.trim()))
     .filter(Boolean);
 }
 
@@ -27,6 +49,35 @@ export function PoliticianDetailContainer({
 }: PoliticianDetailContainerProps) {
   const biographyLines = formatBiography(politician.biography);
   const party = getPartyPresentation(politician.party);
+  const [following, setFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/politicians/${politician.id}/follow`)
+      .then((r) => r.json() as Promise<{ following: boolean }>)
+      .then(({ following: f }) => setFollowing(f))
+      .catch(() => null);
+  }, [politician.id]);
+
+  const handleFollow = async () => {
+    if (followLoading) return;
+    setFollowLoading(true);
+    try {
+      const res = await fetch(`/api/politicians/${politician.id}/follow`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: politician.name, image: politician.image }),
+      });
+      if (res.status === 401) {
+        window.location.href = "/";
+        return;
+      }
+      const data = (await res.json()) as { following: boolean };
+      setFollowing(data.following);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   return (
     <Page>
@@ -85,6 +136,16 @@ export function PoliticianDetailContainer({
             <HeroDescription>
               {politician.committee ?? "현재 위원회 정보가 등록되지 않았습니다."}
             </HeroDescription>
+
+            <FollowButton
+              type="button"
+              $following={following}
+              disabled={followLoading}
+              onClick={() => void handleFollow()}
+            >
+              {following ? <BellOff size={15} /> : <Bell size={15} />}
+              <span>{following ? "팔로우 중" : "팔로우"}</span>
+            </FollowButton>
           </HeroBody>
         </Hero>
 
@@ -356,6 +417,35 @@ const HeroDescription = styled.p`
   color: #4e5968;
   font-size: 16px;
   line-height: 1.6;
+`;
+
+const FollowButton = styled.button<{ $following: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 6px;
+  padding: 0 16px;
+  height: 40px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 150ms;
+  border: 1.5px solid ${({ $following }) => ($following ? "#e5e8eb" : "#3182f6")};
+  background: ${({ $following }) => ($following ? "transparent" : "#3182f6")};
+  color: ${({ $following }) => ($following ? "#6b7684" : "#ffffff")};
+
+  &:hover:not(:disabled) {
+    border-color: ${({ $following }) => ($following ? "#f04452" : "#2272eb")};
+    background: ${({ $following }) => ($following ? "#fef2f2" : "#2272eb")};
+    color: ${({ $following }) => ($following ? "#f04452" : "#ffffff")};
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `;
 
 const ContentGrid = styled.div`

@@ -21,6 +21,9 @@ export type Database = {
           source_url: string | null;
           bill_id: string | null;
           published_at: string | null;
+          proposer: string | null;
+          committee: string | null;
+          bill_status: string | null;
           expires_at: string;
           created_at: string;
         };
@@ -33,6 +36,9 @@ export type Database = {
           source_url?: string | null;
           bill_id?: string | null;
           published_at?: string | null;
+          proposer?: string | null;
+          committee?: string | null;
+          bill_status?: string | null;
           expires_at: string;
           created_at?: string;
         };
@@ -45,6 +51,9 @@ export type Database = {
           source_url?: string | null;
           bill_id?: string | null;
           published_at?: string | null;
+          proposer?: string | null;
+          committee?: string | null;
+          bill_status?: string | null;
           expires_at?: string;
           created_at?: string;
         };
@@ -192,6 +201,41 @@ export type Database = {
           },
         ];
       };
+      politician_follows: {
+        Row: {
+          id: string;
+          user_id: string;
+          politician_id: string;
+          politician_name: string;
+          politician_image: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          politician_id: string;
+          politician_name: string;
+          politician_image?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          politician_id?: string;
+          politician_name?: string;
+          politician_image?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "politician_follows_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       generation_locks: {
         Row: {
           key: string;
@@ -210,8 +254,80 @@ export type Database = {
         };
         Relationships: [];
       };
+      issue_votes: {
+        Row: {
+          id: string;
+          issue_id: string;
+          user_id: string;
+          stance: "progressive" | "conservative" | "neutral";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          issue_id: string;
+          user_id: string;
+          stance: "progressive" | "conservative" | "neutral";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          issue_id?: string;
+          user_id?: string;
+          stance?: "progressive" | "conservative" | "neutral";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      verdict_votes: {
+        Row: {
+          id: string;
+          issue_id: string;
+          user_id: string;
+          side: "progressive" | "conservative" | "draw";
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          issue_id: string;
+          user_id: string;
+          side: "progressive" | "conservative" | "draw";
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          issue_id?: string;
+          user_id?: string;
+          side?: "progressive" | "conservative" | "draw";
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
-    Views: Record<string, never>;
+    Views: {
+      issue_vote_counts: {
+        Row: {
+          issue_id: string;
+          progressive: number;
+          conservative: number;
+          neutral: number;
+          total: number;
+        };
+        Relationships: [];
+      };
+      verdict_vote_counts: {
+        Row: {
+          issue_id: string;
+          progressive: number;
+          conservative: number;
+          draw: number;
+          total: number;
+        };
+        Relationships: [];
+      };
+    };
     Functions: Record<string, never>;
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
