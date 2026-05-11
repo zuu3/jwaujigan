@@ -80,6 +80,7 @@ type BillListRow = {
   LINK_URL?: string;
   DETAIL_LINK?: string;
   AGE?: string;
+  PROC_RESULT?: string;
 };
 
 export type AssemblyIssueBill = {
@@ -87,9 +88,18 @@ export type AssemblyIssueBill = {
   title: string;
   proposer: string | null;
   committee: string | null;
+  billStatus: string | null;
   publishedAt: string | null;
   sourceUrl: string | null;
 };
+
+function mapBillStatus(procResult: string | undefined): string | null {
+  if (!procResult?.trim()) return null;
+  const v = procResult.trim();
+  if (v.includes("가결")) return "통과";
+  if (v.includes("부결") || v.includes("폐기") || v.includes("철회")) return "폐기";
+  return "계류 중";
+}
 
 const ISSUE_KEYWORDS = [
   "예산",
@@ -407,9 +417,48 @@ export async function getRecentIssueBills(): Promise<AssemblyIssueBill[]> {
       title: row.BILL_NAME?.trim() ?? "",
       proposer: row.PROPOSER?.trim() ?? null,
       committee: row.COMMITTEE?.trim() ?? row.CURR_COMMITTEE?.trim() ?? null,
+      billStatus: mapBillStatus(row.PROC_RESULT),
       publishedAt: toIsoDate(row.PROPOSE_DT),
       sourceUrl: row.DETAIL_LINK?.trim() ?? row.LINK_URL?.trim() ?? null,
     }))
     .filter((bill) => bill.billId && bill.title)
     .slice(0, 5);
+}
+
+export type PoliticianSearchResult = {
+  id: string;
+  name: string;
+  party: string | null;
+  district: string | null;
+  committee: string | null;
+  image: string | null;
+};
+
+async function resolveMonaCd(name: string): Promise<string | null> {
+  const payload = await fetchAssemblyJson("nwvrqwxyaytdsfvhu", { HG_NM: name });
+  const rows = extractRows<PersonalMemberRow>(payload, "nwvrqwxyaytdsfvhu");
+  return rows[0]?.MONA_CD ?? null;
+}
+
+export async function searchPoliticiansByName(query: string): Promise<PoliticianSearchResult[]> {
+  const payload = await fetchAssemblyJson("ALLNAMEMBER", { NAAS_NM: query });
+  const rows = extractRows<IntegratedMemberRow>(payload, "ALLNAMEMBER");
+  const top = rows.slice(0, 5);
+
+  const settled = await Promise.all(
+    top.map(async (row) => {
+      const monaCd = await resolveMonaCd(row.NAAS_NM);
+      if (!monaCd) return null;
+      return {
+        id: monaCd,
+        name: row.NAAS_NM,
+        party: row.PLPT_NM ?? null,
+        district: row.ELECD_NM ?? null,
+        committee: row.BLNG_CMIT_NM ?? null,
+        image: row.NAAS_PIC ?? null,
+      };
+    }),
+  );
+
+  return settled.filter((r): r is PoliticianSearchResult => r !== null);
 }
