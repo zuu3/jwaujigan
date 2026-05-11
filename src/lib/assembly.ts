@@ -168,6 +168,7 @@ function buildUrl(endpoint: string, params: Record<string, string | number | und
 async function fetchAssemblyJson(endpoint: string, params: Record<string, string | number | undefined>) {
   const response = await fetch(buildUrl(endpoint, params), {
     cache: "no-store",
+    signal: AbortSignal.timeout(7000),
     headers: {
       "User-Agent": "jwaujigan/1.0",
       Accept: "application/json",

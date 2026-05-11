@@ -142,6 +142,9 @@ export async function GET() {
 
     const issues = await enrichWithVotes(insertedIssues ?? [], userId);
     return NextResponse.json({ issues } satisfies HotIssuesResponse);
+  } catch (generateError) {
+    console.error("Failed to generate issues from Assembly API", generateError);
+    return NextResponse.json({ issues: [] satisfies HotIssue[] });
   } finally {
     await supabase.from("generation_locks").delete().eq("key", LOCK_KEY);
   }

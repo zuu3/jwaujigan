@@ -43,9 +43,9 @@ export async function GET() {
   } catch (routeError) {
     console.error("Failed to fetch local politicians", routeError);
 
-    return NextResponse.json(
-      { message: "Failed to fetch local politicians." },
-      { status: 500 },
-    );
+    return NextResponse.json({
+      district: user.district,
+      politicians: [],
+    });
   }
 }
