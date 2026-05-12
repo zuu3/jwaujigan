@@ -8,7 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { Session } from "next-auth";
-import { SignOutButton } from "@/components/auth/sign-out-button";
+import { AppHeader } from "@/components/app-header";
 import { useIssues } from "@/hooks/useIssues";
 import type { PoliticianDetail } from "@/lib/assembly";
 import { getPartyPresentation } from "@/lib/parties";
@@ -224,6 +224,7 @@ export function HomeContainer({ session }: HomeContainerProps) {
   const profileQuery = useQuery({
     queryKey: ["user-profile"],
     queryFn: () => fetchJson<UserProfileResponse>("/api/user/profile"),
+    staleTime: 1000 * 60 * 10,
   });
   const issuesQuery = useIssues();
 
@@ -245,11 +246,13 @@ export function HomeContainer({ session }: HomeContainerProps) {
     queryKey: ["local-politicians", district],
     enabled: Boolean(district),
     queryFn: () => fetchJson<LocalPoliticiansResponse>("/api/politicians/local"),
+    staleTime: 1000 * 60 * 60 * 12,
   });
   const politicianDetailQuery = useQuery({
     queryKey: ["politician-detail", expandedPoliticianId],
     enabled: Boolean(expandedPoliticianId),
     queryFn: () => fetchJson<PoliticianDetail>(`/api/politicians/${expandedPoliticianId}`),
+    staleTime: 1000 * 60 * 60 * 12,
   });
 
   const followedNamesQuery = useQuery({
@@ -283,35 +286,7 @@ export function HomeContainer({ session }: HomeContainerProps) {
 
   return (
     <Page>
-      <MotionHeader
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.2 }}
-      >
-        <Brand href="/">좌우지간</Brand>
-
-        <HeaderNav aria-label="홈 바로가기">
-          <HeaderNavLink href="#hot-issues">핫이슈</HeaderNavLink>
-          <HeaderNavLink href="#battle-banner">배틀</HeaderNavLink>
-          <HeaderNavLink href="#local-politicians">정치인 찾기</HeaderNavLink>
-        </HeaderNav>
-
-        <HeaderActions>
-          <ProfileInline>
-            <Avatar aria-hidden="true">
-              {displayImage ? (
-                <AvatarImage src={displayImage} alt="" width={32} height={32} />
-              ) : (
-                getProfileInitial(displayName, displayEmail)
-              )}
-            </Avatar>
-            <ProfileName>{displayName ?? "사용자"}</ProfileName>
-          </ProfileInline>
-
-          <MyPageLink href="/mypage">마이페이지</MyPageLink>
-          <HeaderSignOutButton callbackUrl="/">로그아웃</HeaderSignOutButton>
-        </HeaderActions>
-      </MotionHeader>
+      <AppHeader userName={displayName} userImage={displayImage} />
 
       <Main>
         <MotionIntro
@@ -830,130 +805,12 @@ export function HomeContainer({ session }: HomeContainerProps) {
 
 const Page = styled.main`
   min-height: 100vh;
-  padding: 24px 24px 80px;
+  padding-bottom: 80px;
   background: #ffffff;
   color: #191f28;
 
   @media (max-width: 768px) {
-    padding: 20px 20px 56px;
-  }
-`;
-
-const MotionHeader = styled(motion.header)`
-  display: flex;
-  width: min(100%, 1160px);
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin: 0 auto;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #f2f4f6;
-
-  @media (max-width: 768px) {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-`;
-
-const Brand = styled(Link)`
-  color: #191f28;
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-`;
-
-const HeaderNav = styled.nav`
-  display: inline-flex;
-  align-items: center;
-  gap: 24px;
-  margin-left: auto;
-  margin-right: 16px;
-
-  @media (max-width: 960px) {
-    display: none;
-  }
-`;
-
-const HeaderNavLink = styled(Link)`
-  color: #4e5968;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  transition: color 140ms cubic-bezier(0.16, 1, 0.3, 1);
-
-  &:hover {
-    color: #191f28;
-  }
-`;
-
-const HeaderActions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-`;
-
-const ProfileInline = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-`;
-
-const Avatar = styled.div`
-  display: inline-flex;
-  width: 32px;
-  height: 32px;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border-radius: 999px;
-  color: #1d4ed8;
-  background: rgba(49, 130, 246, 0.12);
-  font-size: 14px;
-  font-weight: 700;
-`;
-
-const AvatarImage = styled(Image)`
-  object-fit: cover;
-  border-radius: 999px;
-`;
-
-const ProfileName = styled.div`
-  color: #191f28;
-  font-size: 14px;
-  font-weight: 600;
-`;
-
-const MyPageLink = styled(Link)`
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  color: #4e5968;
-  font-size: 14px;
-  font-weight: 600;
-  transition: color 140ms cubic-bezier(0.16, 1, 0.3, 1);
-
-  &:hover {
-    color: #191f28;
-  }
-`;
-
-const HeaderSignOutButton = styled(SignOutButton)`
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  color: #8b95a1;
-  background: transparent;
-  border: 0;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: color 140ms cubic-bezier(0.16, 1, 0.3, 1);
-
-  &:hover {
-    color: #4e5968;
+    padding-bottom: 56px;
   }
 `;
 
@@ -961,7 +818,12 @@ const Main = styled.div`
   display: grid;
   width: min(100%, 720px);
   gap: 0;
-  margin: 32px auto 0;
+  margin: 0 auto;
+  padding: 32px 24px 0;
+
+  @media (max-width: 768px) {
+    padding: 24px 20px 0;
+  }
 `;
 
 const MotionIntro = styled(motion.div)`

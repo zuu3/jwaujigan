@@ -1,7 +1,14 @@
+import { unstable_cache } from "next/cache";
 import { NextResponse } from "next/server";
 import { auth } from "../../../../../auth";
 import { getLocalPoliticiansByDistrict } from "@/lib/assembly";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
+
+const getCachedLocalPoliticians = unstable_cache(
+  (district: string) => getLocalPoliticiansByDistrict(district),
+  ["local-politicians"],
+  { revalidate: 60 * 60 * 24, tags: ["local-politicians"] },
+);
 
 export async function GET() {
   const session = await auth();
@@ -34,7 +41,7 @@ export async function GET() {
   }
 
   try {
-    const politicians = await getLocalPoliticiansByDistrict(user.district);
+    const politicians = await getCachedLocalPoliticians(user.district);
 
     return NextResponse.json({
       district: user.district,
