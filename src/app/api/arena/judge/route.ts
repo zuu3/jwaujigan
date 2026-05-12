@@ -128,11 +128,11 @@ export async function POST(request: Request) {
     formatHistory(body.history),
     "",
     "논리성, 근거, 설득력 기준으로 판정해줘.",
+    "두 AI 중 논거가 더 구체적이고 설득력 있는 쪽을 반드시 선택해.",
+    "draw는 두 입장이 완전히 동등해서 도저히 구분이 불가능할 때만 써. 가능하면 승자를 골라.",
+    "",
     "아래 JSON 형식으로만 응답하고 다른 텍스트는 절대 출력하지 마:",
-    '{',
-    '  "winner": "progressive" 또는 "conservative" 또는 "draw",',
-    '  "reason": "판정 이유를 한국어로 45자 이내"',
-    '}',
+    '{"winner": "progressive", "reason": "판정 이유 45자 이내"}',
     "",
     "winner 값은 반드시 영어로: progressive(진보 우세), conservative(보수 우세), draw(무승부)",
   ].join("\n");
@@ -142,7 +142,7 @@ export async function POST(request: Request) {
       generationConfig: {
         responseMimeType: "application/json",
         maxOutputTokens: 160,
-        temperature: 0.2,
+        temperature: 0.5,
       },
     });
     const result = await model.generateContent(prompt);

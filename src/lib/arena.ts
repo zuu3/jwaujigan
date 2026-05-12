@@ -43,7 +43,7 @@ function mapIssueRow(row: IssueRow): HotIssue {
 
 
 export function getArenaBattleCacheTopic(issueId: string) {
-  return `arena-cache:v2:${issueId}`;
+  return `arena-cache:v3:${issueId}`;
 }
 
 function isValidCachedMessages(value: unknown): value is DebateMessage[] {
