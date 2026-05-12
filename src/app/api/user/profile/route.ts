@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 import { getUserGateState } from "@/lib/users";
+import { calcStreak, kstTodayStartISO } from "@/services/points/points";
 
 export async function GET() {
   const session = await auth();
@@ -20,11 +21,28 @@ export async function GET() {
 
   if (error) {
     console.error("Failed to fetch user profile", error);
+    return NextResponse.json({ message: "Failed to fetch user profile." }, { status: 500 });
+  }
 
-    return NextResponse.json(
-      { message: "Failed to fetch user profile." },
-      { status: 500 },
-    );
+  let streak = 0;
+  let today_active = false;
+
+  if (data?.id) {
+    const cutoff = new Date(Date.now() - 15 * 86_400_000).toISOString();
+    const todayStart = kstTodayStartISO();
+
+    const [votesRes, verdictsRes] = await Promise.all([
+      supabase.from("issue_votes").select("created_at").eq("user_id", data.id).gte("created_at", cutoff),
+      supabase.from("verdict_votes").select("created_at").eq("user_id", data.id).gte("created_at", cutoff),
+    ]);
+
+    const allDates = [
+      ...(votesRes.data ?? []).map((r) => r.created_at as string),
+      ...(verdictsRes.data ?? []).map((r) => r.created_at as string),
+    ];
+
+    streak = calcStreak(allDates);
+    today_active = allDates.some((d) => d >= todayStart);
   }
 
   return NextResponse.json({
@@ -38,5 +56,7 @@ export async function GET() {
     }),
     district: gateState.district ?? data?.district ?? session.user.district ?? null,
     hasPoliticalProfile: gateState.hasPoliticalProfile,
+    streak,
+    today_active,
   });
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
+import { BADGE_DEFS, calcStreak, computeEarnedBadgeIds, kstTodayStartISO } from "@/services/points/points";
 
 type ActivityType = "issue_vote" | "battle_vote" | "orientation_test";
 
@@ -34,7 +35,7 @@ export async function GET() {
   type IssueVoteRow = { id: string; stance: string; created_at: string; issues: { title: string } | null };
   type VerdictVoteRow = { id: string; side: string; created_at: string; issues: { title: string } | null };
 
-  const [issueVotesResult, verdictVotesResult, orientationResult] = await Promise.all([
+  const [issueVotesResult, verdictVotesResult, orientationResult, battleLogsResult, followsResult] = await Promise.all([
     supabase
       .from("issue_votes")
       .select("id, stance, created_at, issues(title)")
@@ -53,11 +54,21 @@ export async function GET() {
       .eq("user_id", userId)
       .order("completed_at", { ascending: false })
       .limit(5),
+    supabase
+      .from("battle_logs")
+      .select("id", { count: "exact" })
+      .eq("user_id", userId),
+    supabase
+      .from("politician_follows")
+      .select("id", { count: "exact" })
+      .eq("user_id", userId),
   ]);
 
   const issueVotes = (issueVotesResult.data ?? []) as unknown as IssueVoteRow[];
   const verdictVotes = (verdictVotesResult.data ?? []) as unknown as VerdictVoteRow[];
   const orientations = orientationResult.data ?? [];
+  const battleCount = battleLogsResult.count ?? 0;
+  const followCount = followsResult.count ?? 0;
 
   // Build activities array
   const activities: Activity[] = [];
@@ -111,8 +122,28 @@ export async function GET() {
       ? { type: orientations[0].political_type, date: orientations[0].completed_at }
       : null;
 
+  const allDates = [
+    ...issueVotes.map((v) => v.created_at),
+    ...verdictVotes.map((v) => v.created_at),
+  ];
+  const streak = calcStreak(allDates);
+  const todayStart = kstTodayStartISO();
+  const today_active = allDates.some((d) => d >= todayStart);
+
+  // KST 날짜별 deduplicate (캘린더용)
+  const toKSTDate = (iso: string) =>
+    new Date(new Date(iso).getTime() + 9 * 3_600_000).toISOString().slice(0, 10);
+  const active_dates = [...new Set(allDates.map(toKSTDate))];
+
+  const earnedIds = new Set(computeEarnedBadgeIds({ issueVotes: totalIssues, battles: battleCount, follows: followCount, streak }));
+  const badges = BADGE_DEFS.map((b) => ({ ...b, earned: earnedIds.has(b.id) }));
+
   return NextResponse.json({
     summary: { total_issues: totalIssues, vote_ratio: voteRatio, last_orientation: lastOrientation },
     activities: recent,
+    streak,
+    today_active,
+    active_dates,
+    badges,
   });
 }
