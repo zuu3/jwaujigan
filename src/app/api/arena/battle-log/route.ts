@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
-import { POINTS } from "@/services/points/points";
+import { DAILY_BONUS, POINTS, getDailyBattleLimit, getLevel, kstTodayStartISO } from "@/services/points/points";
 
 type DebateMessage = {
   role: "progressive" | "conservative" | "user";
@@ -49,7 +49,7 @@ function mapWinnerToResult(
 export async function POST(request: Request) {
   const session = await auth();
 
-  if (!session?.user?.id) {
+  if (!session?.user?.email) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
@@ -67,10 +67,41 @@ export async function POST(request: Request) {
   }
 
   const supabase = createServiceRoleSupabaseClient();
+
+  // email로 DB id + 포인트 조회 (JWT 캐시 값 대신 항상 정확한 DB UUID 사용)
+  const { data: userRow } = await supabase
+    .from("users")
+    .select("id, points")
+    .eq("email", session.user.email)
+    .maybeSingle();
+  const userId = userRow?.id;
+  if (!userId) {
+    return NextResponse.json({ message: "User not found" }, { status: 404 });
+  }
+
+  // 레벨별 일일 배틀 한도 확인
+  const userPoints = userRow.points ?? 0;
+  const dailyLimit = getDailyBattleLimit(userPoints);
+
+  const todayStart = kstTodayStartISO();
+  const { count: battlesToday } = await supabase
+    .from("battle_logs")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .gte("created_at", todayStart);
+
+  const todayCount = battlesToday ?? 0;
+  if (dailyLimit !== Infinity && todayCount >= dailyLimit) {
+    return NextResponse.json(
+      { message: "daily_limit_reached", limit: dailyLimit, battles_today: todayCount, level: getLevel(userPoints).title },
+      { status: 429 },
+    );
+  }
+
   const { data, error } = await supabase
     .from("battle_logs")
     .insert({
-      user_id: session.user.id,
+      user_id: userId,
       topic: body.topic,
       messages: body.messages,
       result: mapWinnerToResult(body.winner, body.userStance),
@@ -80,14 +111,25 @@ export async function POST(request: Request) {
 
   if (error) {
     console.error("Failed to insert battle log", error);
-
-    return NextResponse.json(
-      { message: "Failed to insert battle log." },
-      { status: 500 },
-    );
+    return NextResponse.json({ message: "Failed to insert battle log." }, { status: 500 });
   }
 
-  await supabase.rpc("increment_user_points", { p_user_id: session.user.id, p_amount: POINTS.BATTLE });
+  // 오늘 첫 배틀 보너스
+  const isFirstBattleToday = todayCount === 0;
+  const bonus = isFirstBattleToday ? DAILY_BONUS : 0;
+  const earned = POINTS.BATTLE + bonus;
+  const { error: pointsError } = await supabase
+    .from("users")
+    .update({ points: userPoints + earned })
+    .eq("id", userId);
+  if (pointsError) {
+    console.error("[battle-log] points update failed", pointsError);
+  }
 
-  return NextResponse.json({ id: data.id });
+  return NextResponse.json({
+    id: data.id,
+    daily_bonus_earned: isFirstBattleToday,
+    battles_today: todayCount + 1,
+    limit: dailyLimit === Infinity ? null : dailyLimit,
+  });
 }
