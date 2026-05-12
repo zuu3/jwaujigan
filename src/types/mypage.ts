@@ -42,7 +42,18 @@ export type ActivitySummary = {
   last_orientation: { type: string; date: string } | null;
 };
 
+export type BadgeStatus = {
+  id: string;
+  title: string;
+  desc: string;
+  earned: boolean;
+};
+
 export type ActivityResponse = {
   summary: ActivitySummary;
   activities: ActivityItem[];
+  streak: number;
+  today_active: boolean;
+  active_dates: string[];
+  badges: BadgeStatus[];
 };

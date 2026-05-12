@@ -5,6 +5,9 @@ export type UserProfileResponse = {
   image: string | null;
   district: string | null;
   hasPoliticalProfile: boolean;
+  points: number;
+  streak: number;
+  today_active: boolean;
 };
 
 export type PoliticalProfilePayload = {
