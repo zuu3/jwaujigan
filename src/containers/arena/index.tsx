@@ -3,6 +3,7 @@
 import styled from "@emotion/styled";
 import { ArrowLeft, ArrowRight, ExternalLink, RotateCcw, Share2, Swords } from "lucide-react";
 import Link from "next/link";
+import { AppHeader } from "@/components/app-header";
 import { useCallback, useEffect, useMemo, useRef, useState, memo } from "react";
 import type { CachedArenaBattle } from "@/lib/arena";
 import type { HotIssue } from "@/types/issue";
@@ -185,12 +186,13 @@ async function saveBattleCache({
 export function ArenaIndex({ issues, isAuthenticated }: ArenaIndexProps) {
   return (
     <Page>
+      {isAuthenticated ? <AppHeader /> : (
+        <GuestNav>
+          <Brand href="/home">좌우지간</Brand>
+          <GuestNavLink href="/">로그인</GuestNavLink>
+        </GuestNav>
+      )}
       <Shell>
-        <TopNav>
-          <Brand href="/">좌우지간</Brand>
-          <HomeLink href="/home">홈</HomeLink>
-        </TopNav>
-
         {!isAuthenticated ? (
           <LoginBanner>
             <BannerText>
@@ -319,6 +321,7 @@ export function ArenaIssueDetail({ issue }: IssueDetailProps) {
 
   return (
     <Page>
+      <AppHeader />
       <Shell>
         <BackLink href="/arena">
           <ArrowLeft size={16} />
@@ -1010,7 +1013,7 @@ export function ArenaBattle({
 
 const Page = styled.main`
   min-height: 100vh;
-  padding: 32px 24px 80px;
+  padding-bottom: 80px;
   color: #191F28;
   background: #FFFFFF;
   animation: fadeIn 200ms ease-out;
@@ -1021,7 +1024,7 @@ const Page = styled.main`
   }
 
   @media (max-width: 640px) {
-    padding: 24px 16px 64px;
+    padding-bottom: 64px;
   }
 `;
 
@@ -1030,34 +1033,53 @@ const Shell = styled.div`
   width: min(100%, 1120px);
   gap: 40px;
   margin: 0 auto;
+  padding: 32px 24px 0;
+
+  @media (max-width: 640px) {
+    padding: 24px 16px 0;
+  }
 `;
 
-const TopNav = styled.nav`
+const GuestNav = styled.nav`
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #F2F4F6;
+  width: min(100%, 1160px);
+  min-height: 56px;
+  margin: 0 auto;
+  padding: 0 24px;
+  border-bottom: 1px solid #f2f4f6;
+
+  @media (max-width: 640px) {
+    padding: 0 20px;
+  }
 `;
 
 const Brand = styled(Link)`
   color: #191F28;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -0.04em;
 `;
 
-const HomeLink = styled(Link)`
+const GuestNavLink = styled(Link)`
   display: inline-flex;
-  min-height: 44px;
+  min-height: 36px;
   align-items: center;
-  border: 1px solid #E5E7EB;
-  border-radius: 8px;
-  padding: 0 16px;
-  color: #4E5968;
-  background: #FFFFFF;
-  font-size: 14px;
-  font-weight: 600;
+  justify-content: center;
+  padding: 0 14px;
+  border: 1px solid #e5e8eb;
+  border-radius: 6px;
+  color: #4e5968;
+  font-size: 13px;
+  font-weight: 500;
+  transition: border-color 120ms, color 120ms;
+
+  &:hover {
+    border-color: #b0b8c1;
+    color: #191f28;
+  }
 `;
 
 const LoginBanner = styled.div`

@@ -5,7 +5,7 @@ import { Activity, ArrowRight, BarChart3, Bell, MapPin, RotateCcw, Swords } from
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { SignOutButton } from "@/components/auth/sign-out-button";
+import { AppHeader } from "@/components/app-header";
 
 export type MyPageProfile = {
   id: string;
@@ -170,15 +170,8 @@ export function MyPageContainer({
 
   return (
     <Page>
+      <AppHeader userName={profile.name} userImage={profile.image} />
       <Shell>
-        <Header>
-          <Brand href="/">좌우지간</Brand>
-          <HeaderActions>
-            <HeaderLink href="/home">홈</HeaderLink>
-            <HeaderSignOutButton callbackUrl="/">로그아웃</HeaderSignOutButton>
-          </HeaderActions>
-        </Header>
-
         <Hero>
           <HeroEyebrow>마이페이지</HeroEyebrow>
           <HeroTitle>내 정치 성향과 토론 기록</HeroTitle>
@@ -605,7 +598,7 @@ function SecurityBar({ score }: { score: number }) {
 
 const Page = styled.main`
   min-height: 100vh;
-  padding: 32px 24px 80px;
+  padding-bottom: 80px;
   color: #191F28;
   background: #FFFFFF;
   animation: fadeIn 200ms ease-out;
@@ -624,7 +617,7 @@ const Page = styled.main`
   }
 
   @media (max-width: 640px) {
-    padding: 24px 16px 64px;
+    padding-bottom: 64px;
   }
 `;
 
@@ -634,69 +627,10 @@ const Shell = styled.div`
   width: min(100%, 880px);
   gap: 40px;
   margin: 0 auto;
-`;
-
-const Header = styled.header`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  padding: 32px 24px 0;
 
   @media (max-width: 640px) {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-`;
-
-const Brand = styled(Link)`
-  color: #191F28;
-  font-size: 18px;
-  font-weight: 700;
-`;
-
-const HeaderActions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-`;
-
-const HeaderLink = styled(Link)`
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #E5E7EB;
-  border-radius: 8px;
-  padding: 0 14px;
-  color: #4E5968;
-  background: #FFFFFF;
-  font-size: 14px;
-  font-weight: 600;
-  transition: background 140ms ease-out;
-
-  &:hover {
-    background: #F2F4F6;
-  }
-`;
-
-const HeaderSignOutButton = styled(SignOutButton)`
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #E5E7EB;
-  border-radius: 8px;
-  padding: 0 14px;
-  color: #4E5968;
-  background: #FFFFFF;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 140ms ease-out;
-
-  &:hover {
-    background: #F2F4F6;
+    padding: 24px 16px 0;
   }
 `;
 

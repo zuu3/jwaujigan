@@ -271,19 +271,16 @@ export function HomeContainer({ session }: HomeContainerProps) {
 
   const introTitle = needsOnboarding
     ? onboardingCopy.title
-    : district
-      ? `${district} 의원 정보와 오늘의 쟁점을 정리했어요.`
-      : "오늘의 쟁점을 한눈에 정리했어요.";
+    : "진보·보수 두 입장을 직접 비교하고 AI 토론을 판정해보세요.";
   const introEyebrow = displayName ? `오늘, ${displayName}님` : "오늘";
   const introText = needsOnboarding ? onboardingCopy.description : null;
 
   const primaryAction = needsOnboarding
     ? { href: "/onboarding", label: onboardingCopy.action }
-    : { href: "/arena", label: "AI 배틀 시작" };
-  const secondaryAction = needsDistrict
-    ? { href: "/onboarding", label: "지역구 설정" }
-    : { href: "#local-politicians", label: "내 의원 보기" };
+    : { href: "#hot-issues", label: "이슈 바로 보기" };
 
+  const hasVoted = issues.some((i) => i.user_vote !== null);
+  const showFirstRunGuide = !issuesQuery.isLoading && !hasVoted && issues.length > 0;
   return (
     <Page>
       <AppHeader userName={displayName} userImage={displayImage} />
@@ -299,37 +296,23 @@ export function HomeContainer({ session }: HomeContainerProps) {
             <IntroTitle>{introTitle}</IntroTitle>
             {introText ? <IntroText>{introText}</IntroText> : null}
             <IntroActions>
-              <PrimaryActionLink href={primaryAction.href}>
-                {primaryAction.label}
-                <ArrowRight size={16} />
-              </PrimaryActionLink>
-              <SecondaryActionLink href={secondaryAction.href}>
-                {secondaryAction.label}
-              </SecondaryActionLink>
+              {needsOnboarding ? (
+                <PrimaryActionLink href={primaryAction.href}>
+                  {primaryAction.label}
+                  <ArrowRight size={16} />
+                </PrimaryActionLink>
+              ) : (
+                <PrimaryActionScroll
+                  onClick={() => {
+                    document.getElementById("hot-issues")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                >
+                  {primaryAction.label}
+                  <ArrowRight size={16} />
+                </PrimaryActionScroll>
+              )}
             </IntroActions>
           </IntroCopy>
-
-          <IntroStatsDivider />
-          <IntroStats aria-label="홈 상태 요약">
-            <StatItem>
-              <StatLabel>지역구</StatLabel>
-              <StatValue>{district ?? "미설정"}</StatValue>
-            </StatItem>
-            <StatItem>
-              <StatLabel>성향 분석</StatLabel>
-              <StatValue>{hasPoliticalProfile ? "완료" : "미완료"}</StatValue>
-            </StatItem>
-            <StatItem>
-              <StatLabel>내 의원</StatLabel>
-              <StatValue>
-                {district ? `${politicians.length}명` : "설정 필요"}
-              </StatValue>
-            </StatItem>
-            <StatItem>
-              <StatLabel>핫이슈</StatLabel>
-              <StatValue>{issues.length > 0 ? `${issues.length}건` : "수집 중"}</StatValue>
-            </StatItem>
-          </IntroStats>
         </MotionIntro>
 
         <SearchBar role="search">
@@ -392,6 +375,7 @@ export function HomeContainer({ session }: HomeContainerProps) {
           </SearchResults>
         ) : null}
 
+        {district ? (
         <MotionSection
           id="local-politicians"
           initial={{ opacity: 0 }}
@@ -402,23 +386,12 @@ export function HomeContainer({ session }: HomeContainerProps) {
             <SectionMeta>
               <SectionTitleRow>
                 <SectionTitle>내 지역구 의원</SectionTitle>
-                <SectionSubtle>
-                  {district ? district : "지역구 설정 필요"}
-                </SectionSubtle>
+                <SectionSubtle>{district}</SectionSubtle>
               </SectionTitleRow>
             </SectionMeta>
-            {needsOnboarding ? (
-              <SectionHeaderAside>
-                <CompactNoticeAction href="/onboarding">
-                  {onboardingCopy.label}
-                  <ArrowRight size={14} />
-                </CompactNoticeAction>
-              </SectionHeaderAside>
-            ) : null}
           </SectionHeader>
 
-          {district ? (
-            politiciansQuery.isLoading ? (
+          {politiciansQuery.isLoading ? (
               <EmptyCard>의원 정보를 불러오는 중이에요.</EmptyCard>
             ) : politiciansQuery.isError ? (
               <EmptyCard>
@@ -572,15 +545,9 @@ export function HomeContainer({ session }: HomeContainerProps) {
                   온보딩에서 지역구를 다시 설정해 주세요.
                 </EmptyCardText>
               </EmptyCard>
-            )
-          ) : (
-            <DistrictPromptCard>
-              <PromptTitle>{onboardingCopy.title}</PromptTitle>
-              <PromptText>{onboardingCopy.description}</PromptText>
-              <PromptLink href="/onboarding">지역구 설정</PromptLink>
-            </DistrictPromptCard>
-          )}
+            )}
         </MotionSection>
+        ) : null}
 
         <MotionSection
           id="hot-issues"
@@ -618,6 +585,26 @@ export function HomeContainer({ session }: HomeContainerProps) {
               </BalanceToggle>
             ) : null}
           </SectionHeader>
+
+          {showFirstRunGuide ? (
+            <FirstRunGuide>
+              <FirstRunTitle>처음 오셨나요?</FirstRunTitle>
+              <FirstRunSteps>
+                <FirstRunStep>
+                  <FirstRunNum>1</FirstRunNum>
+                  <FirstRunText>이슈를 눌러 <strong>진보·보수 입장 비교</strong></FirstRunText>
+                </FirstRunStep>
+                <FirstRunStep>
+                  <FirstRunNum>2</FirstRunNum>
+                  <FirstRunText>더 설득력 있는 쪽에 <strong>투표</strong></FirstRunText>
+                </FirstRunStep>
+                <FirstRunStep>
+                  <FirstRunNum>3</FirstRunNum>
+                  <FirstRunText><strong>AI 배틀</strong>로 더 깊이 파고들기</FirstRunText>
+                </FirstRunStep>
+              </FirstRunSteps>
+            </FirstRunGuide>
+          ) : null}
 
           <IssueLayout>
             {issuesQuery.isLoading ? (
@@ -677,13 +664,13 @@ export function HomeContainer({ session }: HomeContainerProps) {
                           }}
                           aria-expanded={isExpanded}
                         >
-                          입장 보기
+                          입장 비교
                           <IssueChevron $expanded={isExpanded}>
                             <ChevronDown size={15} />
                           </IssueChevron>
                         </IssueToggleButton>
                         <IssueTopLink href={getIssueLink(issue)}>
-                          배틀 보기
+                          AI 배틀
                           <ArrowRight size={15} />
                         </IssueTopLink>
                       </IssueActions>
@@ -782,22 +769,6 @@ export function HomeContainer({ session }: HomeContainerProps) {
           </IssueLayout>
         </MotionSection>
 
-        <MotionBattleBanner
-          id="battle-banner"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.2 }}
-        >
-          <BannerCopy>
-            <BannerEyebrow>AI 배틀</BannerEyebrow>
-            <BannerTitle>같은 이슈, 두 시각으로 빠르게 비교해 보세요.</BannerTitle>
-          </BannerCopy>
-
-          <BannerLink href="/arena">
-            배틀 시작하기
-            <ArrowRight size={18} />
-          </BannerLink>
-        </MotionBattleBanner>
       </Main>
     </Page>
   );
@@ -890,59 +861,79 @@ const PrimaryActionLink = styled(Link)`
   }
 `;
 
-const SecondaryActionLink = styled(Link)`
+const PrimaryActionScroll = styled.button`
   display: inline-flex;
   min-height: 44px;
   align-items: center;
   justify-content: center;
-  color: #4e5968;
-  background: transparent;
+  gap: 6px;
+  padding: 0 16px;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #191f28;
   border: 0;
   font-size: 14px;
   font-weight: 600;
-  transition: color 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1);
 
   &:hover {
-    color: #191f28;
-    text-decoration: underline;
-    text-underline-offset: 4px;
+    opacity: 0.86;
   }
 `;
 
-const IntroStatsDivider = styled.hr`
-  margin: 32px 0 20px;
-  height: 1px;
-  border: 0;
-  background: #e5e7eb;
-`;
-
-const IntroStats = styled.div`
+const FirstRunGuide = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 24px;
-
-  @media (max-width: 540px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 20px 16px;
-  }
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: 10px;
+  background: #f9fafb;
+  border: 1px solid #e5e8eb;
+  margin-bottom: 4px;
 `;
 
-const StatItem = styled.div`
-  display: grid;
-  gap: 4px;
-`;
-
-const StatLabel = styled.span`
+const FirstRunTitle = styled.div`
   color: #8b95a1;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
 `;
 
-const StatValue = styled.span`
-  color: #191f28;
-  font-size: 16px;
-  font-weight: 600;
-  word-break: keep-all;
+const FirstRunSteps = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+`;
+
+const FirstRunStep = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const FirstRunNum = styled.div`
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #e5e8eb;
+  color: #4e5968;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+`;
+
+const FirstRunText = styled.span`
+  color: #4e5968;
+  font-size: 13px;
+  font-weight: 400;
+
+  strong {
+    color: #191f28;
+    font-weight: 600;
+  }
 `;
 
 const MotionSection = styled(motion.section)`
@@ -1003,33 +994,6 @@ const SectionCount = styled.span`
   color: #4e5968;
   font-size: 14px;
   font-weight: 600;
-`;
-
-const SectionHeaderAside = styled.div`
-  display: flex;
-  justify-content: flex-end;
-
-  @media (max-width: 768px) {
-    width: 100%;
-  }
-`;
-
-const CompactNoticeAction = styled(Link)`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 44px;
-  color: #4e5968;
-  background: transparent;
-  border: 0;
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-  transition: color 140ms cubic-bezier(0.16, 1, 0.3, 1);
-
-  &:hover {
-    color: #191f28;
-  }
 `;
 
 const PoliticianList = styled.div`
@@ -1280,49 +1244,6 @@ const RetryButton = styled.button`
   font-weight: 600;
   cursor: pointer;
   margin-top: 8px;
-  transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1);
-
-  &:hover {
-    opacity: 0.86;
-  }
-`;
-
-const DistrictPromptCard = styled.div`
-  display: grid;
-  gap: 12px;
-  padding: 24px 0;
-  border-bottom: 1px solid #e5e7eb;
-`;
-
-const PromptTitle = styled.div`
-  color: #191f28;
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.4;
-  letter-spacing: -0.03em;
-  word-break: keep-all;
-`;
-
-const PromptText = styled.p`
-  margin: 0;
-  color: #4e5968;
-  font-size: 16px;
-  line-height: 1.6;
-  word-break: keep-all;
-`;
-
-const PromptLink = styled(Link)`
-  display: inline-flex;
-  width: fit-content;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 16px;
-  border-radius: 8px;
-  color: #ffffff;
-  background: #191f28;
-  font-size: 14px;
-  font-weight: 600;
   transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1);
 
   &:hover {
@@ -1670,67 +1591,6 @@ const BattleCTA = styled(Link)`
 const BattleCTAIcon = styled.span`
   font-size: 15px;
   line-height: 1;
-`;
-
-const MotionBattleBanner = styled(motion.section)`
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-  margin-top: 40px;
-  padding-top: 40px;
-  border-top: 1px solid #e5e7eb;
-
-  @media (max-width: 768px) {
-    align-items: flex-start;
-    flex-direction: column;
-    margin-top: 32px;
-    padding-top: 32px;
-  }
-`;
-
-const BannerCopy = styled.div`
-  display: grid;
-  gap: 8px;
-  max-width: 480px;
-`;
-
-const BannerEyebrow = styled.div`
-  color: #8b95a1;
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-`;
-
-const BannerTitle = styled.h2`
-  margin: 0;
-  color: #191f28;
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1.4;
-  letter-spacing: -0.03em;
-  word-break: keep-all;
-`;
-
-const BannerLink = styled(Link)`
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 0 20px;
-  border-radius: 8px;
-  color: #ffffff;
-  background: #3182f6;
-  font-size: 14px;
-  font-weight: 600;
-  flex-shrink: 0;
-  white-space: nowrap;
-  transition: background 140ms cubic-bezier(0.16, 1, 0.3, 1);
-
-  &:hover {
-    background: #1b64da;
-  }
 `;
 
 /* ── Search ───────────────────────────────────────────── */
