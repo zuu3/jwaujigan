@@ -52,27 +52,27 @@ function getStanceLabel(stance: Stance) {
 }
 
 function getStanceTone(stance: Stance) {
-  return stance === "progressive" ? "#3182F6" : "#E5484D";
+  return stance === "progressive" ? "#3182f6" : "#e5484d";
 }
 
 function getResultCopy(result: DebateResult) {
   if (result.winner === "progressive") {
     return {
       title: "진보 AI가 우세했습니다",
-      color: "#3182F6",
+      color: "#3182f6",
     };
   }
 
   if (result.winner === "conservative") {
     return {
       title: "보수 AI가 우세했습니다",
-      color: "#E5484D",
+      color: "#e5484d",
     };
   }
 
   return {
     title: "팽팽한 승부였습니다",
-    color: "#4E5968",
+    color: "#4e5968",
   };
 }
 
@@ -233,17 +233,41 @@ export function ArenaIndex({ issues, isAuthenticated }: ArenaIndexProps) {
 
         {issues.length > 0 ? (
           <IssueGrid>
-            {issues.map((issue) => (
-              <IssueCard key={issue.id} href={`/arena/${issue.id}`}>
-                <IssueCardMeta>토론 이슈</IssueCardMeta>
-                <IssueCardTitle>{issue.title}</IssueCardTitle>
-                <IssueCardSummary>{issue.summary}</IssueCardSummary>
-                <IssueCardFooter>
-                  <span>배틀 참여하기</span>
-                  <ArrowRight size={16} />
-                </IssueCardFooter>
-              </IssueCard>
-            ))}
+            {issues.map((issue) => {
+              const total = issue.vote_counts?.total ?? 0;
+              const statusColor =
+                issue.bill_status === "통과" ? "#03b26c" :
+                issue.bill_status === "폐기" ? "#8b95a1" :
+                issue.bill_status ? "#fe9800" : null;
+
+              return (
+                <IssueCard key={issue.id} href={`/arena/${issue.id}`}>
+                  <IssueCardTop>
+                    {issue.bill_status && statusColor ? (
+                      <IssueCardBadge $color={statusColor}>{issue.bill_status}</IssueCardBadge>
+                    ) : (
+                      <IssueCardBadge $color="#8b95a1">토론</IssueCardBadge>
+                    )}
+                    {total > 0 ? (
+                      <IssueCardParticipants>
+                        {total.toLocaleString()}명 참여
+                      </IssueCardParticipants>
+                    ) : null}
+                  </IssueCardTop>
+                  <IssueCardTitle>{issue.title}</IssueCardTitle>
+                  <IssueCardSummary>{issue.summary}</IssueCardSummary>
+                  {issue.proposer || issue.committee ? (
+                    <IssueCardMeta>
+                      {[issue.committee, issue.proposer].filter(Boolean).join(" · ")}
+                    </IssueCardMeta>
+                  ) : null}
+                  <IssueCardFooter>
+                    <span>배틀 참여하기</span>
+                    <ArrowRight size={16} />
+                  </IssueCardFooter>
+                </IssueCard>
+              );
+            })}
           </IssueGrid>
         ) : (
           <EmptyPanel>
@@ -370,11 +394,11 @@ export function ArenaIssueDetail({ issue }: IssueDetailProps) {
 
           <ContextGrid>
             <ContextBox>
-              <ContextLabel $tone="#3182F6">진보 관점</ContextLabel>
+              <ContextLabel $tone="#3182f6">진보 관점</ContextLabel>
               <ContextText>{issue.progressive}</ContextText>
             </ContextBox>
             <ContextBox>
-              <ContextLabel $tone="#E5484D">보수 관점</ContextLabel>
+              <ContextLabel $tone="#e5484d">보수 관점</ContextLabel>
               <ContextText>{issue.conservative}</ContextText>
             </ContextBox>
           </ContextGrid>
@@ -385,13 +409,13 @@ export function ArenaIssueDetail({ issue }: IssueDetailProps) {
           <StanceActions>
             <StanceButton
               href={`/arena/${issue.id}/battle?stance=progressive`}
-              $tone="#3182F6"
+              $tone="#3182f6"
             >
               진보 편으로 참여
             </StanceButton>
             <StanceButton
               href={`/arena/${issue.id}/battle?stance=conservative`}
-              $tone="#E5484D"
+              $tone="#e5484d"
             >
               보수 편으로 참여
             </StanceButton>
@@ -1014,8 +1038,8 @@ export function ArenaBattle({
 const Page = styled.main`
   min-height: 100vh;
   padding-bottom: 80px;
-  color: #191F28;
-  background: #FFFFFF;
+  color: #191f28;
+  background: #ffffff;
   animation: fadeIn 200ms ease-out;
 
   @keyframes fadeIn {
@@ -1057,7 +1081,7 @@ const GuestNav = styled.nav`
 `;
 
 const Brand = styled(Link)`
-  color: #191F28;
+  color: #191f28;
   font-size: 18px;
   font-weight: 800;
   letter-spacing: -0.04em;
@@ -1088,9 +1112,9 @@ const LoginBanner = styled.div`
   justify-content: space-between;
   gap: 16px;
   padding: 16px 20px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  background: #FFFFFF;
+  background: #ffffff;
 
   @media (max-width: 640px) {
     align-items: stretch;
@@ -1100,7 +1124,7 @@ const LoginBanner = styled.div`
 
 const BannerText = styled.p`
   margin: 0;
-  color: #4E5968;
+  color: #4e5968;
   font-size: 14px;
   font-weight: 500;
   line-height: 1.55;
@@ -1113,8 +1137,8 @@ const BannerAction = styled(Link)`
   justify-content: center;
   border-radius: 8px;
   padding: 0 16px;
-  color: #FFFFFF;
-  background: #3182F6;
+  color: #ffffff;
+  background: #3182f6;
   font-size: 14px;
   font-weight: 600;
 `;
@@ -1125,7 +1149,7 @@ const Hero = styled.section`
 `;
 
 const HeroEyebrow = styled.div`
-  color: #4E5968;
+  color: #4e5968;
   font-size: 14px;
   font-weight: 600;
 `;
@@ -1133,7 +1157,7 @@ const HeroEyebrow = styled.div`
 const HeroTitle = styled.h1`
   max-width: 780px;
   margin: 0;
-  color: #191F28;
+  color: #191f28;
   font-size: 32px;
   font-weight: 700;
   line-height: 1.25;
@@ -1144,7 +1168,7 @@ const HeroTitle = styled.h1`
 const HeroDescription = styled.p`
   max-width: 640px;
   margin: 0;
-  color: #4E5968;
+  color: #4e5968;
   font-size: 16px;
   font-weight: 400;
   line-height: 1.6;
@@ -1213,25 +1237,54 @@ const IssueCard = styled(Link)`
   align-content: start;
   gap: 12px;
   padding: 24px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  background: #FFFFFF;
+  background: #ffffff;
   transition: border-color 200ms ease;
 
   &:hover {
-    border-color: #191F28;
+    border-color: #191f28;
   }
 `;
 
-const IssueCardMeta = styled.div`
-  color: #8B95A1;
-  font-size: 14px;
+const IssueCardTop = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+`;
+
+const IssueCardBadge = styled.span<{ $color: string }>`
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: ${({ $color }) => `${$color}18`};
+  color: ${({ $color }) => $color};
+  font-size: 12px;
   font-weight: 600;
+`;
+
+const IssueCardParticipants = styled.span`
+  color: #8b95a1;
+  font-size: 12px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+`;
+
+const IssueCardMeta = styled.div`
+  color: #8b95a1;
+  font-size: 13px;
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const IssueCardTitle = styled.h2`
   margin: 0;
-  color: #191F28;
+  color: #191f28;
   font-size: 18px;
   font-weight: 700;
   line-height: 1.4;
@@ -1240,7 +1293,7 @@ const IssueCardTitle = styled.h2`
 
 const IssueCardSummary = styled.p`
   margin: 0;
-  color: #4E5968;
+  color: #4e5968;
   font-size: 14px;
   font-weight: 400;
   line-height: 1.6;
@@ -1253,29 +1306,29 @@ const IssueCardFooter = styled.div`
   gap: 12px;
   margin-top: auto;
   padding-top: 12px;
-  border-top: 1px solid #F2F4F6;
-  color: #191F28;
+  border-top: 1px solid #f2f4f6;
+  color: #191f28;
   font-size: 14px;
   font-weight: 600;
 `;
 
 const EmptyPanel = styled.div`
   padding: 32px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  background: #FFFFFF;
+  background: #ffffff;
 `;
 
 const EmptyTitle = styled.h2`
   margin: 0;
-  color: #191F28;
+  color: #191f28;
   font-size: 18px;
   font-weight: 700;
 `;
 
 const EmptyText = styled.p`
   margin: 8px 0 0;
-  color: #4E5968;
+  color: #4e5968;
   font-size: 14px;
   font-weight: 400;
   line-height: 1.6;
@@ -1286,7 +1339,7 @@ const BackLink = styled(Link)`
   width: fit-content;
   align-items: center;
   gap: 6px;
-  color: #4E5968;
+  color: #4e5968;
   font-size: 14px;
   font-weight: 600;
 `;
@@ -1359,7 +1412,7 @@ const DetailPanel = styled.section`
 const DetailTitle = styled.h1`
   max-width: 860px;
   margin: 0;
-  color: #191F28;
+  color: #191f28;
   font-size: 32px;
   font-weight: 700;
   line-height: 1.25;
@@ -1370,7 +1423,7 @@ const DetailTitle = styled.h1`
 const DetailSummary = styled.p`
   max-width: 760px;
   margin: 0;
-  color: #4E5968;
+  color: #4e5968;
   font-size: 16px;
   font-weight: 400;
   line-height: 1.6;
@@ -1390,9 +1443,9 @@ const ContextBox = styled.div`
   display: grid;
   gap: 8px;
   padding: 20px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  background: #FFFFFF;
+  background: #ffffff;
 `;
 
 const ContextLabel = styled("div", {
@@ -1405,7 +1458,7 @@ const ContextLabel = styled("div", {
 
 const ContextText = styled.p`
   margin: 0;
-  color: #4E5968;
+  color: #4e5968;
   font-size: 14px;
   font-weight: 400;
   line-height: 1.6;
@@ -1434,7 +1487,7 @@ const StanceButton = styled(Link, {
   justify-content: center;
   border-radius: 8px;
   padding: 0 20px;
-  color: #FFFFFF;
+  color: #ffffff;
   background: ${({ $tone }) => $tone};
   font-size: 16px;
   font-weight: 600;
@@ -1615,11 +1668,11 @@ const RoundBadge = styled.div`
   display: inline-flex;
   min-height: 36px;
   align-items: center;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 999px;
   padding: 0 14px;
-  color: #4E5968;
-  background: #FFFFFF;
+  color: #4e5968;
+  background: #ffffff;
   font-size: 14px;
   font-weight: 600;
 `;
@@ -1634,14 +1687,14 @@ const BattleKicker = styled.div`
   width: fit-content;
   align-items: center;
   gap: 6px;
-  color: #4E5968;
+  color: #4e5968;
   font-size: 14px;
   font-weight: 600;
 `;
 
 const BattleTitle = styled.h1`
   margin: 0;
-  color: #191F28;
+  color: #191f28;
   font-size: 24px;
   font-weight: 700;
   line-height: 1.3;
@@ -1651,7 +1704,7 @@ const BattleTitle = styled.h1`
 
 const BattleSummary = styled.p`
   margin: 0;
-  color: #4E5968;
+  color: #4e5968;
   font-size: 16px;
   font-weight: 400;
   line-height: 1.6;
@@ -1663,8 +1716,8 @@ const ChatPanel = styled.section`
   align-content: start;
   gap: 16px;
   padding: 24px 0;
-  border-top: 1px solid #F2F4F6;
-  border-bottom: 1px solid #F2F4F6;
+  border-top: 1px solid #f2f4f6;
+  border-bottom: 1px solid #f2f4f6;
 
   @media (max-width: 640px) {
     padding: 16px 0;
@@ -1686,11 +1739,11 @@ const MessageBubble = styled("div", {
   flex-direction: column;
   max-width: min(78%, 620px);
   gap: 6px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 14px 16px;
-  color: #191F28;
-  background: #FFFFFF;
+  color: #191f28;
+  background: #ffffff;
 
   @media (max-width: 640px) {
     max-width: 92%;
@@ -1698,13 +1751,13 @@ const MessageBubble = styled("div", {
 `;
 
 const MessageLabel = styled.div<{ $tone?: string }>`
-  color: ${({ $tone }) => $tone ?? "#4E5968"};
+  color: ${({ $tone }) => $tone ?? "#4e5968"};
   font-size: 14px;
   font-weight: 600;
 `;
 
 const MessageText = styled.div`
-  color: #191F28;
+  color: #191f28;
   font-size: 14px;
   font-weight: 400;
   line-height: 1.6;
@@ -1717,7 +1770,7 @@ const Cursor = styled.span`
   width: 6px;
   height: 1em;
   margin-left: 2px;
-  background: #191F28;
+  background: #191f28;
   vertical-align: -0.14em;
   animation: blink 0.9s steps(2, start) infinite;
 
@@ -1734,7 +1787,7 @@ const Cursor = styled.span`
 const EmptyChat = styled.div`
   align-self: center;
   justify-self: center;
-  color: #8B95A1;
+  color: #8b95a1;
   font-size: 14px;
   font-weight: 500;
 `;
@@ -1749,7 +1802,7 @@ const ComposerMeta = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  color: #8B95A1;
+  color: #8b95a1;
   font-size: 14px;
   font-weight: 500;
 `;
@@ -1775,11 +1828,11 @@ const ComposerActions = styled.div`
 const ArgumentInput = styled.textarea`
   width: 100%;
   resize: vertical;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 14px 16px;
-  color: #191F28;
-  background: #FFFFFF;
+  color: #191f28;
+  background: #ffffff;
   font-size: 16px;
   font-weight: 400;
   line-height: 1.6;
@@ -1787,17 +1840,17 @@ const ArgumentInput = styled.textarea`
 
   &:focus {
     outline: none;
-    border-color: #3182F6;
+    border-color: #3182f6;
   }
 
   &:disabled {
-    color: #8B95A1;
-    background: #F2F4F6;
+    color: #8b95a1;
+    background: #f2f4f6;
     cursor: not-allowed;
   }
 
   &::placeholder {
-    color: #8B95A1;
+    color: #8b95a1;
   }
 `;
 
@@ -1811,8 +1864,8 @@ const SubmitButton = styled("button", {
   border: 0;
   border-radius: 8px;
   padding: 0 20px;
-  color: #FFFFFF;
-  background: #3182F6;
+  color: #ffffff;
+  background: #3182f6;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -1823,8 +1876,8 @@ const SubmitButton = styled("button", {
   }
 
   &:disabled {
-    color: #8B95A1;
-    background: #F2F4F6;
+    color: #8b95a1;
+    background: #f2f4f6;
     cursor: not-allowed;
   }
 `;
@@ -1834,27 +1887,27 @@ const SecondaryButton = styled.button`
   min-height: 44px;
   align-items: center;
   justify-content: center;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 0 16px;
-  color: #4E5968;
-  background: #FFFFFF;
+  color: #4e5968;
+  background: #ffffff;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: border-color 200ms ease;
 
   &:hover {
-    border-color: #191F28;
+    border-color: #191f28;
   }
 `;
 
 const StatusPanel = styled.div`
   padding: 16px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  color: #4E5968;
-  background: #FFFFFF;
+  color: #4e5968;
+  background: #ffffff;
   font-size: 14px;
   font-weight: 500;
   line-height: 1.6;
@@ -1865,7 +1918,7 @@ const ErrorPanel = styled.div`
   border: 1px solid #f04452;
   border-radius: 8px;
   color: #f04452;
-  background: #FFFFFF;
+  background: #ffffff;
   font-size: 14px;
   font-weight: 500;
   line-height: 1.6;
@@ -1877,14 +1930,14 @@ const ResultCard = styled("section", {
   display: grid;
   gap: 12px;
   padding: 24px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  background: #FFFFFF;
+  background: #ffffff;
 `;
 
 const ResultTitle = styled.h2`
   margin: 0;
-  color: #191F28;
+  color: #191f28;
   font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -1892,7 +1945,7 @@ const ResultTitle = styled.h2`
 
 const ResultReason = styled.p`
   margin: 0;
-  color: #4E5968;
+  color: #4e5968;
   font-size: 16px;
   font-weight: 400;
   line-height: 1.6;
@@ -1915,8 +1968,8 @@ const ResultButton = styled.button`
   border: 0;
   border-radius: 8px;
   padding: 0 16px;
-  color: #FFFFFF;
-  background: #3182F6;
+  color: #ffffff;
+  background: #3182f6;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -1932,17 +1985,17 @@ const ResultLink = styled(Link)`
   min-height: 44px;
   align-items: center;
   justify-content: center;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 0 16px;
-  color: #4E5968;
-  background: #FFFFFF;
+  color: #4e5968;
+  background: #ffffff;
   font-size: 14px;
   font-weight: 600;
   transition: border-color 200ms ease;
 
   &:hover {
-    border-color: #191F28;
+    border-color: #191f28;
   }
 `;
 
