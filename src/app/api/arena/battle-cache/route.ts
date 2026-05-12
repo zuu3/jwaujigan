@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "../../../../../auth";
 import { getArenaBattleCacheTopic } from "@/lib/arena";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 
@@ -48,6 +49,11 @@ function isValidResult(value: unknown): value is DebateResult {
 }
 
 export async function POST(request: Request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   const body = (await request.json()) as BattleCacheRequestBody;
 
   if (!body.issueId || !isValidMessages(body.messages) || !isValidResult(body.result)) {

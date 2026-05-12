@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "../../../../../auth";
 import { getGeminiModel } from "@/lib/gemini";
 
 type DebateMessage = {
@@ -106,6 +107,11 @@ function normalizeReason(reason: string) {
 }
 
 export async function POST(request: Request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   const body = (await request.json()) as JudgeRequestBody;
 
   if (

@@ -24,7 +24,7 @@ export function LandingContainer({ isAuthenticated }: LandingContainerProps) {
       <ArenaSection />
       <AnalysisSection />
       <EngagementSection />
-      <LandingFooter />
+      <LandingFooter isAuthenticated={isAuthenticated} />
     </Page>
   );
 }
