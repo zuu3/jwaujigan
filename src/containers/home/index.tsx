@@ -129,6 +129,13 @@ export function HomeContainer({ session }: HomeContainerProps) {
         <MotionIntro>
           <IntroCopy>
             <IntroEyebrow>{introEyebrow}</IntroEyebrow>
+            {(() => {
+              const streak = profileQuery.data?.streak ?? 0;
+              const todayActive = profileQuery.data?.today_active ?? false;
+              if (streak >= 2 && todayActive) return <StreakChip>{streak}일 연속 참여 중</StreakChip>;
+              if (streak >= 1 && !todayActive) return <StreakChip>오늘 참여하면 {streak + 1}일 연속이에요</StreakChip>;
+              return null;
+            })()}
             <IntroTitle>{introTitle}</IntroTitle>
             {introText ? <IntroText>{introText}</IntroText> : null}
             <IntroActions>
@@ -640,6 +647,18 @@ const BalanceToggle = styled.button<{ $active: boolean }>`
     border-color: #3182f6;
     color: #3182f6;
   }
+`;
+
+const StreakChip = styled.div`
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  background: #e8f3ff;
+  color: #3182f6;
+  font-size: 12px;
+  font-weight: 600;
+  width: fit-content;
 `;
 
 const BalanceBadge = styled.span`
