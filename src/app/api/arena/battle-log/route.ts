@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "../../../../../auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
+import { POINTS } from "@/services/points/points";
 
 type DebateMessage = {
   role: "progressive" | "conservative" | "user";
@@ -85,6 +86,8 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+
+  await supabase.rpc("increment_user_points", { p_user_id: session.user.id, p_amount: POINTS.BATTLE });
 
   return NextResponse.json({ id: data.id });
 }

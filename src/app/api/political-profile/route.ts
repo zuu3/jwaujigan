@@ -8,6 +8,7 @@ import {
   isCompletePoliticalAnswers,
   type PoliticalAnswers,
 } from "@/lib/political-profile";
+import { POINTS } from "@/services/points/points";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -53,6 +54,8 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+
+  await supabase.rpc("increment_user_points", { p_user_id: session.user.id, p_amount: POINTS.ONBOARDING });
 
   const cookieStore = await cookies();
   cookieStore.delete(ONBOARDING_SKIP_COOKIE);

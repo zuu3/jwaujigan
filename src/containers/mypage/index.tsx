@@ -18,6 +18,7 @@ import { PoliticalProfileSection } from "@/components/mypage/PoliticalProfileSec
 import { BattleSection } from "@/components/mypage/BattleSection";
 import { FollowingSection } from "@/components/mypage/FollowingSection";
 import { ActivitySection } from "@/components/mypage/ActivitySection";
+import { getLevel } from "@/services/points/points";
 
 export type { MyPageProfile, PoliticalProfile, BattleLogItem } from "@/types/mypage";
 
@@ -80,6 +81,7 @@ export function MyPageContainer({
               <MapPin size={14} />
               <span>{profile.district ?? "지역구 미설정"}</span>
             </DistrictLine>
+            <PointsBadge points={profile.points} />
           </ProfileContent>
           <ProfileAction href="/onboarding">
             <RotateCcw size={14} />
@@ -250,4 +252,78 @@ const ProfileAction = styled(Link)`
   @media (max-width: 720px) {
     grid-column: 1 / -1;
   }
+`;
+
+/* ── PointsBadge ────────────────────────────────────────── */
+
+function PointsBadge({ points }: { points: number }) {
+  const level = getLevel(points);
+  return (
+    <PointsBadgeRoot>
+      <PointsRow>
+        <span>{level.title}</span>
+        <PointsSep aria-hidden="true">•</PointsSep>
+        <span>{points.toLocaleString("ko-KR")}점</span>
+      </PointsRow>
+      <ProgressRow>
+        <ProgressTrack>
+          <ProgressFill style={{ width: `${level.progress}%` }} />
+        </ProgressTrack>
+        {level.next !== null ? (
+          <ProgressLabel>다음 등급까지 {(level.next - points).toLocaleString("ko-KR")}점</ProgressLabel>
+        ) : (
+          <ProgressLabel>최고 등급</ProgressLabel>
+        )}
+      </ProgressRow>
+    </PointsBadgeRoot>
+  );
+}
+
+const PointsBadgeRoot = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+`;
+
+const PointsRow = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #3182f6;
+  font-size: 13px;
+  font-weight: 600;
+`;
+
+const PointsSep = styled.span`
+  color: #b0b8c1;
+  font-weight: 400;
+`;
+
+const ProgressRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const ProgressTrack = styled.div`
+  width: 96px;
+  height: 4px;
+  border-radius: 2px;
+  background: #e5e8eb;
+  overflow: hidden;
+  flex-shrink: 0;
+`;
+
+const ProgressFill = styled.div`
+  height: 100%;
+  border-radius: 2px;
+  background: #3182f6;
+  transition: width 250ms cubic-bezier(0.4, 0, 0.2, 1);
+`;
+
+const ProgressLabel = styled.span`
+  color: #8b95a1;
+  font-size: 12px;
+  font-weight: 400;
 `;

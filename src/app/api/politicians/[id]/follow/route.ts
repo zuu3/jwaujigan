@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "../../../../../../auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
+import { POINTS } from "@/services/points/points";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -60,6 +61,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     politician_name: body.name,
     politician_image: body.image ?? null,
   });
+  await supabase.rpc("increment_user_points", { p_user_id: userId, p_amount: POINTS.FOLLOW });
 
   return NextResponse.json({ following: true });
 }

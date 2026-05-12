@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "../../../../../../auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 import type { IssueVoteCounts, IssueVoteStance } from "@/types/issue";
+import { POINTS } from "@/services/points/points";
 
 const VALID_STANCES: IssueVoteStance[] = ["progressive", "conservative", "neutral"];
 
@@ -75,6 +76,7 @@ export async function POST(
         { issue_id: issueId, user_id: userId, stance, updated_at: new Date().toISOString() },
         { onConflict: "issue_id,user_id" },
       );
+    await supabase.rpc("increment_user_points", { p_user_id: userId, p_amount: POINTS.VOTE });
     userVote = stance;
   }
 

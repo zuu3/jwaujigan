@@ -144,6 +144,19 @@ export async function GET() {
     return NextResponse.json({ issues } satisfies HotIssuesResponse);
   } catch (generateError) {
     console.error("Failed to generate issues from Assembly API", generateError);
+
+    // 타임아웃/에러 시 만료된 스테일 캐시라도 반환
+    const { data: staleIssues } = await supabase
+      .from("issues")
+      .select(ISSUE_SELECT)
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .limit(5);
+
+    if (staleIssues && staleIssues.length > 0) {
+      const issues = await enrichWithVotes(staleIssues, userId);
+      return NextResponse.json({ issues } satisfies HotIssuesResponse);
+    }
+
     return NextResponse.json({ issues: [] satisfies HotIssue[] });
   } finally {
     await supabase.from("generation_locks").delete().eq("key", LOCK_KEY);

@@ -14,7 +14,7 @@ export async function GET() {
   const supabase = createServiceRoleSupabaseClient();
   const { data, error } = await supabase
     .from("users")
-    .select("id, email, name, image, district")
+    .select("id, email, name, image, district, points")
     .eq("email", session.user.email)
     .maybeSingle();
 
@@ -34,6 +34,7 @@ export async function GET() {
       name: session.user.name ?? null,
       image: session.user.image ?? null,
       district: gateState.district ?? session.user.district ?? null,
+      points: 0,
     }),
     district: gateState.district ?? data?.district ?? session.user.district ?? null,
     hasPoliticalProfile: gateState.hasPoliticalProfile,

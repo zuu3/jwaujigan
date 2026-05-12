@@ -137,6 +137,7 @@ export type Database = {
           name: string | null;
           image: string | null;
           district: string | null;
+          points: number;
           created_at: string;
           updated_at: string;
         };
@@ -155,6 +156,7 @@ export type Database = {
           name?: string | null;
           image?: string | null;
           district?: string | null;
+          points?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -328,7 +330,12 @@ export type Database = {
         Relationships: [];
       };
     };
-    Functions: Record<string, never>;
+    Functions: {
+      increment_user_points: {
+        Args: { p_user_id: string; p_amount: number };
+        Returns: void;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };
