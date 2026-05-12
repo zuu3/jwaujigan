@@ -247,8 +247,8 @@ export function ArenaIndex({ issues, isAuthenticated }: ArenaIndexProps) {
           </IssueGrid>
         ) : (
           <EmptyPanel>
-            <EmptyTitle>진행 가능한 이슈가 없습니다</EmptyTitle>
-            <EmptyText>유효한 이슈가 생성되면 이곳에 표시됩니다.</EmptyText>
+            <EmptyTitle>오늘은 배틀 이슈가 없어요</EmptyTitle>
+            <EmptyText>매일 새 이슈가 추가돼요. 홈에서 핫이슈를 먼저 확인해 보세요.</EmptyText>
           </EmptyPanel>
         )}
       </Shell>
@@ -942,7 +942,7 @@ export function ArenaBattle({
               <label htmlFor="argument-input">
                 {phase === "intervention" ? "내 생각 보내기" : "내 생각 추가하기"}
               </label>
-              <span aria-hidden="true">
+              <span id="argument-counter">
                 {argument.length} / {MAX_ARGUMENT_LENGTH}
               </span>
             </ComposerMeta>
@@ -1862,9 +1862,9 @@ const StatusPanel = styled.div`
 
 const ErrorPanel = styled.div`
   padding: 16px;
-  border: 1px solid #E5484D;
+  border: 1px solid #f04452;
   border-radius: 8px;
-  color: #E5484D;
+  color: #f04452;
   background: #FFFFFF;
   font-size: 14px;
   font-weight: 500;

@@ -45,12 +45,10 @@ export const globalStyles = css`
     color: var(--foreground);
     background: var(--background);
     font-family:
-      var(--font-geist-sans),
-      "Toss Product Sans",
-      "SF Pro KR",
+      "Pretendard",
       "Apple SD Gothic Neo",
-      Arial,
-      Helvetica,
+      Roboto,
+      "Noto Sans KR",
       sans-serif;
     overflow-x: hidden;
     text-rendering: optimizeLegibility;

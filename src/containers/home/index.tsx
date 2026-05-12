@@ -1,7 +1,6 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { motion } from "framer-motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, ChevronDown, ExternalLink, MapPin, Search, SlidersHorizontal, X } from "lucide-react";
 import Image from "next/image";
@@ -286,11 +285,7 @@ export function HomeContainer({ session }: HomeContainerProps) {
       <AppHeader userName={displayName} userImage={displayImage} />
 
       <Main>
-        <MotionIntro
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.2 }}
-        >
+        <MotionIntro>
           <IntroCopy>
             <IntroEyebrow>{introEyebrow}</IntroEyebrow>
             <IntroTitle>{introTitle}</IntroTitle>
@@ -376,12 +371,7 @@ export function HomeContainer({ session }: HomeContainerProps) {
         ) : null}
 
         {district ? (
-        <MotionSection
-          id="local-politicians"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.2 }}
-        >
+        <MotionSection id="local-politicians">
           <SectionHeader>
             <SectionMeta>
               <SectionTitleRow>
@@ -435,9 +425,9 @@ export function HomeContainer({ session }: HomeContainerProps) {
                               <PartyLogo
                                 src={party.src}
                                 alt={party.label}
-                                onError={(event) => {
-                                  event.currentTarget.style.display = "none";
-                                }}
+                                width={40}
+                                height={14}
+                                unoptimized
                               />
                             ) : (
                               <PartyTextBadge $tone={partyTone}>{party.label}</PartyTextBadge>
@@ -549,12 +539,7 @@ export function HomeContainer({ session }: HomeContainerProps) {
         </MotionSection>
         ) : null}
 
-        <MotionSection
-          id="hot-issues"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.2 }}
-        >
+        <MotionSection id="hot-issues">
           <SectionHeader>
             <SectionMeta>
               <SectionTitleRow>
@@ -797,10 +782,20 @@ const Main = styled.div`
   }
 `;
 
-const MotionIntro = styled(motion.div)`
+const MotionIntro = styled.div`
   display: grid;
   gap: 0;
   padding-bottom: 40px;
+  animation: fadeIn 200ms ease-out both;
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 `;
 
 const IntroCopy = styled.div`
@@ -936,10 +931,20 @@ const FirstRunText = styled.span`
   }
 `;
 
-const MotionSection = styled(motion.section)`
+const MotionSection = styled.section`
   display: grid;
   gap: 0;
   padding-top: 40px;
+  animation: fadeIn 200ms ease-out both;
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 
   @media (max-width: 768px) {
     padding-top: 32px;
@@ -1079,7 +1084,7 @@ const PartyInline = styled.div`
   gap: 6px;
 `;
 
-const PartyLogo = styled.img`
+const PartyLogo = styled(Image)`
   display: block;
   width: auto;
   height: 14px;
@@ -1140,7 +1145,8 @@ const InlineActionButton = styled.button`
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 0;
+  min-height: 44px;
+  padding: 0 2px;
   border: 0;
   color: #3182f6;
   background: transparent;
@@ -1639,7 +1645,7 @@ const SearchInput = styled.input`
 const SearchClear = styled.button`
   background: none;
   border: none;
-  padding: 4px;
+  padding: 12px 8px;
   cursor: pointer;
   color: #b0b8c1;
   display: flex;
