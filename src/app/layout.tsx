@@ -7,6 +7,7 @@ import "@fontsource/pretendard/700.css";
 import "@fontsource/pretendard/800.css";
 import "@toss/tds-colors/colors.css";
 import { AppProvider } from "@/components/providers/app-provider";
+import { PointsToaster } from "@/components/PointsToaster";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -26,7 +27,10 @@ export default function RootLayout({
   return (
     <html lang="ko" className={geistMono.variable}>
       <body>
-        <AppProvider>{children}</AppProvider>
+        <AppProvider>
+          {children}
+          <PointsToaster />
+        </AppProvider>
       </body>
     </html>
   );
