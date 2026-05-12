@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { voteIssue } from "./issues.api";
 import type { HotIssuesResponse, IssueVoteStance } from "./issues.api";
+import { showPointsToast } from "@/lib/points-toast";
+import { DAILY_BONUS, POINTS } from "@/services/points/points";
 
 export function useVoteIssue() {
   const queryClient = useQueryClient();
@@ -27,6 +29,16 @@ export function useVoteIssue() {
         };
       });
       return { previous };
+    },
+    onSuccess: (data) => {
+      if (data.points_earned > 0) {
+        showPointsToast({
+          points: POINTS.VOTE,
+          label: "투표 완료",
+          bonus: data.daily_bonus_earned ? DAILY_BONUS : undefined,
+        });
+        void queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+      }
     },
     onError: (_err, _vars, context) => {
       if (context?.previous) {

@@ -5,8 +5,11 @@ import { ArrowLeft, RotateCcw, Share2, Swords } from "lucide-react";
 import Link from "next/link";
 import { AppHeader } from "@/components/app-header";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { CachedArenaBattle } from "@/lib/arena";
 import type { HotIssue } from "@/types/issue";
+import { showPointsToast } from "@/lib/points-toast";
+import { DAILY_BONUS, POINTS } from "@/services/points/points";
 
 export type DebateMessage = {
   role: "progressive" | "conservative" | "user";
@@ -199,6 +202,7 @@ export function ArenaBattle({
   const [userVerdict, setUserVerdict] = useState<string | null>(null);
   const [verdictLoading, setVerdictLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const queryClient = useQueryClient();
   const startedRef = useRef(false);
   const runningTurnRef = useRef<number | null>(null);
   const messagesRef = useRef<DebateMessage[]>([]);
@@ -327,11 +331,9 @@ export function ArenaBattle({
 
       logSavedRef.current = true;
 
-      await fetch("/api/arena/battle-log", {
+      const logRes = await fetch("/api/arena/battle-log", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           topic: issue.title,
           messages: finalMessages,
@@ -339,6 +341,16 @@ export function ArenaBattle({
           userStance: stance,
         }),
       });
+
+      if (logRes.ok) {
+        const logData = await logRes.json() as { daily_bonus_earned?: boolean };
+        showPointsToast({
+          points: POINTS.BATTLE,
+          label: "배틀 완료",
+          bonus: logData.daily_bonus_earned ? DAILY_BONUS : undefined,
+        });
+        void queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+      }
     },
     [isAuthenticated, issue.title, stance],
   );
