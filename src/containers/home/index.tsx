@@ -1,16 +1,17 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { Session } from "next-auth";
 import { AppHeader } from "@/components/app-header";
-import { useIssues } from "@/hooks/useIssues";
-import type { PoliticianDetail } from "@/lib/assembly";
-import type { HotIssue, HotIssuesResponse, IssueVoteStance } from "@/types/issue";
-import type { SearchResponse } from "@/app/api/search/route";
+import { useIssues } from "@/services/issues/issues.queries";
+import { useVoteIssue } from "@/services/issues/issues.mutations";
+import { useUserProfile } from "@/services/user/user.queries";
+import { useLocalPoliticians, usePoliticianDetail, useFollowedPoliticianNames } from "@/services/politicians/politicians.queries";
+import { useSearch } from "@/services/search/search.queries";
+import type { HotIssue } from "@/types/issue";
 import { SearchBar } from "@/components/home/search";
 import { PoliticianCard } from "@/components/home/politician-card";
 import { IssueCard } from "@/components/home/issue-card";
@@ -18,45 +19,6 @@ import { IssueCard } from "@/components/home/issue-card";
 type HomeContainerProps = {
   session: Session;
 };
-
-type UserProfileResponse = {
-  id: string;
-  email: string;
-  name: string | null;
-  image: string | null;
-  district: string | null;
-  hasPoliticalProfile: boolean;
-};
-
-type LocalPolitician = {
-  id: string;
-  name: string;
-  party: string;
-  district: string;
-  committee: string | null;
-  reelection: string | null;
-  office: string | null;
-  image: string | null;
-};
-
-type LocalPoliticiansResponse = {
-  district: string | null;
-  politicians: LocalPolitician[];
-};
-
-async function fetchJson<T>(url: string) {
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}`);
-  }
-
-  return (await response.json()) as T;
-}
-
-function getProfileInitial(name: string | null, email: string | null) {
-  return (name?.trim()?.[0] ?? email?.trim()?.[0] ?? "유").toUpperCase();
-}
 
 function getOnboardingCopy({
   needsDistrict,
@@ -109,64 +71,16 @@ export function HomeContainer({ session }: HomeContainerProps) {
     return localStorage.getItem("balance-mode") === "1";
   });
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const queryClient = useQueryClient();
-  const voteMutation = useMutation({
-    mutationFn: async ({ issueId, stance }: { issueId: string; stance: IssueVoteStance }) => {
-      const res = await fetch(`/api/issues/${issueId}/vote`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stance }),
-      });
-      if (!res.ok) throw new Error("투표에 실패했어요");
-      return res.json() as Promise<{ vote_counts: HotIssue["vote_counts"]; user_vote: IssueVoteStance | null }>;
-    },
-    onMutate: async ({ issueId, stance }) => {
-      await queryClient.cancelQueries({ queryKey: ["issues"] });
-      const previous = queryClient.getQueryData<HotIssuesResponse>(["issues"]);
-      queryClient.setQueryData<HotIssuesResponse>(["issues"], (old) => {
-        if (!old) return old;
-        return {
-          issues: old.issues.map((issue) => {
-            if (issue.id !== issueId) return issue;
-            const prev = issue.user_vote;
-            const isToggle = prev === stance;
-            const newVote = isToggle ? null : stance;
-            const counts = { ...issue.vote_counts };
-            if (prev) counts[prev] = Math.max(0, counts[prev] - 1);
-            if (newVote) counts[newVote]++;
-            counts.total = counts.progressive + counts.conservative + counts.neutral;
-            return { ...issue, user_vote: newVote, vote_counts: counts };
-          }),
-        };
-      });
-      return { previous };
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData<HotIssuesResponse>(["issues"], context.previous);
-      }
-    },
-    onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: ["issues"] });
-    },
-  });
+
+  const voteMutation = useVoteIssue();
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(searchQuery.trim()), 350);
     return () => clearTimeout(t);
   }, [searchQuery]);
 
-  const searchResultsQuery = useQuery({
-    queryKey: ["search", debouncedQuery],
-    enabled: debouncedQuery.length >= 2,
-    queryFn: () => fetchJson<SearchResponse>(`/api/search?q=${encodeURIComponent(debouncedQuery)}`),
-  });
-
-  const profileQuery = useQuery({
-    queryKey: ["user-profile"],
-    queryFn: () => fetchJson<UserProfileResponse>("/api/user/profile"),
-    staleTime: 1000 * 60 * 10,
-  });
+  const searchResultsQuery = useSearch(debouncedQuery);
+  const profileQuery = useUserProfile();
   const issuesQuery = useIssues();
 
   const displayName = profileQuery.data?.name ?? session.user.name ?? null;
@@ -182,25 +96,10 @@ export function HomeContainer({ session }: HomeContainerProps) {
     needsPoliticalProfile,
   });
 
-  const politiciansQuery = useQuery({
-    queryKey: ["local-politicians", district],
-    enabled: Boolean(district),
-    queryFn: () => fetchJson<LocalPoliticiansResponse>("/api/politicians/local"),
-    staleTime: 1000 * 60 * 60 * 12,
-  });
-  const politicianDetailQuery = useQuery({
-    queryKey: ["politician-detail", expandedPoliticianId],
-    enabled: Boolean(expandedPoliticianId),
-    queryFn: () => fetchJson<PoliticianDetail>(`/api/politicians/${expandedPoliticianId}`),
-    staleTime: 1000 * 60 * 60 * 12,
-  });
-
-  const followedNamesQuery = useQuery({
-    queryKey: ["followed-politician-names"],
-    queryFn: () => fetchJson<{ names: string[] }>("/api/politicians/follows").then((r) => r.names),
-    staleTime: 60_000,
-  });
-  const followedNames = new Set(followedNamesQuery.data ?? []);
+  const politiciansQuery = useLocalPoliticians({ enabled: Boolean(district) });
+  const politicianDetailQuery = usePoliticianDetail(expandedPoliticianId);
+  const followedNamesQuery = useFollowedPoliticianNames();
+  const followedNames = new Set<string>(followedNamesQuery.data ?? []);
 
   const politicians = politiciansQuery.data?.politicians ?? [];
   const issues = issuesQuery.data?.issues ?? [];
