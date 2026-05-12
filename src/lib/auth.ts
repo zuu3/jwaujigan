@@ -1,6 +1,6 @@
 import { getServerSession, type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { getUserGateState, syncUserRecord } from "./src/lib/users";
+import { getUserGateState, syncUserRecord } from "./users";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.AUTH_SECRET,

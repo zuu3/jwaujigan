@@ -1,4 +1,4 @@
-import { auth } from "../../../auth";
+import { auth } from "@/lib/auth";
 import { ArenaIndex } from "@/containers/arena";
 import { getArenaIssues } from "@/lib/arena";
 

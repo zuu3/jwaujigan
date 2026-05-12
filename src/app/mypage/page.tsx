@@ -1,6 +1,6 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
-import { auth } from "../../../auth";
+import { auth } from "@/lib/auth";
 import { MyPageContainer, type BattleLogItem, type MyPageProfile, type PoliticalProfile } from "@/containers/mypage";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 

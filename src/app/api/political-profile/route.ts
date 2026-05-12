@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { auth } from "../../../../auth";
+import { auth } from "@/lib/auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 import { ONBOARDING_SKIP_COOKIE } from "@/lib/onboarding";
 import {

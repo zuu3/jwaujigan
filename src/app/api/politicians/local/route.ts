@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { NextResponse } from "next/server";
-import { auth } from "../../../../../auth";
+import { auth } from "@/lib/auth";
 import { getLocalPoliticiansByDistrict } from "@/lib/assembly";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 

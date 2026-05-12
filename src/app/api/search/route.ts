@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "../../../../auth";
+import { auth } from "@/lib/auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 import { searchPoliticiansByName, type PoliticianSearchResult } from "@/lib/assembly";
 import type { HotIssue } from "@/types/issue";

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "../../../../auth";
+import { auth } from "@/lib/auth";
 import { getRecentIssueBills } from "@/lib/assembly";
 import { buildIssueFromBill } from "@/lib/issues";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";

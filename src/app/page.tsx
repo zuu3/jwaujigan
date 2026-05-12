@@ -1,4 +1,4 @@
-import { auth } from "../../auth";
+import { auth } from "@/lib/auth";
 import { LandingContainer } from "@/containers/landing/index";
 
 export default async function Home() {

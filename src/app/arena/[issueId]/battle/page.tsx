@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { auth } from "../../../../../auth";
+import { auth } from "@/lib/auth";
 import { ArenaBattle } from "@/containers/arena";
 import { getArenaIssueById, getCachedArenaBattle } from "@/lib/arena";
 

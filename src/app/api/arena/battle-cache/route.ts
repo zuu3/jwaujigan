@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "../../../../../auth";
+import { auth } from "@/lib/auth";
 import { getArenaBattleCacheTopic } from "@/lib/arena";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 
