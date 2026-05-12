@@ -8,18 +8,25 @@ export async function fetchIssues(): Promise<HotIssuesResponse> {
   return res.json() as Promise<HotIssuesResponse>;
 }
 
+export type VoteResponse = {
+  vote_counts: HotIssue["vote_counts"];
+  user_vote: IssueVoteStance | null;
+  daily_bonus_earned: boolean;
+  points_earned: number;
+};
+
 export async function voteIssue({
   issueId,
   stance,
 }: {
   issueId: string;
   stance: IssueVoteStance;
-}): Promise<{ vote_counts: HotIssue["vote_counts"]; user_vote: IssueVoteStance | null }> {
+}): Promise<VoteResponse> {
   const res = await fetch(`/api/issues/${issueId}/vote`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ stance }),
   });
   if (!res.ok) throw new Error("투표에 실패했어요");
-  return res.json() as Promise<{ vote_counts: HotIssue["vote_counts"]; user_vote: IssueVoteStance | null }>;
+  return res.json() as Promise<VoteResponse>;
 }
