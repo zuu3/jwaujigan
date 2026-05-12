@@ -18,7 +18,10 @@ import { PoliticalProfileSection } from "@/components/mypage/PoliticalProfileSec
 import { BattleSection } from "@/components/mypage/BattleSection";
 import { FollowingSection } from "@/components/mypage/FollowingSection";
 import { ActivitySection } from "@/components/mypage/ActivitySection";
+import { BadgesSection } from "@/components/mypage/BadgesSection";
+import { StreakCalendar } from "@/components/mypage/StreakCalendar";
 import { getLevel } from "@/services/points/points";
+import { useUserProfile } from "@/services/user/user.queries";
 
 export type { MyPageProfile, PoliticalProfile, BattleLogItem } from "@/types/mypage";
 
@@ -35,6 +38,7 @@ export function MyPageContainer({
 }: MyPageContainerProps) {
   const [activityData, setActivityData] = useState<ActivityResponse | null>(null);
   const [followedPoliticians, setFollowedPoliticians] = useState<FollowedPolitician[] | null>(null);
+  const profileQuery = useUserProfile();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -81,7 +85,7 @@ export function MyPageContainer({
               <MapPin size={14} />
               <span>{profile.district ?? "지역구 미설정"}</span>
             </DistrictLine>
-            <PointsBadge points={profile.points} />
+            <PointsBadge points={profileQuery.data?.points ?? profile.points} />
           </ProfileContent>
           <ProfileAction href="/onboarding">
             <RotateCcw size={14} />
@@ -90,6 +94,16 @@ export function MyPageContainer({
         </ProfileSection>
 
         <PoliticalProfileSection politicalProfile={politicalProfile} />
+        {activityData && (
+          <>
+            <StreakCalendar
+              activeDates={activityData.active_dates}
+              streak={activityData.streak}
+              todayActive={activityData.today_active}
+            />
+            <BadgesSection badges={activityData.badges} />
+          </>
+        )}
         <BattleSection battleLogs={battleLogs} />
         <FollowingSection followedPoliticians={followedPoliticians} />
         <ActivitySection activityData={activityData} />
