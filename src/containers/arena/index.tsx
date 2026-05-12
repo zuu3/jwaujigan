@@ -202,10 +202,31 @@ export function ArenaIndex({ issues, isAuthenticated }: ArenaIndexProps) {
 
         <Hero>
           <HeroEyebrow>AI 토론 배틀</HeroEyebrow>
-          <HeroTitle>이슈를 고르고 3라운드 논리 싸움을 시작하세요</HeroTitle>
+          <HeroTitle>이슈를 고르고 AI 토론을 지켜보세요</HeroTitle>
           <HeroDescription>
-            진보 AI와 보수 AI가 서로 번갈아 토론합니다. 원하는 순간에만 의견을 개입할 수 있습니다.
+            진보 AI와 보수 AI가 3라운드 토론을 벌입니다. 원할 때 내 생각을 보내면 AI가 다음 발언에 반영합니다.
           </HeroDescription>
+          <HowItWorks>
+            <HowStep>
+              <HowNum>1</HowNum>
+              <HowText>이슈 선택</HowText>
+            </HowStep>
+            <HowDivider aria-hidden="true" />
+            <HowStep>
+              <HowNum>2</HowNum>
+              <HowText>편 고르기 또는 구경</HowText>
+            </HowStep>
+            <HowDivider aria-hidden="true" />
+            <HowStep>
+              <HowNum>3</HowNum>
+              <HowText>AI 토론 + 내 의견 추가</HowText>
+            </HowStep>
+            <HowDivider aria-hidden="true" />
+            <HowStep>
+              <HowNum>4</HowNum>
+              <HowText>AI 판정 확인</HowText>
+            </HowStep>
+          </HowItWorks>
         </Hero>
 
         {issues.length > 0 ? (
@@ -216,7 +237,7 @@ export function ArenaIndex({ issues, isAuthenticated }: ArenaIndexProps) {
                 <IssueCardTitle>{issue.title}</IssueCardTitle>
                 <IssueCardSummary>{issue.summary}</IssueCardSummary>
                 <IssueCardFooter>
-                  <span>토론 입장 고르기</span>
+                  <span>배틀 참여하기</span>
                   <ArrowRight size={16} />
                 </IssueCardFooter>
               </IssueCard>
@@ -305,7 +326,7 @@ export function ArenaIssueDetail({ issue }: IssueDetailProps) {
         </BackLink>
 
         <DetailPanel>
-          <HeroEyebrow>AI 배틀 이슈</HeroEyebrow>
+          <HeroEyebrow>어느 쪽 논리가 더 설득력 있을까요?</HeroEyebrow>
           <DetailTitle>{issue.title}</DetailTitle>
           <DetailSummary>{issue.summary}</DetailSummary>
 
@@ -357,21 +378,22 @@ export function ArenaIssueDetail({ issue }: IssueDetailProps) {
 
           <IssueOpinionSnapshot issueId={issue.id} />
 
+          <StanceGuide>편을 고르면 AI 토론 중에 내 생각을 추가할 수 있어요. 그냥 구경만 해도 됩니다.</StanceGuide>
           <StanceActions>
             <StanceButton
               href={`/arena/${issue.id}/battle?stance=progressive`}
               $tone="#3182F6"
             >
-              진보 AI 응원하기
+              진보 편으로 참여
             </StanceButton>
             <StanceButton
               href={`/arena/${issue.id}/battle?stance=conservative`}
               $tone="#E5484D"
             >
-              보수 AI 응원하기
+              보수 편으로 참여
             </StanceButton>
             <WatchButton href={`/arena/${issue.id}/battle?stance=watch`}>
-              그냥 구경하기
+              구경만 할래요
             </WatchButton>
           </StanceActions>
         </DetailPanel>
@@ -914,11 +936,18 @@ export function ArenaBattle({
         ) : stance === "watch" ? null : (
           <Composer>
             <ComposerMeta>
-              <label htmlFor="argument-input">내 의견 개입</label>
+              <label htmlFor="argument-input">
+                {phase === "intervention" ? "내 생각 보내기" : "내 생각 추가하기"}
+              </label>
               <span aria-hidden="true">
                 {argument.length} / {MAX_ARGUMENT_LENGTH}
               </span>
             </ComposerMeta>
+            {phase === "intervention" ? (
+              <InterventionHint>
+                내 생각을 보내면 AI가 다음 발언에 반영합니다. 이슈에 대한 근거나 반론을 자유롭게 적어보세요.
+              </InterventionHint>
+            ) : null}
             <ArgumentInput
               id="argument-input"
               aria-describedby="argument-counter"
@@ -932,8 +961,8 @@ export function ArenaBattle({
               }}
               placeholder={
                 phase === "intervention"
-                  ? "토론에 참고시킬 의견을 짧게 입력하세요."
-                  : "AI끼리 토론 중입니다. 개입 버튼을 누르면 의견을 넣을 수 있습니다."
+                  ? "예: '이 정책은 서민 부담만 늘립니다' / '장기적으로 성장에 도움이 됩니다'"
+                  : "AI 발언이 끝나면 내 생각을 추가할 수 있어요."
               }
               disabled={phase !== "intervention"}
               rows={4}
@@ -942,14 +971,14 @@ export function ArenaBattle({
               {phase === "between-turns" ? (
                 <>
                   <SecondaryButton type="button" onClick={handleContinue}>
-                    바로 다음 발언
+                    다음 발언 보기
                   </SecondaryButton>
                   <SubmitButton
                     type="button"
                     onClick={handleOpenIntervention}
                     $tone={getStanceTone(stance)}
                   >
-                    의견 개입
+                    내 생각 추가하기
                   </SubmitButton>
                 </>
               ) : null}
@@ -967,7 +996,7 @@ export function ArenaBattle({
                     disabled={!canSubmit}
                     $tone={getStanceTone(stance)}
                   >
-                    의견 넣고 계속
+                    보내고 계속
                   </SubmitButton>
                 </>
               ) : null}
@@ -1110,6 +1139,49 @@ const IssueGrid = styled.div`
 
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
+  }
+`;
+
+const HowItWorks = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+`;
+
+const HowStep = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const HowNum = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #e8f3ff;
+  color: #3182f6;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+`;
+
+const HowText = styled.span`
+  color: #4e5968;
+  font-size: 13px;
+  font-weight: 400;
+`;
+
+const HowDivider = styled.span`
+  color: #b0b8c1;
+  font-size: 12px;
+
+  &::before {
+    content: "→";
   }
 `;
 
@@ -1315,6 +1387,14 @@ const ContextText = styled.p`
   font-size: 14px;
   font-weight: 400;
   line-height: 1.6;
+`;
+
+const StanceGuide = styled.p`
+  margin: 0;
+  color: #6b7684;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
 `;
 
 const StanceActions = styled.div`
@@ -1650,6 +1730,17 @@ const ComposerMeta = styled.div`
   color: #8B95A1;
   font-size: 14px;
   font-weight: 500;
+`;
+
+const InterventionHint = styled.p`
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: #f2f4f6;
+  color: #4e5968;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
 `;
 
 const ComposerActions = styled.div`
