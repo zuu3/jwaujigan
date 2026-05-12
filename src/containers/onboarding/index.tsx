@@ -2,21 +2,21 @@
 
 import styled from "@emotion/styled";
 import { useFunnel } from "@use-funnel/browser";
-import { AnimatePresence, motion } from "framer-motion";
-import { TargetCursor } from "@/components/cursor/target-cursor";
-import { ArrowRight, Crosshair, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useMemo, useState } from "react";
 import { FullScreenLoader } from "@/components/loading/full-screen-loader";
-import {
-  DISTRICT_AREA_OPTIONS,
-  DISTRICT_PROVINCES,
-  normalizeKoreanText,
-  type DistrictAreaOption,
-} from "@/lib/districts/catalog";
+import { DISTRICT_AREA_OPTIONS, normalizeKoreanText } from "@/lib/districts/catalog";
 import { ONBOARDING_SKIP_COOKIE } from "@/lib/onboarding";
-import { questions, likertOptions } from "./questions";
 import { useOnboardingStore } from "./store";
+import {
+  DistrictStep,
+  getLocationErrorMessage,
+  getManualResultScore,
+  resolveCurrentPosition,
+  MANUAL_MATCH_LIMIT,
+} from "./DistrictStep";
+import { QuestionsStep } from "./QuestionsStep";
+import { questions } from "./questions";
 
 type OnboardingContainerProps = {
   initialDistrict: string | null;
@@ -49,100 +49,6 @@ type DistrictRequestPayload = {
   matchedArea?: string;
   sourceAddress?: string;
 };
-
-type GeolocationFailure = {
-  code?: number;
-  message?: string;
-};
-
-function getCurrentPosition(options?: PositionOptions) {
-  return new Promise<GeolocationPosition>((resolve, reject) => {
-    if (typeof window !== "undefined" && !window.isSecureContext) {
-      reject(
-        new Error(
-          "브라우저 보안 정책 때문에 현재 위치를 사용할 수 없습니다. HTTPS 또는 localhost에서 접속해 주세요.",
-        ),
-      );
-      return;
-    }
-
-    if (!navigator.geolocation) {
-      reject(new Error("브라우저가 위치 정보를 지원하지 않습니다."));
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(resolve, reject, options);
-  });
-}
-
-function isGeolocationFailure(error: unknown): error is GeolocationFailure {
-  return typeof error === "object" && error !== null && "code" in error;
-}
-
-function getLocationErrorMessage(error: unknown) {
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  if (isGeolocationFailure(error)) {
-    switch (error.code) {
-      case 1:
-        return "위치 권한이 차단되어 있습니다. 아래에서 직접 지역구를 선택하세요.";
-      case 2:
-        return "현재 위치를 확인하지 못했습니다. 잠시 후 다시 시도하거나 직접 선택하세요.";
-      case 3:
-        return "위치 확인 시간이 초과됐습니다. 다시 시도하거나 직접 선택하세요.";
-      default:
-        return error.message ?? "현재 위치를 확인하지 못했습니다.";
-    }
-  }
-
-  return "현재 위치를 확인하지 못했습니다.";
-}
-
-const MANUAL_MATCH_LIMIT = 8;
-
-function getManualResultScore(
-  option: DistrictAreaOption,
-  normalizedQuery: string,
-) {
-  const normalizedArea = normalizeKoreanText(option.areaLabel);
-  const normalizedDistrict = normalizeKoreanText(option.districtLabel);
-
-  if (normalizedArea === normalizedQuery) {
-    return 4;
-  }
-
-  if (normalizedArea.startsWith(normalizedQuery)) {
-    return 3;
-  }
-
-  if (normalizedDistrict.startsWith(normalizedQuery)) {
-    return 2;
-  }
-
-  return 1;
-}
-
-async function resolveCurrentPosition() {
-  try {
-    return await getCurrentPosition({
-      enableHighAccuracy: true,
-      timeout: 10_000,
-      maximumAge: 0,
-    });
-  } catch (error) {
-    if (isGeolocationFailure(error) && (error.code === 2 || error.code === 3)) {
-      return getCurrentPosition({
-        enableHighAccuracy: false,
-        timeout: 15_000,
-        maximumAge: 300_000,
-      });
-    }
-
-    throw error;
-  }
-}
 
 export function OnboardingContainer({
   initialDistrict,
@@ -215,7 +121,6 @@ export function OnboardingContainer({
   const [manualQuery, setManualQuery] = useState("");
 
   const question = questions[currentIndex];
-  const progress = ((currentIndex + 1) / questions.length) * 100;
   const isLastQuestion = currentIndex === questions.length - 1;
   const isResolvingDistrict = isResolvingLocation || isSavingManualDistrict;
   const canAnswer = Boolean(district) && !isSubmitting && !isResolvingDistrict;
@@ -351,7 +256,7 @@ export function OnboardingContainer({
     });
   };
 
-  const handleManualDistrictSelect = async (option: DistrictAreaOption) => {
+  const handleManualDistrictSelect = async (option: import("@/lib/districts/catalog").DistrictAreaOption) => {
     setIsSavingManualDistrict(true);
     setSavingManualOptionId(option.id);
     setDistrictError(null);
@@ -453,141 +358,25 @@ export function OnboardingContainer({
                 </StepDescription>
               </StepHeader>
 
-              <DistrictSection>
-                <DistrictMeta>
-                  <DistrictTitle>현재 위치 또는 직접 검색</DistrictTitle>
-                  <DistrictDescription>
-                    위치가 잡히지 않으면 시/도와 행정동 이름으로 찾으세요.
-                  </DistrictDescription>
-                </DistrictMeta>
-
-                <DistrictPanel>
-                  <DistrictStatus>
-                    <StatusLabel>현재 지역구</StatusLabel>
-                    <StatusValue>{district ?? "설정되지 않음"}</StatusValue>
-                    {resolvedAddress ? (
-                      <StatusHint>{resolvedAddress}</StatusHint>
-                    ) : initialDistrict ? (
-                      <StatusHint>저장된 지역구를 그대로 사용할 수 있습니다.</StatusHint>
-                    ) : (
-                      <StatusHint>지역구를 정하면 다음 단계로 이동합니다.</StatusHint>
-                    )}
-                  </DistrictStatus>
-
-                  <SectionRow>
-                    <SectionRowText>
-                      <SectionRowTitle>현재 위치로 찾기</SectionRowTitle>
-                      <SectionRowDescription>
-                        브라우저 위치 권한을 허용하면 자동으로 선거구를 찾습니다.
-                      </SectionRowDescription>
-                    </SectionRowText>
-                    <LocationButton
-                      type="button"
-                      onClick={() => void handleResolveLocation()}
-                      disabled={isResolvingDistrict}
-                    >
-                      <Crosshair size={16} />
-                      <span>
-                        {isResolvingLocation ? "확인 중" : "위치 찾기"}
-                      </span>
-                    </LocationButton>
-                  </SectionRow>
-
-                  <ManualFinder>
-                    <ManualFinderHeader>
-                      <ManualFinderTitle>직접 찾기</ManualFinderTitle>
-                      <ManualFinderDescription>
-                        시/도와 동 이름을 입력하고 결과를 선택하세요.
-                      </ManualFinderDescription>
-                    </ManualFinderHeader>
-
-                    <ManualFinderControls>
-                      <ProvinceSelect
-                        value={selectedProvince}
-                        onChange={(event) => setSelectedProvince(event.target.value)}
-                        disabled={isResolvingDistrict}
-                      >
-                        <option value="all">전체 시/도</option>
-                        {DISTRICT_PROVINCES.map((province) => (
-                          <option key={province} value={province}>
-                            {province}
-                          </option>
-                        ))}
-                      </ProvinceSelect>
-
-                      <ManualSearchField>
-                        <Search size={16} />
-                        <ManualSearchInput
-                          value={manualQuery}
-                          onChange={(event) => setManualQuery(event.target.value)}
-                          placeholder="예: 서교동, 분당동, 해운대구"
-                          disabled={isResolvingDistrict}
-                        />
-                      </ManualSearchField>
-                    </ManualFinderControls>
-
-                    {normalizedManualQuery ? (
-                      manualMatches.length > 0 ? (
-                        <ManualResultList>
-                          {manualMatches.map((option) => (
-                            <ManualResultButton
-                              key={option.id}
-                              type="button"
-                              onClick={() => void handleManualDistrictSelect(option)}
-                              disabled={isResolvingDistrict}
-                            >
-                              <ManualResultText>
-                                <ManualResultArea>{option.areaLabel}</ManualResultArea>
-                                <ManualResultMeta>
-                                  {[option.province, option.districtLabel]
-                                    .filter(Boolean)
-                                    .join(" · ")}
-                                </ManualResultMeta>
-                              </ManualResultText>
-                              <ManualResultAction
-                                $selected={district === option.district}
-                              >
-                                {savingManualOptionId === option.id
-                                  ? "저장 중"
-                                  : district === option.district
-                                    ? "선택됨"
-                                    : "선택"}
-                              </ManualResultAction>
-                            </ManualResultButton>
-                          ))}
-                        </ManualResultList>
-                      ) : (
-                        <ManualEmptyState>
-                          일치하는 행정동이 없습니다. 시/도를 고르거나 동 이름을 더 입력하세요.
-                        </ManualEmptyState>
-                      )
-                    ) : (
-                      <ManualHint>
-                        시/도와 동 이름을 함께 입력하면 더 빨리 찾을 수 있습니다.
-                      </ManualHint>
-                    )}
-                  </ManualFinder>
-
-                  {districtNotice ? <HelperText>{districtNotice}</HelperText> : null}
-                  {districtError ? <ErrorText>{districtError}</ErrorText> : null}
-
-                  <StepActionRow>
-                    <NextStepHint>
-                      {district
-                        ? "선택한 지역구로 다음 단계로 이동합니다."
-                        : "위치 찾기 또는 검색 결과를 먼저 선택하세요."}
-                    </NextStepHint>
-                    <PrimaryActionButton
-                      type="button"
-                      onClick={handleContinueToQuestions}
-                      disabled={!district || isResolvingDistrict}
-                    >
-                      다음
-                      <ArrowRight size={16} />
-                    </PrimaryActionButton>
-                  </StepActionRow>
-                </DistrictPanel>
-              </DistrictSection>
+              <DistrictStep
+                district={district}
+                resolvedAddress={resolvedAddress}
+                initialDistrict={initialDistrict}
+                isResolvingLocation={isResolvingLocation}
+                isSavingManualDistrict={isSavingManualDistrict}
+                savingManualOptionId={savingManualOptionId}
+                selectedProvince={selectedProvince}
+                manualQuery={manualQuery}
+                normalizedManualQuery={normalizedManualQuery}
+                manualMatches={manualMatches}
+                districtError={districtError}
+                districtNotice={districtNotice}
+                onResolveLocation={handleResolveLocation}
+                onManualDistrictSelect={handleManualDistrictSelect}
+                onProvinceChange={setSelectedProvince}
+                onManualQueryChange={setManualQuery}
+                onContinueToQuestions={handleContinueToQuestions}
+              />
             </>
           ) : (
             <>
@@ -599,78 +388,67 @@ export function OnboardingContainer({
                 </StepDescription>
               </StepHeader>
 
-              <DistrictSummaryCard>
-                <DistrictSummaryText>
-                  <StatusLabel>선택한 지역구</StatusLabel>
-                  <StatusValue>{district ?? "설정되지 않음"}</StatusValue>
-                  {resolvedAddress ? <StatusHint>{resolvedAddress}</StatusHint> : null}
-                </DistrictSummaryText>
-                <SecondaryActionButton
-                  type="button"
-                  onClick={handleBackToDistrictStep}
-                  disabled={isSubmitting}
-                >
-                  다시 선택
-                </SecondaryActionButton>
-              </DistrictSummaryCard>
-
-              <Header>
-                <ProgressMeta>
-                  <ProgressText>
-                    질문 {currentIndex + 1} / {questions.length}
-                  </ProgressText>
-                  <ProgressTitle>가장 가까운 입장을 고르세요</ProgressTitle>
-                </ProgressMeta>
-
-                <ProgressBar>
-                  <ProgressFill style={{ width: `${progress}%` }} />
-                </ProgressBar>
-              </Header>
-
-              <QuestionStage>
-                <AnimatePresence mode="wait">
-                  <QuestionCard
-                    key={question.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <QuestionEyebrow>{question.axis}</QuestionEyebrow>
-                    <QuestionText>{question.text}</QuestionText>
-                  </QuestionCard>
-                </AnimatePresence>
-              </QuestionStage>
-
-              <AnswerGrid>
-                {likertOptions.map((option) => (
-                  <AnswerButton
-                    key={option.label}
-                    type="button"
-                    data-cursor-target="onboarding-answer"
-                    onClick={() => void handleAnswer(option.value)}
-                    disabled={!canAnswer}
-                    $selected={currentSelection === option.value}
-                  >
-                    <span>{option.label}</span>
-                    <ArrowRight size={16} />
-                  </AnswerButton>
-                ))}
-              </AnswerGrid>
+              <QuestionsStep
+                district={district}
+                resolvedAddress={resolvedAddress}
+                currentIndex={currentIndex}
+                canAnswer={canAnswer}
+                currentSelection={currentSelection}
+                isSubmitting={isSubmitting}
+                onAnswer={handleAnswer}
+                onBackToDistrictStep={handleBackToDistrictStep}
+              />
             </>
           )}
         </ContentInner>
       </Content>
-      {step === "questions" ? (
-        <TargetCursor
-          targetSelector='[data-cursor-target="onboarding-answer"]'
-          spinDuration={3.2}
-          hoverDuration={0.14}
-        />
-      ) : null}
     </Page>
   );
 }
+
+// Shared styled components — exported for use in DistrictStep and QuestionsStep
+export const StatusLabel = styled.div`
+  color: #8b95a1;
+  font-size: 14px;
+  font-weight: 500;
+`;
+
+export const StatusValue = styled.div`
+  color: #191f28;
+  font-size: 18px;
+  font-weight: 700;
+`;
+
+export const StatusHint = styled.div`
+  color: #4e5968;
+  font-size: 14px;
+  line-height: 1.5;
+`;
+
+export const SecondaryActionButton = styled.button`
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #191f28;
+  background: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover:enabled {
+    background: #f9fafb;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  @media (max-width: 640px) {
+    width: 100%;
+  }
+`;
 
 const Page = styled.main`
   min-height: 100vh;
@@ -772,476 +550,4 @@ const StepDescription = styled.p`
   font-weight: 400;
   line-height: 1.55;
   word-break: keep-all;
-`;
-
-const DistrictSection = styled.section`
-  display: grid;
-  gap: 40px;
-  margin-bottom: 40px;
-`;
-
-const DistrictMeta = styled.div`
-  display: grid;
-  gap: 8px;
-`;
-
-const DistrictTitle = styled.h2`
-  margin: 0;
-  color: #191f28;
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.4;
-  word-break: keep-all;
-`;
-
-const DistrictDescription = styled.p`
-  margin: 0;
-  color: #4e5968;
-  font-size: 14px;
-  line-height: 1.55;
-  word-break: keep-all;
-`;
-
-const DistrictPanel = styled.div`
-  display: grid;
-  gap: 32px;
-`;
-
-const DistrictStatus = styled.div`
-  display: grid;
-  gap: 6px;
-  padding: 16px 0;
-  border-top: 1px solid #f2f4f6;
-  border-bottom: 1px solid #f2f4f6;
-`;
-
-const StatusLabel = styled.div`
-  color: #8b95a1;
-  font-size: 14px;
-  font-weight: 500;
-`;
-
-const StatusValue = styled.div`
-  color: #191f28;
-  font-size: 18px;
-  font-weight: 700;
-`;
-
-const StatusHint = styled.div`
-  color: #4e5968;
-  font-size: 14px;
-  line-height: 1.5;
-`;
-
-const SectionRow = styled.section`
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 0;
-  border-bottom: 1px solid #f2f4f6;
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const SectionRowText = styled.div`
-  display: grid;
-  gap: 4px;
-`;
-
-const SectionRowTitle = styled.h3`
-  margin: 0;
-  color: #191f28;
-  font-size: 16px;
-  font-weight: 600;
-`;
-
-const SectionRowDescription = styled.p`
-  margin: 0;
-  color: #4e5968;
-  font-size: 14px;
-  line-height: 1.5;
-  word-break: keep-all;
-`;
-
-const LocationButton = styled.button`
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 0 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  color: #191f28;
-  background: #ffffff;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-
-  &:hover:enabled {
-    background: #f9fafb;
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-
-  @media (max-width: 640px) {
-    width: 100%;
-  }
-`;
-
-const ManualFinder = styled.section`
-  display: grid;
-  gap: 16px;
-`;
-
-const ManualFinderHeader = styled.div`
-  display: grid;
-  gap: 4px;
-`;
-
-const ManualFinderTitle = styled.h3`
-  margin: 0;
-  color: #191f28;
-  font-size: 16px;
-  font-weight: 600;
-`;
-
-const ManualFinderDescription = styled.p`
-  margin: 0;
-  color: #4e5968;
-  font-size: 14px;
-  line-height: 1.5;
-  word-break: keep-all;
-`;
-
-const ManualFinderControls = styled.div`
-  display: grid;
-  grid-template-columns: minmax(140px, 200px) minmax(0, 1fr);
-  gap: 8px;
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const ProvinceSelect = styled.select`
-  min-height: 44px;
-  padding: 0 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  color: #191f28;
-  background: #ffffff;
-  font-size: 14px;
-  appearance: none;
-`;
-
-const ManualSearchField = styled.label`
-  display: flex;
-  min-height: 44px;
-  align-items: center;
-  gap: 8px;
-  padding: 0 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  color: #8b95a1;
-  background: #ffffff;
-`;
-
-const ManualSearchInput = styled.input`
-  width: 100%;
-  border: 0;
-  color: #191f28;
-  background: transparent;
-  font-size: 14px;
-  outline: none;
-
-  &::placeholder {
-    color: #8b95a1;
-  }
-`;
-
-const ManualResultList = styled.div`
-  display: grid;
-`;
-
-const ManualResultButton = styled.button`
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 0;
-  border: 0;
-  border-bottom: 1px solid #f2f4f6;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-
-  &:hover:enabled {
-    background: #f9fafb;
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-`;
-
-const ManualResultText = styled.div`
-  display: grid;
-  gap: 2px;
-`;
-
-const ManualResultArea = styled.div`
-  color: #191f28;
-  font-size: 16px;
-  font-weight: 600;
-`;
-
-const ManualResultMeta = styled.div`
-  color: #8b95a1;
-  font-size: 14px;
-  line-height: 1.4;
-`;
-
-const ManualResultAction = styled.div<{ $selected: boolean }>`
-  color: ${({ $selected }) => ($selected ? "#191f28" : "#4e5968")};
-  font-size: 14px;
-  font-weight: ${({ $selected }) => ($selected ? 700 : 500)};
-  white-space: nowrap;
-`;
-
-const ManualHint = styled.div`
-  color: #8b95a1;
-  font-size: 14px;
-  line-height: 1.5;
-  word-break: keep-all;
-`;
-
-const ManualEmptyState = styled.div`
-  padding: 14px 0;
-  color: #8b95a1;
-  font-size: 14px;
-  line-height: 1.5;
-`;
-
-const StepActionRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding-top: 24px;
-  border-top: 1px solid #f2f4f6;
-
-  @media (max-width: 640px) {
-    align-items: stretch;
-    flex-direction: column;
-  }
-`;
-
-const NextStepHint = styled.div`
-  color: #8b95a1;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.5;
-`;
-
-const PrimaryActionButton = styled.button`
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 0 20px;
-  border: 0;
-  border-radius: 8px;
-  color: #ffffff;
-  background: #191f28;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-
-  &:hover:enabled {
-    background: #333d4b;
-  }
-
-  &:disabled {
-    color: #8b95a1;
-    background: #f2f4f6;
-    cursor: not-allowed;
-  }
-
-  @media (max-width: 640px) {
-    width: 100%;
-  }
-`;
-
-const SecondaryActionButton = styled.button`
-  min-height: 44px;
-  padding: 0 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  color: #191f28;
-  background: #ffffff;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-
-  &:hover:enabled {
-    background: #f9fafb;
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-
-  @media (max-width: 640px) {
-    width: 100%;
-  }
-`;
-
-const HelperText = styled.div`
-  color: #3182f6;
-  font-size: 14px;
-  font-weight: 500;
-`;
-
-const ErrorText = styled.div`
-  color: #e5484d;
-  font-size: 14px;
-  font-weight: 500;
-`;
-
-const Header = styled.div`
-  margin-top: 32px;
-`;
-
-const DistrictSummaryCard = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 40px;
-  padding: 16px 0;
-  border-top: 1px solid #f2f4f6;
-  border-bottom: 1px solid #f2f4f6;
-
-  @media (max-width: 640px) {
-    flex-direction: column;
-    align-items: stretch;
-  }
-`;
-
-const DistrictSummaryText = styled.div`
-  display: grid;
-  gap: 4px;
-`;
-
-const ProgressMeta = styled.div`
-  display: grid;
-  gap: 8px;
-`;
-
-const ProgressText = styled.div`
-  color: #8b95a1;
-  font-size: 14px;
-  font-weight: 500;
-`;
-
-const ProgressTitle = styled.h1`
-  margin: 0;
-  color: #191f28;
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1.35;
-  word-break: keep-all;
-
-  @media (max-width: 640px) {
-    font-size: 18px;
-  }
-`;
-
-const ProgressBar = styled.div`
-  height: 4px;
-  margin-top: 24px;
-  border-radius: 999px;
-  background: #f2f4f6;
-  overflow: hidden;
-`;
-
-const ProgressFill = styled.div`
-  height: 100%;
-  border-radius: inherit;
-  background: #191f28;
-  transition: width 220ms ease;
-`;
-
-const QuestionStage = styled.div`
-  margin-top: 32px;
-`;
-
-const QuestionCard = styled(motion.div)`
-  padding: 24px 0;
-  border-top: 1px solid #f2f4f6;
-  border-bottom: 1px solid #f2f4f6;
-`;
-
-const QuestionEyebrow = styled.div`
-  color: #8b95a1;
-  font-size: 14px;
-  font-weight: 500;
-`;
-
-const QuestionText = styled.p`
-  margin: 12px 0 0;
-  color: #191f28;
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1.4;
-  word-break: keep-all;
-
-  @media (max-width: 640px) {
-    font-size: 18px;
-  }
-`;
-
-const AnswerGrid = styled.div`
-  display: grid;
-  margin-top: 32px;
-  grid-template-columns: 1fr;
-  gap: 8px;
-`;
-
-const AnswerButton = styled.button<{ $selected: boolean }>`
-  display: flex;
-  min-height: 44px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  color: #191f28;
-  background: ${({ $selected }) => ($selected ? "#f4f6f8" : "#ffffff")};
-  font-size: 16px;
-  font-weight: ${({ $selected }) => ($selected ? 600 : 500)};
-  text-align: left;
-  cursor: pointer;
-  transition: background 140ms ease;
-
-  &:hover:enabled {
-    background: #f4f6f8;
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
 `;

@@ -2,17 +2,18 @@
 
 import styled from "@emotion/styled";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, ChevronDown, ExternalLink, MapPin, Search, SlidersHorizontal, X } from "lucide-react";
-import Image from "next/image";
+import { ArrowRight, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { Session } from "next-auth";
 import { AppHeader } from "@/components/app-header";
 import { useIssues } from "@/hooks/useIssues";
 import type { PoliticianDetail } from "@/lib/assembly";
-import { getPartyPresentation } from "@/lib/parties";
 import type { HotIssue, HotIssuesResponse, IssueVoteStance } from "@/types/issue";
 import type { SearchResponse } from "@/app/api/search/route";
+import { SearchBar } from "@/components/home/search";
+import { PoliticianCard } from "@/components/home/politician-card";
+import { IssueCard } from "@/components/home/issue-card";
 
 type HomeContainerProps = {
   session: Session;
@@ -90,66 +91,6 @@ function getOnboardingCopy({
   };
 }
 
-function getIssueLink(issue: HotIssue) {
-  const searchParams = new URLSearchParams();
-
-  if (issue.id) {
-    searchParams.set("issueId", issue.id);
-  }
-
-  if (issue.bill_id) {
-    searchParams.set("billId", issue.bill_id);
-  }
-
-  return `/arena?${searchParams.toString()}`;
-}
-
-function getIssueMetaLabel(issue: HotIssue) {
-  if (issue.published_at) {
-    return new Intl.DateTimeFormat("ko-KR", {
-      month: "numeric",
-      day: "numeric",
-    }).format(new Date(issue.published_at));
-  }
-
-  if (issue.bill_id) {
-    return issue.bill_id;
-  }
-
-  return "국회 발의안";
-}
-
-function getPartyTone(party: string) {
-  if (party.includes("국민의힘")) {
-    return "red";
-  }
-
-  if (party.includes("더불어민주") || party.includes("민주")) {
-    return "blue";
-  }
-
-  return "neutral";
-}
-
-type VoteOption = {
-  stance: IssueVoteStance;
-  label: string;
-  barLabel: string;
-  color: string;
-  tint: string;
-};
-
-const VOTE_OPTIONS: VoteOption[] = [
-  { stance: "progressive", label: "진보 지지", barLabel: "진보", color: "#3182f6", tint: "#e8f3ff" },
-  { stance: "neutral",     label: "모르겠음",  barLabel: "모름", color: "#8b95a1", tint: "#f2f4f6" },
-  { stance: "conservative",label: "보수 지지", barLabel: "보수", color: "#e5484d", tint: "#fef2f2" },
-];
-
-function getVotePercent(count: number, total: number): number {
-  if (total === 0) return 0;
-  return Math.round((count / total) * 100);
-}
-
 function getUserLean(issues: HotIssue[]): "progressive" | "conservative" | null {
   const p = issues.filter((i) => i.user_vote === "progressive").length;
   const c = issues.filter((i) => i.user_vote === "conservative").length;
@@ -209,6 +150,7 @@ export function HomeContainer({ session }: HomeContainerProps) {
       void queryClient.invalidateQueries({ queryKey: ["issues"] });
     },
   });
+
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(searchQuery.trim()), 350);
     return () => clearTimeout(t);
@@ -228,7 +170,6 @@ export function HomeContainer({ session }: HomeContainerProps) {
   const issuesQuery = useIssues();
 
   const displayName = profileQuery.data?.name ?? session.user.name ?? null;
-  const displayEmail = profileQuery.data?.email ?? session.user.email ?? null;
   const displayImage = profileQuery.data?.image ?? session.user.image ?? null;
   const district = profileQuery.data?.district ?? session.user.district ?? null;
   const hasPoliticalProfile =
@@ -280,6 +221,7 @@ export function HomeContainer({ session }: HomeContainerProps) {
 
   const hasVoted = issues.some((i) => i.user_vote !== null);
   const showFirstRunGuide = !issuesQuery.isLoading && !hasVoted && issues.length > 0;
+
   return (
     <Page>
       <AppHeader userName={displayName} userImage={displayImage} />
@@ -310,78 +252,28 @@ export function HomeContainer({ session }: HomeContainerProps) {
           </IntroCopy>
         </MotionIntro>
 
-        <SearchBar role="search">
-          <SearchIcon aria-hidden="true"><Search size={16} /></SearchIcon>
-          <SearchInput
-            ref={searchInputRef}
-            type="search"
-            placeholder="이슈 또는 정치인 검색"
-            value={searchQuery}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-            aria-label="검색"
-          />
-          {searchQuery ? (
-            <SearchClear
-              type="button"
-              onClick={() => { setSearchQuery(""); setDebouncedQuery(""); }}
-              aria-label="검색 초기화"
-            >
-              <X size={14} />
-            </SearchClear>
-          ) : null}
-        </SearchBar>
-
-        {isSearchActive ? (
-          <SearchResults>
-            {searchResultsQuery.isLoading ? (
-              <SearchEmpty>검색 중...</SearchEmpty>
-            ) : (
-              <>
-                <SearchSection>
-                  <SearchSectionTitle>이슈</SearchSectionTitle>
-                  {(searchResultsQuery.data?.issues.length ?? 0) === 0 ? (
-                    <SearchEmpty>이슈 결과가 없어요.</SearchEmpty>
-                  ) : (
-                    searchResultsQuery.data?.issues.map((issue) => (
-                      <SearchIssueRow key={issue.id} href={`/arena?issueId=${issue.id}`}>
-                        <SearchIssueTitle>{issue.title}</SearchIssueTitle>
-                        <SearchIssueMeta>{issue.summary}</SearchIssueMeta>
-                      </SearchIssueRow>
-                    ))
-                  )}
-                </SearchSection>
-                <SearchSection>
-                  <SearchSectionTitle>정치인</SearchSectionTitle>
-                  {(searchResultsQuery.data?.politicians.length ?? 0) === 0 ? (
-                    <SearchEmpty>정치인 결과가 없어요.</SearchEmpty>
-                  ) : (
-                    searchResultsQuery.data?.politicians.map((p) => (
-                      <SearchPoliticianRow key={p.id} href={`/politicians/${p.id}`}>
-                        <SearchPoliticianName>{p.name}</SearchPoliticianName>
-                        <SearchPoliticianMeta>
-                          {[p.party, p.district].filter(Boolean).join(" · ")}
-                        </SearchPoliticianMeta>
-                      </SearchPoliticianRow>
-                    ))
-                  )}
-                </SearchSection>
-              </>
-            )}
-          </SearchResults>
-        ) : null}
+        <SearchBar
+          searchQuery={searchQuery}
+          isSearchActive={isSearchActive}
+          isLoading={searchResultsQuery.isLoading}
+          searchResults={searchResultsQuery.data}
+          searchInputRef={searchInputRef}
+          onQueryChange={setSearchQuery}
+          onClear={() => { setSearchQuery(""); setDebouncedQuery(""); }}
+        />
 
         {district ? (
-        <MotionSection id="local-politicians">
-          <SectionHeader>
-            <SectionMeta>
-              <SectionTitleRow>
-                <SectionTitle>내 지역구 의원</SectionTitle>
-                <SectionSubtle>{district}</SectionSubtle>
-              </SectionTitleRow>
-            </SectionMeta>
-          </SectionHeader>
+          <MotionSection id="local-politicians">
+            <SectionHeader>
+              <SectionMeta>
+                <SectionTitleRow>
+                  <SectionTitle>내 지역구 의원</SectionTitle>
+                  <SectionSubtle>{district}</SectionSubtle>
+                </SectionTitleRow>
+              </SectionMeta>
+            </SectionHeader>
 
-          {politiciansQuery.isLoading ? (
+            {politiciansQuery.isLoading ? (
               <EmptyCard>의원 정보를 불러오는 중이에요.</EmptyCard>
             ) : politiciansQuery.isError ? (
               <EmptyCard>
@@ -400,143 +292,35 @@ export function HomeContainer({ session }: HomeContainerProps) {
               </EmptyCard>
             ) : politicians.length > 0 ? (
               <PoliticianList>
-                {politicians.map((politician) => {
-                  const partyTone = getPartyTone(politician.party);
-                  const party = getPartyPresentation(politician.party);
-
-                  return (
-                    <PoliticianRow key={politician.id}>
-                      <PoliticianImageWrap>
-                        {politician.image ? (
-                          <PoliticianImage src={politician.image} alt={politician.name} width={32} height={32} />
-                        ) : (
-                          <PoliticianFallback>
-                            {politician.name.slice(0, 1)}
-                          </PoliticianFallback>
-                        )}
-                      </PoliticianImageWrap>
-
-                      <PoliticianBody>
-                        <PoliticianInline>
-                          <PoliticianName>{politician.name}</PoliticianName>
-                          <DotDivider aria-hidden="true">·</DotDivider>
-                          <PartyInline>
-                            {party.src ? (
-                              <PartyLogo
-                                src={party.src}
-                                alt={party.label}
-                                width={40}
-                                height={14}
-                                unoptimized
-                              />
-                            ) : (
-                              <PartyTextBadge $tone={partyTone}>{party.label}</PartyTextBadge>
-                            )}
-                          </PartyInline>
-                          <DotDivider aria-hidden="true">·</DotDivider>
-                          <PoliticianMeta>
-                            <MapPin size={14} />
-                            <span>{politician.district}</span>
-                          </PoliticianMeta>
-                          {politician.reelection ? (
-                            <>
-                              <DotDivider aria-hidden="true">·</DotDivider>
-                              <PoliticianTag>{politician.reelection}</PoliticianTag>
-                            </>
-                          ) : null}
-                        </PoliticianInline>
-
-                        {politician.committee ? (
-                          <PoliticianSubtext>{politician.committee}</PoliticianSubtext>
-                        ) : null}
-
-                        <PoliticianActions>
-                          <InlineActionButton
-                            type="button"
-                            onClick={() => {
-                              setExpandedPoliticianId((current) =>
-                                current === politician.id ? null : politician.id,
-                              );
-                            }}
-                          >
-                            {expandedPoliticianId === politician.id
-                              ? "상세 닫기"
-                              : "홈에서 바로 보기"}
-                            <ArrowRight size={14} />
-                          </InlineActionButton>
-                          <DetailLink href={`/politicians/${politician.id}`}>
-                            상세 페이지
-                            <ArrowRight size={14} />
-                          </DetailLink>
-                        </PoliticianActions>
-
-                        {expandedPoliticianId === politician.id ? (
-                          <PoliticianInlineDetail>
-                            {politicianDetailQuery.isLoading ? (
-                              <InlineDetailText>
-                                상세 정보를 불러오는 중이에요.
-                              </InlineDetailText>
-                            ) : politicianDetailQuery.isError ? (
-                              <InlineDetailText>
-                                상세 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.
-                              </InlineDetailText>
-                            ) : politicianDetailQuery.data ? (
-                              <>
-                                <InlineDetailGrid>
-                                  <InlineDetailItem>
-                                    <InlineDetailLabel>직책</InlineDetailLabel>
-                                    <InlineDetailValue>
-                                      {politicianDetailQuery.data.jobTitle ?? "-"}
-                                    </InlineDetailValue>
-                                  </InlineDetailItem>
-                                  <InlineDetailItem>
-                                    <InlineDetailLabel>의원회관</InlineDetailLabel>
-                                    <InlineDetailValue>
-                                      {politicianDetailQuery.data.office ?? "-"}
-                                    </InlineDetailValue>
-                                  </InlineDetailItem>
-                                  <InlineDetailItem>
-                                    <InlineDetailLabel>전화</InlineDetailLabel>
-                                    <InlineDetailValue>
-                                      {politicianDetailQuery.data.phone ?? "-"}
-                                    </InlineDetailValue>
-                                  </InlineDetailItem>
-                                  <InlineDetailItem>
-                                    <InlineDetailLabel>이메일</InlineDetailLabel>
-                                    <InlineDetailValue>
-                                      {politicianDetailQuery.data.email ?? "-"}
-                                    </InlineDetailValue>
-                                  </InlineDetailItem>
-                                </InlineDetailGrid>
-
-                                {politicianDetailQuery.data.homepage ? (
-                                  <InlineExternalLink
-                                    href={politicianDetailQuery.data.homepage}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                  >
-                                    홈페이지 열기
-                                    <ExternalLink size={14} />
-                                  </InlineExternalLink>
-                                ) : null}
-                              </>
-                            ) : null}
-                          </PoliticianInlineDetail>
-                        ) : null}
-                      </PoliticianBody>
-                    </PoliticianRow>
-                  );
-                })}
+                {politicians.map((politician) => (
+                  <PoliticianCard
+                    key={politician.id}
+                    politician={politician}
+                    isExpanded={expandedPoliticianId === politician.id}
+                    detail={
+                      expandedPoliticianId === politician.id
+                        ? politicianDetailQuery.data
+                        : undefined
+                    }
+                    isDetailLoading={
+                      expandedPoliticianId === politician.id && politicianDetailQuery.isLoading
+                    }
+                    isDetailError={
+                      expandedPoliticianId === politician.id && politicianDetailQuery.isError
+                    }
+                    onToggleExpand={(id) =>
+                      setExpandedPoliticianId((current) => (current === id ? null : id))
+                    }
+                  />
+                ))}
               </PoliticianList>
             ) : (
               <EmptyCard>
                 <EmptyCardTitle>이 지역구로 등록된 의원이 없어요.</EmptyCardTitle>
-                <EmptyCardText>
-                  온보딩에서 지역구를 다시 설정해 주세요.
-                </EmptyCardText>
+                <EmptyCardText>온보딩에서 지역구를 다시 설정해 주세요.</EmptyCardText>
               </EmptyCard>
             )}
-        </MotionSection>
+          </MotionSection>
         ) : null}
 
         <MotionSection id="hot-issues">
@@ -608,141 +392,23 @@ export function HomeContainer({ session }: HomeContainerProps) {
                 </RetryButton>
               </EmptyCard>
             ) : issues.length > 0 ? (
-              issues.map((issue) => {
-                const isExpanded = expandedIssueId === issue.id;
-
-                return (
-                  <IssueItem key={issue.id}>
-                    <IssueRow>
-                      <IssueRowMeta>{getIssueMetaLabel(issue)}</IssueRowMeta>
-                      <IssueRowBody>
-                        <IssueTitle>{issue.title}</IssueTitle>
-                        <IssueSummary>{issue.summary}</IssueSummary>
-                        {(issue.committee ?? issue.proposer ?? issue.bill_status) ? (
-                          <IssueBodyMeta>
-                            {issue.bill_status ? (
-                              <BillStatusBadge $status={issue.bill_status}>
-                                {issue.bill_status}
-                              </BillStatusBadge>
-                            ) : null}
-                            {issue.committee ? (
-                              <IssueMetaChip>{issue.committee}</IssueMetaChip>
-                            ) : null}
-                            {issue.proposer ? (
-                              <IssueMetaChip
-                                $dim={!followedNames.has(issue.proposer)}
-                                $followed={followedNames.has(issue.proposer)}
-                              >
-                                {followedNames.has(issue.proposer) ? "★ " : ""}{issue.proposer}
-                              </IssueMetaChip>
-                            ) : null}
-                          </IssueBodyMeta>
-                        ) : null}
-                      </IssueRowBody>
-                      <IssueActions>
-                        <IssueToggleButton
-                          type="button"
-                          onClick={() => {
-                            setExpandedIssueId((current) =>
-                              current === issue.id ? null : issue.id,
-                            );
-                          }}
-                          aria-expanded={isExpanded}
-                        >
-                          입장 비교
-                          <IssueChevron $expanded={isExpanded}>
-                            <ChevronDown size={15} />
-                          </IssueChevron>
-                        </IssueToggleButton>
-                        <IssueTopLink href={getIssueLink(issue)}>
-                          AI 배틀
-                          <ArrowRight size={15} />
-                        </IssueTopLink>
-                      </IssueActions>
-                    </IssueRow>
-
-                    {isExpanded ? (
-                      <IssueExpanded>
-                        <IssueComparisonList>
-                          {(showConservativeFirst ? [
-                            { tone: "red" as const, label: "보수", text: issue.conservative },
-                            { tone: "blue" as const, label: "진보", text: issue.progressive },
-                          ] : [
-                            { tone: "blue" as const, label: "진보", text: issue.progressive },
-                            { tone: "red" as const, label: "보수", text: issue.conservative },
-                          ]).map(({ tone, label, text }) => (
-                            <IssueComparisonRow key={label}>
-                              <IssueLabel $tone={tone}>{label}</IssueLabel>
-                              <IssueText>{text}</IssueText>
-                            </IssueComparisonRow>
-                          ))}
-                        </IssueComparisonList>
-                        <IssueVoteSection>
-                          <IssueVoteLabel>이 이슈에 대한 입장은?</IssueVoteLabel>
-                          <IssueVoteButtons role="group" aria-label="입장 선택">
-                            {VOTE_OPTIONS.map(({ stance, label, color, tint }) => {
-                              const isSelected = issue.user_vote === stance;
-                              const isThisVoting =
-                                voteMutation.isPending &&
-                                voteMutation.variables?.issueId === issue.id;
-                              return (
-                                <VoteButton
-                                  key={stance}
-                                  type="button"
-                                  $color={color}
-                                  $tint={tint}
-                                  $selected={isSelected}
-                                  $loading={isThisVoting}
-                                  onClick={() => {
-                                    if (!isThisVoting) {
-                                      voteMutation.mutate({ issueId: issue.id, stance });
-                                    }
-                                  }}
-                                  disabled={isThisVoting}
-                                  aria-pressed={isSelected}
-                                >
-                                  {label}
-                                </VoteButton>
-                              );
-                            })}
-                          </IssueVoteButtons>
-                          {issue.vote_counts.total > 0 ? (
-                            <IssueVoteBars>
-                              {VOTE_OPTIONS.map(({ stance, barLabel, color, tint }) => {
-                                const pct = getVotePercent(
-                                  issue.vote_counts[stance],
-                                  issue.vote_counts.total,
-                                );
-                                const isMyVote = issue.user_vote === stance;
-                                return (
-                                  <VoteBarRow key={stance}>
-                                    <VoteBarLabel $color={isMyVote ? color : "#b0b8c1"}>
-                                      {barLabel}
-                                    </VoteBarLabel>
-                                    <VoteBarTrack $tint={tint}>
-                                      <VoteBarFill $color={color} $pct={pct} />
-                                    </VoteBarTrack>
-                                    <VoteBarPct $active={isMyVote}>{pct}%</VoteBarPct>
-                                  </VoteBarRow>
-                                );
-                              })}
-                              <VoteTotal>
-                                총 {issue.vote_counts.total.toLocaleString()}명 참여
-                              </VoteTotal>
-                            </IssueVoteBars>
-                          ) : null}
-                          {issue.user_vote ? (
-                            <BattleCTA href={`/arena/${issue.id}/battle`}>
-                              <BattleCTAIcon aria-hidden="true">⚔</BattleCTAIcon>
-                              AI 배틀로 더 깊이 파고들기
-                            </BattleCTA>
-                          ) : null}
-                        </IssueVoteSection>
-                      </IssueExpanded>
-                    ) : null}
-                  </IssueItem>
-                );
-              })
+              issues.map((issue) => (
+                <IssueCard
+                  key={issue.id}
+                  issue={issue}
+                  isExpanded={expandedIssueId === issue.id}
+                  showConservativeFirst={showConservativeFirst}
+                  followedNames={followedNames}
+                  isVoting={
+                    voteMutation.isPending &&
+                    voteMutation.variables?.issueId === issue.id
+                  }
+                  onToggleExpand={(id) =>
+                    setExpandedIssueId((current) => (current === id ? null : id))
+                  }
+                  onVote={(issueId, stance) => voteMutation.mutate({ issueId, stance })}
+                />
+              ))
             ) : (
               <EmptyCard>
                 <EmptyCardTitle>오늘은 아직 핫이슈가 없어요.</EmptyCardTitle>
@@ -753,11 +419,12 @@ export function HomeContainer({ session }: HomeContainerProps) {
             )}
           </IssueLayout>
         </MotionSection>
-
       </Main>
     </Page>
   );
 }
+
+/* ── Shared styled components ───────────────────────────── */
 
 const Page = styled.main`
   min-height: 100vh;
@@ -878,59 +545,6 @@ const PrimaryActionScroll = styled.button`
   }
 `;
 
-const FirstRunGuide = styled.div`
-  display: grid;
-  gap: 12px;
-  padding: 16px 20px;
-  border-radius: 10px;
-  background: #f9fafb;
-  border: 1px solid #e5e8eb;
-  margin-bottom: 4px;
-`;
-
-const FirstRunTitle = styled.div`
-  color: #8b95a1;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-`;
-
-const FirstRunSteps = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 20px;
-`;
-
-const FirstRunStep = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const FirstRunNum = styled.div`
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #e5e8eb;
-  color: #4e5968;
-  font-size: 11px;
-  font-weight: 700;
-  flex-shrink: 0;
-`;
-
-const FirstRunText = styled.span`
-  color: #4e5968;
-  font-size: 13px;
-  font-weight: 400;
-
-  strong {
-    color: #191f28;
-    font-weight: 600;
-  }
-`;
-
 const MotionSection = styled.section`
   display: grid;
   gap: 0;
@@ -1006,213 +620,6 @@ const PoliticianList = styled.div`
   gap: 0;
 `;
 
-const PoliticianImageWrap = styled.div`
-  width: 32px;
-  height: 32px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #f2f4f6;
-  flex-shrink: 0;
-`;
-
-const PoliticianImage = styled(Image)`
-  object-fit: cover;
-  object-position: center top;
-`;
-
-const PoliticianFallback = styled.div`
-  display: flex;
-  width: 100%;
-  height: 100%;
-  align-items: center;
-  justify-content: center;
-  color: #4e5968;
-  font-size: 14px;
-  font-weight: 700;
-`;
-
-const PoliticianRow = styled.article`
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
-  gap: 12px;
-  align-items: start;
-  padding: 16px 0;
-  border-bottom: 1px solid #f2f4f6;
-
-  &:last-of-type {
-    border-bottom: 0;
-  }
-`;
-
-const PoliticianBody = styled.div`
-  display: grid;
-  gap: 8px;
-  min-width: 0;
-`;
-
-const PoliticianInline = styled.div`
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-`;
-
-const PoliticianName = styled.div`
-  color: #191f28;
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-`;
-
-const DotDivider = styled.span`
-  color: #c5cad1;
-  font-size: 14px;
-  line-height: 1;
-`;
-
-const PartyTextBadge = styled.div<{ $tone: "blue" | "red" | "neutral" }>`
-  display: inline-flex;
-  color: ${({ $tone }) =>
-    $tone === "blue" ? "#3182f6" : $tone === "red" ? "#e5484d" : "#8b95a1"};
-  font-size: 14px;
-  font-weight: 600;
-`;
-
-const PartyInline = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-`;
-
-const PartyLogo = styled(Image)`
-  display: block;
-  width: auto;
-  height: 14px;
-  flex-shrink: 0;
-`;
-
-const PoliticianMeta = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: #8b95a1;
-  font-size: 14px;
-  font-weight: 400;
-  min-width: 0;
-
-  svg {
-    flex-shrink: 0;
-  }
-`;
-
-const PoliticianTag = styled.div`
-  display: inline-flex;
-  color: #8b95a1;
-  font-size: 14px;
-  font-weight: 400;
-`;
-
-const PoliticianSubtext = styled.div`
-  color: #8b95a1;
-  font-size: 14px;
-  line-height: 1.6;
-  word-break: keep-all;
-`;
-
-const DetailLink = styled(Link)`
-  display: inline-flex;
-  width: fit-content;
-  align-items: center;
-  gap: 4px;
-  color: #3182f6;
-  font-size: 14px;
-  font-weight: 500;
-  transition: opacity 120ms cubic-bezier(0.16, 1, 0.3, 1);
-
-  &:hover {
-    opacity: 0.72;
-  }
-`;
-
-const PoliticianActions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-`;
-
-const InlineActionButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 44px;
-  padding: 0 2px;
-  border: 0;
-  color: #3182f6;
-  background: transparent;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 120ms cubic-bezier(0.16, 1, 0.3, 1);
-
-  &:hover {
-    opacity: 0.72;
-  }
-`;
-
-const PoliticianInlineDetail = styled.div`
-  display: grid;
-  gap: 16px;
-  padding: 16px 0 4px;
-  border-top: 1px solid #e5e7eb;
-`;
-
-const InlineDetailGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px 24px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const InlineDetailItem = styled.div`
-  display: grid;
-  gap: 4px;
-`;
-
-const InlineDetailLabel = styled.div`
-  color: #8b95a1;
-  font-size: 14px;
-  font-weight: 600;
-`;
-
-const InlineDetailValue = styled.div`
-  color: #191f28;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 1.5;
-  word-break: break-word;
-`;
-
-const InlineDetailText = styled.p`
-  margin: 0;
-  color: #8b95a1;
-  font-size: 14px;
-  line-height: 1.6;
-`;
-
-const InlineExternalLink = styled.a`
-  display: inline-flex;
-  width: fit-content;
-  align-items: center;
-  gap: 6px;
-  color: #191f28;
-  font-size: 14px;
-  font-weight: 600;
-`;
-
 const EmptyCard = styled.div`
   display: grid;
   gap: 8px;
@@ -1262,478 +669,58 @@ const IssueLayout = styled.div`
   gap: 0;
 `;
 
-const IssueItem = styled.div`
+const FirstRunGuide = styled.div`
   display: grid;
-  border-bottom: 1px solid #f2f4f6;
-
-  &:last-of-type {
-    border-bottom: 0;
-  }
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: 10px;
+  background: #f9fafb;
+  border: 1px solid #e5e8eb;
+  margin-bottom: 4px;
 `;
 
-const IssueRow = styled.article`
-  display: grid;
-  grid-template-columns: 80px minmax(0, 1fr) auto;
-  gap: 16px;
-  align-items: start;
-  padding: 16px 0;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-`;
-
-const IssueRowMeta = styled.div`
+const FirstRunTitle = styled.div`
   color: #8b95a1;
-  font-size: 14px;
-  font-weight: 500;
-  padding-top: 4px;
-`;
-
-const IssueRowBody = styled.div`
-  display: grid;
-  gap: 6px;
-`;
-
-const IssueTitle = styled.h3`
-  margin: 0;
-  color: #191f28;
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 600;
-  line-height: 1.4;
-  letter-spacing: -0.02em;
-  word-break: keep-all;
+  letter-spacing: 0.04em;
 `;
 
-const IssueSummary = styled.p`
-  margin: 0;
-  color: #4e5968;
-  font-size: 14px;
-  line-height: 1.7;
-  word-break: keep-all;
-`;
-
-const IssueBodyMeta = styled.div`
+const FirstRunSteps = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 2px;
+  gap: 8px 20px;
 `;
 
-const BillStatusBadge = styled.span<{ $status: string }>`
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 18px;
-  background: ${({ $status }) =>
-    $status === "통과" ? "#e8f3ff" : $status === "폐기" ? "#fef2f2" : "#f2f4f6"};
-  color: ${({ $status }) =>
-    $status === "통과" ? "#3182f6" : $status === "폐기" ? "#e5484d" : "#6b7684"};
-`;
-
-const IssueMetaChip = styled.span<{ $dim?: boolean; $followed?: boolean }>`
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: ${({ $followed }) => ($followed ? "#e8f3ff" : "#f2f4f6")};
-  color: ${({ $followed, $dim }) => ($followed ? "#3182f6" : $dim ? "#8b95a1" : "#6b7684")};
-  font-size: 12px;
-  font-weight: ${({ $followed }) => ($followed ? 600 : 500)};
-  line-height: 18px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
-`;
-
-const IssueActions = styled.div`
-  display: grid;
-  align-content: start;
-  justify-items: end;
-  gap: 12px;
-  min-width: 108px;
-
-  @media (max-width: 768px) {
-    justify-items: start;
-    min-width: 0;
-    grid-auto-flow: column;
-    gap: 16px;
-  }
-`;
-
-const IssueToggleButton = styled.button`
-  display: inline-flex;
+const FirstRunStep = styled.div`
+  display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
-  padding: 0;
+  gap: 8px;
+`;
+
+const FirstRunNum = styled.div`
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #e5e8eb;
   color: #4e5968;
-  background: transparent;
-  border: 0;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: color 120ms cubic-bezier(0.16, 1, 0.3, 1);
-
-  &:hover {
-    color: #191f28;
-  }
-
-  @media (max-width: 768px) {
-    justify-content: flex-start;
-  }
-`;
-
-const IssueChevron = styled.span<{ $expanded: boolean }>`
-  display: inline-flex;
-  svg {
-    transform: rotate(${({ $expanded }) => ($expanded ? "180deg" : "0deg")});
-    transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-`;
-
-const IssueTopLink = styled(Link)`
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
-  color: #191f28;
-  font-size: 14px;
-  font-weight: 600;
-  transition: opacity 120ms cubic-bezier(0.16, 1, 0.3, 1);
-
-  &:hover {
-    opacity: 0.6;
-  }
-
-  @media (max-width: 768px) {
-    justify-content: flex-start;
-  }
-`;
-
-const IssueComparisonList = styled.div`
-  display: grid;
-  gap: 0;
-`;
-
-const IssueComparisonRow = styled.div`
-  display: grid;
-  gap: 6px;
-  padding: 12px 0;
-
-  &:not(:last-of-type) {
-    border-bottom: 1px solid #f2f4f6;
-  }
-`;
-
-const IssueLabel = styled.div<{ $tone: "blue" | "red" }>`
-  color: ${({ $tone }) => ($tone === "blue" ? "#3182f6" : "#e5484d")};
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-`;
-
-const IssueText = styled.p`
-  margin: 0;
-  color: #191f28;
-  font-size: 16px;
-  line-height: 1.7;
-  word-break: keep-all;
-`;
-
-const IssueExpanded = styled.div`
-  padding: 12px 0 16px 16px;
-  margin-left: 96px;
-  border-left: 1px solid #e5e7eb;
-
-  @media (max-width: 768px) {
-    margin-left: 0;
-  }
-`;
-
-const IssueVoteSection = styled.div`
-  display: grid;
-  gap: 12px;
-  padding-top: 16px;
-  margin-top: 4px;
-  border-top: 1px solid #f2f4f6;
-`;
-
-const IssueVoteLabel = styled.div`
-  color: #8b95a1;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-`;
-
-const IssueVoteButtons = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-`;
-
-const VoteButton = styled.button<{
-  $color: string;
-  $tint: string;
-  $selected: boolean;
-  $loading: boolean;
-}>`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 36px;
-  padding: 0 8px;
-  border-radius: 8px;
-  border: 1.5px solid ${({ $color, $selected }) => ($selected ? "transparent" : $color)};
-  background: ${({ $color, $selected }) => ($selected ? $color : "transparent")};
-  color: ${({ $color, $selected }) => ($selected ? "#ffffff" : $color)};
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  cursor: pointer;
-  transition:
-    background 150ms cubic-bezier(0.4, 0, 0.2, 1),
-    color 150ms cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: ${({ $loading }) => ($loading ? 0.55 : 1)};
-
-  &:hover:not(:disabled) {
-    background: ${({ $color, $tint, $selected }) => ($selected ? $color : $tint)};
-  }
-
-  &:disabled {
-    cursor: default;
-  }
-`;
-
-const IssueVoteBars = styled.div`
-  display: grid;
-  gap: 8px;
-`;
-
-const VoteBarRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-`;
-
-const VoteBarLabel = styled.span<{ $color: string }>`
-  width: 28px;
-  flex-shrink: 0;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: ${({ $color }) => $color};
-  transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
-`;
-
-const VoteBarTrack = styled.div<{ $tint: string }>`
-  flex: 1;
-  height: 6px;
-  border-radius: 99px;
-  background: ${({ $tint }) => $tint};
-  position: relative;
-  overflow: hidden;
-`;
-
-const VoteBarFill = styled.div<{ $color: string; $pct: number }>`
-  position: absolute;
-  inset: 0;
-  border-radius: 99px;
-  background: ${({ $color }) => $color};
-  transform-origin: left center;
-  transform: scaleX(${({ $pct }) => $pct / 100});
-  transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
-`;
-
-const VoteBarPct = styled.span<{ $active: boolean }>`
-  width: 36px;
-  flex-shrink: 0;
-  text-align: right;
-  font-size: 13px;
-  font-weight: ${({ $active }) => ($active ? "700" : "400")};
-  font-variant-numeric: tabular-nums;
-  color: ${({ $active }) => ($active ? "#191f28" : "#8b95a1")};
-  letter-spacing: -0.01em;
-  transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
-`;
-
-const VoteTotal = styled.div`
-  font-size: 12px;
-  font-weight: 400;
-  color: #8b95a1;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  letter-spacing: -0.01em;
-`;
-
-const BattleCTA = styled(Link)`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  background: #191f28;
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 600;
-  transition: opacity 140ms ease-out;
-
-  &:hover {
-    opacity: 0.88;
-  }
-
-  &:focus-visible {
-    outline: 2px solid #3182f6;
-    outline-offset: 2px;
-  }
-`;
-
-const BattleCTAIcon = styled.span`
-  font-size: 15px;
-  line-height: 1;
-`;
-
-/* ── Search ───────────────────────────────────────────── */
-
-const SearchBar = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #f2f4f6;
-  border-radius: 10px;
-  padding: 0 14px;
-  margin: 16px 0 4px;
-  transition: box-shadow 150ms;
-
-  &:focus-within {
-    box-shadow: 0 0 0 2px #3182f6;
-  }
-`;
-
-const SearchIcon = styled.span`
-  color: #b0b8c1;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-`;
-
-const SearchInput = styled.input`
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  padding: 12px 0;
-  font-size: 14px;
-  color: #191f28;
-  font-family: inherit;
-
-  &::placeholder {
-    color: #b0b8c1;
-  }
-
-  &::-webkit-search-cancel-button {
-    display: none;
-  }
-`;
-
-const SearchClear = styled.button`
-  background: none;
-  border: none;
-  padding: 12px 8px;
-  cursor: pointer;
-  color: #b0b8c1;
-  display: flex;
-  align-items: center;
-  border-radius: 4px;
-
-  &:hover {
-    color: #6b7684;
-  }
-`;
-
-const SearchResults = styled.div`
-  display: grid;
-  gap: 4px;
-  padding: 8px 0 16px;
-`;
-
-const SearchSection = styled.div`
-  display: grid;
-`;
-
-const SearchSectionTitle = styled.div`
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: #8b95a1;
-  text-transform: uppercase;
-  padding: 10px 0 6px;
+  font-weight: 700;
+  flex-shrink: 0;
 `;
 
-const SearchEmpty = styled.div`
+const FirstRunText = styled.span`
+  color: #4e5968;
   font-size: 13px;
-  color: #b0b8c1;
-  padding: 8px 0;
-`;
+  font-weight: 400;
 
-const SearchIssueRow = styled(Link)`
-  display: grid;
-  gap: 2px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  text-decoration: none;
-
-  &:hover {
-    background: #f2f4f6;
+  strong {
+    color: #191f28;
+    font-weight: 600;
   }
 `;
-
-const SearchIssueTitle = styled.div`
-  font-size: 14px;
-  font-weight: 500;
-  color: #191f28;
-  word-break: keep-all;
-`;
-
-const SearchIssueMeta = styled.div`
-  font-size: 12px;
-  color: #8b95a1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-const SearchPoliticianRow = styled(Link)`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  text-decoration: none;
-
-  &:hover {
-    background: #f2f4f6;
-  }
-`;
-
-const SearchPoliticianName = styled.div`
-  font-size: 14px;
-  font-weight: 500;
-  color: #191f28;
-`;
-
-const SearchPoliticianMeta = styled.div`
-  font-size: 12px;
-  color: #8b95a1;
-`;
-
-/* ── Balance Mode ─────────────────────────────────────── */
 
 const BalanceToggle = styled.button<{ $active: boolean }>`
   display: inline-flex;
