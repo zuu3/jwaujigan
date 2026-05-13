@@ -4,7 +4,7 @@ import styled from "@emotion/styled";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Swords, User } from "lucide-react";
+import { Home, MessagesSquare, Swords, User } from "lucide-react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 
 type AppHeaderProps = {
@@ -28,15 +28,10 @@ export function AppHeader({ userName, userImage }: AppHeaderProps) {
           </Brand>
 
           <Nav aria-label="주요 메뉴">
-            <NavLink href="/home" $active={pathname === "/home"}>
-              홈
-            </NavLink>
-            <NavLink href="/arena" $active={pathname.startsWith("/arena")}>
-              아레나
-            </NavLink>
-            <NavLink href="/mypage" $active={pathname === "/mypage"}>
-              마이페이지
-            </NavLink>
+            <NavLink href="/home" $active={pathname === "/home"}>홈</NavLink>
+            <NavLink href="/arena" $active={pathname.startsWith("/arena")}>아레나</NavLink>
+            <NavLink href="/community" $active={pathname.startsWith("/community")}>커뮤니티</NavLink>
+            <NavLink href="/mypage" $active={pathname === "/mypage"}>마이페이지</NavLink>
           </Nav>
 
           <Actions>
@@ -63,6 +58,10 @@ export function AppHeader({ userName, userImage }: AppHeaderProps) {
         <BottomNavItem href="/arena" $active={pathname.startsWith("/arena")}>
           <Swords size={22} aria-hidden="true" />
           <BottomNavLabel>아레나</BottomNavLabel>
+        </BottomNavItem>
+        <BottomNavItem href="/community" $active={pathname.startsWith("/community")}>
+          <MessagesSquare size={22} aria-hidden="true" />
+          <BottomNavLabel>커뮤니티</BottomNavLabel>
         </BottomNavItem>
         <BottomNavItem href="/mypage" $active={pathname === "/mypage"}>
           <User size={22} aria-hidden="true" />

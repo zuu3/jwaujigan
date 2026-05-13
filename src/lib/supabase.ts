@@ -294,6 +294,48 @@ export type Database = {
         };
         Relationships: [];
       };
+      polls: {
+        Row: {
+          id: string;
+          user_id: string;
+          question: string;
+          options: unknown;
+          expires_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          question: string;
+          options: unknown;
+          expires_at: string;
+          created_at?: string;
+        };
+        Update: {
+          question?: string;
+          options?: unknown;
+          expires_at?: string;
+        };
+        Relationships: [];
+      };
+      poll_votes: {
+        Row: {
+          id: string;
+          poll_id: string;
+          user_id: string;
+          option_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          poll_id: string;
+          user_id: string;
+          option_id: string;
+          created_at?: string;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
       issue_votes: {
         Row: {
           id: string;

@@ -4,6 +4,7 @@ export const POINTS = {
   FOLLOW: 5,
   ONBOARDING: 20,
   REPORT: 50,
+  POLL_CREATE: 20,
 } as const;
 
 export const DAILY_BONUS = 5;
