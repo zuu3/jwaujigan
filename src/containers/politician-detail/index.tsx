@@ -238,11 +238,6 @@ export function PoliticianDetailContainer({
                     </ReportBlock>
                   )}
 
-                  <ReportBlock>
-                    <ReportBlockTitle>AI 분석</ReportBlockTitle>
-                    <ReportSummary>{report.summary}</ReportSummary>
-                  </ReportBlock>
-
                   {report.notable_bills.length > 0 && (
                     <ReportBlock>
                       <ReportBlockTitle>주요 가결 법안</ReportBlockTitle>

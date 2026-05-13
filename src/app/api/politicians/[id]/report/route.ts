@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 import { getBillsByPoliticianName, getPoliticianDetailById } from "@/lib/assembly";
-import { getGeminiModel } from "@/lib/gemini";
 import { POINTS } from "@/services/points/points";
 
 export type ReportData = {
@@ -10,7 +9,6 @@ export type ReportData = {
   pass_count: number;
   pending_count: number;
   fail_count: number;
-  summary: string;
   categories: { name: string; count: number }[];
   notable_bills: { title: string; date: string | null; result: string | null; url: string | null }[];
 };
@@ -147,34 +145,11 @@ export async function POST(
     .slice(0, 5)
     .map((b) => ({ title: b.title, date: b.proposedAt, result: b.result, url: b.url }));
 
-  // Gemini 분석
-  const billSummary = bills.slice(0, 30).map((b) => `- ${b.title} (${b.proposedAt ?? "날짜 미상"}, ${b.result ?? "계류 중"})`).join("\n");
-  const prompt = [
-    `다음은 국회의원 ${politician.name}(${politician.party}, ${politician.district})의 22대 국회 발의 법안 목록이야.`,
-    `총 ${bills.length}건 중 가결 ${passCount}건, 계류 ${pendingCount}건, 폐기/부결 ${failCount}건이야.`,
-    "",
-    billSummary || "발의 법안 없음",
-    "",
-    "위 데이터를 바탕으로 이 의원의 의정 활동을 3-4문장으로 분석해줘.",
-    "수치는 정확하게 써. 편향 없이 사실 기반으로만 작성해. 마케팅 문구 금지.",
-    "한국어로, 마크다운 없이 일반 텍스트로만 응답해.",
-  ].join("\n");
-
-  let summary = "분석 데이터를 불러오는 데 실패했어요.";
-  try {
-    const model = getGeminiModel({ generationConfig: { maxOutputTokens: 1000, temperature: 0.3 } });
-    const result = await model.generateContent(prompt);
-    summary = result.response.text().trim();
-  } catch (e) {
-    console.error("[report] gemini failed", e);
-  }
-
   const reportData: ReportData = {
     bill_count: bills.length,
     pass_count: passCount,
     pending_count: pendingCount,
     fail_count: failCount,
-    summary,
     categories: categories.slice(0, 5),
     notable_bills: notableBills,
   };
