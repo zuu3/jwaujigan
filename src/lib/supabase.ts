@@ -203,6 +203,41 @@ export type Database = {
           },
         ];
       };
+      politician_reports: {
+        Row: {
+          id: string;
+          user_id: string;
+          politician_id: string;
+          politician_name: string;
+          report: unknown;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          politician_id: string;
+          politician_name: string;
+          report: unknown;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          politician_id?: string;
+          politician_name?: string;
+          report?: unknown;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "politician_reports_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       politician_follows: {
         Row: {
           id: string;

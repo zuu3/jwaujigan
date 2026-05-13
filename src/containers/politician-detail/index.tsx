@@ -1,12 +1,16 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { ArrowLeft, Bell, BellOff, ExternalLink, Mail, MapPin, Phone } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, ExternalLink, Mail, MapPin, Phone, FileText, Lock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { PoliticianDetail } from "@/lib/assembly";
 import { getPartyPresentation } from "@/lib/parties";
+import { useQueryClient } from "@tanstack/react-query";
+import type { ReportData, ReportResponse } from "@/app/api/politicians/[id]/report/route";
+import { POINTS } from "@/services/points/points";
+import { useUserProfile } from "@/services/user/user.queries";
 
 type PoliticianDetailContainerProps = {
   politician: PoliticianDetail;
@@ -51,6 +55,12 @@ export function PoliticianDetailContainer({
   const party = getPartyPresentation(politician.party);
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [report, setReport] = useState<ReportData | null>(null);
+  const [reportCreatedAt, setReportCreatedAt] = useState<string | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportChecked, setReportChecked] = useState(false);
+  const profileQuery = useUserProfile();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     fetch(`/api/politicians/${politician.id}/follow`)
@@ -58,6 +68,43 @@ export function PoliticianDetailContainer({
       .then(({ following: f }) => setFollowing(f))
       .catch(() => null);
   }, [politician.id]);
+
+  useEffect(() => {
+    fetch(`/api/politicians/${politician.id}/report`)
+      .then((r) => r.json() as Promise<{ report: ReportData | null } | ReportResponse>)
+      .then((data) => {
+        if ("report" in data && data.report) {
+          setReport(data.report);
+          if ("created_at" in data) setReportCreatedAt(data.created_at);
+        }
+      })
+      .catch(() => null)
+      .finally(() => setReportChecked(true));
+  }, [politician.id]);
+
+  const handleGenerateReport = async () => {
+    if (reportLoading) return;
+    setReportLoading(true);
+    try {
+      const res = await fetch(`/api/politicians/${politician.id}/report`, { method: "POST" });
+      if (res.status === 402) {
+        alert(`포인트가 부족해요. 심층 분석에는 ${POINTS.REPORT}pt가 필요해요.`);
+        return;
+      }
+      if (!res.ok) {
+        alert("분석 생성에 실패했어요. 잠시 후 다시 시도해주세요.");
+        return;
+      }
+      const data = await res.json() as ReportResponse;
+      setReport(data.report);
+      setReportCreatedAt(data.created_at);
+      if (!data.is_cached) {
+        void queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+      }
+    } finally {
+      setReportLoading(false);
+    }
+  };
 
   const handleFollow = async () => {
     if (followLoading) return;
@@ -151,6 +198,100 @@ export function PoliticianDetailContainer({
 
         <ContentGrid>
           <MainSection>
+            <Section>
+              <ReportSectionTitle>
+                <FileText size={18} />
+                <span>발의 법안 심층 분석</span>
+              </ReportSectionTitle>
+
+              {report ? (
+                <ReportCard>
+                  <ReportStats>
+                    <StatBox>
+                      <StatNum>{report.bill_count}</StatNum>
+                      <StatLabel>총 발의</StatLabel>
+                    </StatBox>
+                    <StatBox>
+                      <StatNum $color="#03b26c">{report.pass_count}</StatNum>
+                      <StatLabel>가결</StatLabel>
+                    </StatBox>
+                    <StatBox>
+                      <StatNum $color="#8b95a1">{report.pending_count}</StatNum>
+                      <StatLabel>계류</StatLabel>
+                    </StatBox>
+                    <StatBox>
+                      <StatNum $color="#f04452">{report.fail_count}</StatNum>
+                      <StatLabel>폐기</StatLabel>
+                    </StatBox>
+                  </ReportStats>
+
+                  {report.categories.length > 0 && (
+                    <ReportBlock>
+                      <ReportBlockTitle>주요 분야</ReportBlockTitle>
+                      <CategoryList>
+                        {report.categories.map((c) => (
+                          <CategoryChip key={c.name}>
+                            {c.name} <CategoryCount>{c.count}건</CategoryCount>
+                          </CategoryChip>
+                        ))}
+                      </CategoryList>
+                    </ReportBlock>
+                  )}
+
+                  <ReportBlock>
+                    <ReportBlockTitle>AI 분석</ReportBlockTitle>
+                    <ReportSummary>{report.summary}</ReportSummary>
+                  </ReportBlock>
+
+                  {report.notable_bills.length > 0 && (
+                    <ReportBlock>
+                      <ReportBlockTitle>주요 가결 법안</ReportBlockTitle>
+                      <NotableBillList>
+                        {report.notable_bills.map((b) => (
+                          <NotableBillItem key={b.title}>
+                            {b.url ? (
+                              <a href={b.url} target="_blank" rel="noreferrer">{b.title}</a>
+                            ) : (
+                              <span>{b.title}</span>
+                            )}
+                            {b.date && <BillDate>{b.date.slice(0, 10)}</BillDate>}
+                          </NotableBillItem>
+                        ))}
+                      </NotableBillList>
+                    </ReportBlock>
+                  )}
+
+                  {reportCreatedAt && (
+                    <ReportFooter>
+                      {new Date(reportCreatedAt).toLocaleDateString("ko-KR")} 기준 · 22대 국회 데이터
+                    </ReportFooter>
+                  )}
+                </ReportCard>
+              ) : reportChecked ? (
+                <ReportGate>
+                  <ReportGateIcon>
+                    <Lock size={20} />
+                  </ReportGateIcon>
+                  <ReportGateText>
+                    {politician.name} 의원의 발의 법안을 AI가 분석해드려요.
+                  </ReportGateText>
+                  <ReportGateSub>한 번 생성하면 무료로 다시 볼 수 있어요.</ReportGateSub>
+                  <ReportButton
+                    type="button"
+                    disabled={reportLoading}
+                    onClick={() => void handleGenerateReport()}
+                  >
+                    {reportLoading ? "분석 중..." : `분석 생성 · ${POINTS.REPORT}pt`}
+                  </ReportButton>
+                  {profileQuery.data && (
+                    <UserPoints>보유 포인트: {(profileQuery.data.points).toLocaleString("ko-KR")}pt</UserPoints>
+                  )}
+                </ReportGate>
+              ) : (
+                <ReportSkeleton />
+              )}
+            </Section>
+
             <Section>
               <SectionTitle>기본 정보</SectionTitle>
               <InfoList>
@@ -569,5 +710,206 @@ const ExternalAnchor = styled.a`
 
   &:hover {
     text-decoration: underline;
+  }
+`;
+
+/* ── Report Section ──────────────────────────────────────── */
+
+const ReportSectionTitle = styled.h2`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #191f28;
+  font-size: 18px;
+  font-weight: 700;
+`;
+
+const ReportCard = styled.div`
+  display: grid;
+  gap: 24px;
+  padding: 24px;
+  border: 1px solid #e5e8eb;
+  border-radius: 12px;
+`;
+
+const ReportStats = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+`;
+
+const StatBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 8px;
+  border-radius: 8px;
+  background: #f9fafb;
+`;
+
+const StatNum = styled.span<{ $color?: string }>`
+  font-size: 24px;
+  font-weight: 700;
+  color: ${({ $color }) => $color ?? "#191f28"};
+  font-variant-numeric: tabular-nums;
+`;
+
+const StatLabel = styled.span`
+  font-size: 12px;
+  color: #8b95a1;
+  font-weight: 500;
+`;
+
+const ReportBlock = styled.div`
+  display: grid;
+  gap: 12px;
+`;
+
+const ReportBlockTitle = styled.h3`
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4e5968;
+`;
+
+const CategoryList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+const CategoryChip = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  background: #e8f3ff;
+  color: #3182f6;
+  font-size: 13px;
+  font-weight: 600;
+`;
+
+const CategoryCount = styled.span`
+  color: #8b95a1;
+  font-weight: 400;
+`;
+
+const ReportSummary = styled.p`
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #333d4b;
+`;
+
+const NotableBillList = styled.ul`
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid #f2f4f6;
+`;
+
+const NotableBillItem = styled.li`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f2f4f6;
+  font-size: 14px;
+  color: #191f28;
+
+  a {
+    color: #3182f6;
+    text-decoration: none;
+    &:hover { text-decoration: underline; }
+  }
+`;
+
+const BillDate = styled.span`
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #8b95a1;
+`;
+
+const ReportFooter = styled.p`
+  margin: 0;
+  font-size: 12px;
+  color: #b0b8c1;
+`;
+
+const ReportGate = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 24px;
+  border: 1px solid #e5e8eb;
+  border-radius: 12px;
+  text-align: center;
+`;
+
+const ReportGateIcon = styled.div`
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 12px;
+  background: #f2f4f6;
+  color: #8b95a1;
+`;
+
+const ReportGateText = styled.p`
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #191f28;
+`;
+
+const ReportGateSub = styled.p`
+  margin: 0;
+  font-size: 13px;
+  color: #8b95a1;
+`;
+
+const ReportButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 8px;
+  background: #191f28;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 150ms;
+
+  &:hover:not(:disabled) { opacity: 0.85; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+`;
+
+const UserPoints = styled.span`
+  font-size: 12px;
+  color: #8b95a1;
+`;
+
+const ReportSkeleton = styled.div`
+  height: 200px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #f2f4f6 25%, #e5e8eb 50%, #f2f4f6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
   }
 `;

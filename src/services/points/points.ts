@@ -3,6 +3,7 @@ export const POINTS = {
   BATTLE: 30,
   FOLLOW: 5,
   ONBOARDING: 20,
+  REPORT: 50,
 } as const;
 
 export const DAILY_BONUS = 5;
