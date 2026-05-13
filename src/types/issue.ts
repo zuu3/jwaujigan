@@ -13,6 +13,7 @@ export type HotIssue = {
   id: string;
   title: string;
   summary: string;
+  body: string | null;
   progressive: string;
   conservative: string;
   source_url: string | null;
