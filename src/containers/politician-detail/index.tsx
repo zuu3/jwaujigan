@@ -802,6 +802,8 @@ const ReportSummary = styled.p`
   font-size: 15px;
   line-height: 1.7;
   color: #333d4b;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 `;
 
 const NotableBillList = styled.ul`

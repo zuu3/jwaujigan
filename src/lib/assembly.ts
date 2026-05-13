@@ -472,27 +472,18 @@ export type PoliticianBill = {
   url: string | null;
 };
 
-type BillVoteRow = {
-  BILL_NM?: string;
-  BILL_NO?: string;
-  PROPOSER?: string;
-  PROPOSE_DT?: string;
-  PROC_RESULT_CD?: string;
-  LINK_URL?: string;
-};
-
 export async function getBillsByPoliticianName(name: string): Promise<PoliticianBill[]> {
   const payload = await fetchAssemblyJson("nzmimeepazxkubdpn", {
     AGE: 22,
     PROPOSER: name,
     pSize: 100,
   });
-  const rows = extractRows<BillVoteRow>(payload, "nzmimeepazxkubdpn");
+  const rows = extractRows<BillListRow>(payload, "nzmimeepazxkubdpn");
   return rows.map((r) => ({
-    title: r.BILL_NM?.trim() ?? "",
+    title: r.BILL_NAME?.trim() ?? "",
     proposer: r.PROPOSER?.trim() ?? "",
     proposedAt: toIsoDate(r.PROPOSE_DT),
-    result: r.PROC_RESULT_CD?.trim() ?? null,
-    url: r.LINK_URL?.trim() ?? null,
+    result: r.PROC_RESULT?.trim() ?? null,
+    url: r.DETAIL_LINK?.trim() ?? r.LINK_URL?.trim() ?? null,
   })).filter((b) => b.title);
 }
