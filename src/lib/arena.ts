@@ -17,6 +17,7 @@ type IssueRow = {
   id: string;
   title: string;
   summary: string;
+  body: string | null;
   progressive: string;
   conservative: string;
   source_url: string | null;
@@ -43,7 +44,7 @@ function mapIssueRow(row: IssueRow): HotIssue {
 
 
 export function getArenaBattleCacheTopic(issueId: string) {
-  return `arena-cache:v3:${issueId}`;
+  return `arena-cache:v4:${issueId}`;
 }
 
 function isValidCachedMessages(value: unknown): value is DebateMessage[] {
@@ -95,7 +96,7 @@ export async function getArenaIssues() {
   const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("issues")
-    .select("id, title, summary, progressive, conservative, source_url, bill_id, published_at, proposer, committee, bill_status, created_at")
+    .select("id, title, summary, body, progressive, conservative, source_url, bill_id, published_at, proposer, committee, bill_status, created_at")
     .gt("expires_at", now)
     .order("created_at", { ascending: false })
     .limit(6);
@@ -113,7 +114,7 @@ export async function getArenaIssueById(issueId: string) {
   const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("issues")
-    .select("id, title, summary, progressive, conservative, source_url, bill_id, published_at, proposer, committee, bill_status, created_at")
+    .select("id, title, summary, body, progressive, conservative, source_url, bill_id, published_at, proposer, committee, bill_status, created_at")
     .eq("id", issueId)
     .gt("expires_at", now)
     .maybeSingle();

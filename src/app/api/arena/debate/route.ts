@@ -13,6 +13,7 @@ type DebateMessage = {
 type DebateRequestBody = {
   issueId?: string;
   issueTitle?: string;
+  issueBody?: string;
   progressiveContext?: string;
   conservativeContext?: string;
   speakerStance?: "progressive" | "conservative";
@@ -74,14 +75,15 @@ function buildDebatePrompt({
   const latestOpponentMessage = opponentMessages.at(-1);
   const latestUserMessage = history.filter((message) => message.role === "user").at(-1);
   const commonRules = [
-    "출력은 토론 발언문만 작성해.",
-    "이슈 제목만 반복하지 마.",
-    "상대 발언을 따옴표로 길게 재인용하지 마.",
-    "직전 발언과 같은 문장 구조를 반복하지 마.",
-    "제목, 키워드, 명사구만 출력하면 안 돼.",
-    "완결된 주장 문장 2~3문장으로 작성해.",
-    "구체적인 정책 효과, 위험, 기준, 절차 중 최소 2개를 포함해.",
-    "80자 이상 150자 이내로 작성해.",
+    "출력은 발언문만. 다른 설명 붙이지 마.",
+    "이슈 제목 그대로 반복하지 마.",
+    "상대 발언 길게 재인용하지 마.",
+    "직전 발언과 같은 문장 구조 피해.",
+    "1~2문장으로 짧게. 분량 90~140자.",
+    "반드시 이유를 넣고, 가능하면 법안의 대상·의무·수치·예외 중 하나를 짚어.",
+    "추상어만 반복하지 말고, 이 조항이 실제로 누구에게 어떤 영향이 있는지 말해.",
+    "반드시 마침표나 종결어미(~해/~야/~지/~잖아)로 마무리. 미완성 금지.",
+    "카톡 톤 — 친구한테 말하듯 자연스럽게.",
   ];
   const retryRules = retry
     ? [
@@ -97,6 +99,7 @@ function buildDebatePrompt({
       "",
       `${getStanceLabel(speakerStance)} AI의 첫 발언이야.`,
       `"${issueTitle}"에 대해 네 입장을 먼저 제시해.`,
+      "첫 문장은 핵심 주장, 다음 문장은 구체 근거로 써.",
       latestUserMessage ? `참고할 사용자 의견: ${latestUserMessage.content}` : "",
       ...commonRules,
       ...retryRules,
@@ -112,6 +115,7 @@ function buildDebatePrompt({
     `상대 AI의 최신 주장: ${latestOpponentMessage.content}`,
     latestUserMessage ? `참고할 사용자 의견: ${latestUserMessage.content}` : "",
     "상대 AI 주장에 직접 반박하고 네 입장을 강화해.",
+    "상대가 말한 우려나 장점을 하나 인정하더라도, 왜 네 결론이 더 타당한지 구체적으로 이어가.",
     ...commonRules,
     ...retryRules,
   ].join("\n");
@@ -130,13 +134,16 @@ async function collectGeminiStream(
 }
 
 function isWeakDebateText(text: string, issueTitle: string) {
+  const trimmed = text.trimEnd();
   const normalizedText = text.replace(/\s+/g, "");
   const normalizedTitle = issueTitle.replace(/\s+/g, "");
 
-  if (text.length < 45) {
+  // 너무 짧음 (15자 미만은 의미 없음)
+  if (text.length < 15) {
     return true;
   }
 
+  // 제목만 반복
   if (normalizedText === normalizedTitle) {
     return true;
   }
@@ -148,7 +155,15 @@ function isWeakDebateText(text: string, issueTitle: string) {
     return true;
   }
 
-  return !/[.!?。]|다$|요$|함$|됨$/.test(text);
+  // 쉼표·조사·연결어미로 끝남 = 미완성
+  if (/[,，·]$/.test(trimmed)) return true;
+  // 조사/연결어미로 끝나면서 마침표 없으면 잘린 것
+  if (/(은|는|이|가|을|를|에|와|과|로|며|면서|하고|하며|있고|있으며|등은|등을|등의)$/.test(trimmed)) {
+    return true;
+  }
+
+  // 종결어미·문장부호 어느 것도 없음
+  return !/[.!?。]$|다\.?$|요\.?$|함\.?$|됨\.?$|해\.?$|어\.?$|지\.?$|야\.?$/.test(trimmed);
 }
 
 function splitForSse(text: string) {
@@ -161,17 +176,8 @@ function splitForSse(text: string) {
   return chunks;
 }
 
-function compactContext(context: string) {
-  return context
-    .replace(/\s+/g, " ")
-    .replace(/[.!?。]$/g, "")
-    .replace(/(합니다|입니다|한다|된다|개정안입니다|일부 개정안입니다)$/g, "")
-    .slice(0, 54);
-}
-
 function buildFallbackDebateText({
   aiStance,
-  issueTitle,
   context,
   history,
   round,
@@ -182,33 +188,32 @@ function buildFallbackDebateText({
   history: DebateMessage[];
   round: number;
 }) {
-  const issueSubject = issueTitle.replace(/\s*(개정안|일부 개정안|법안)$/g, "");
-  const contextSummary = compactContext(context);
   const opponentStance =
     aiStance === "progressive" ? "conservative" : "progressive";
   const hasOpponentMessage = history.some((message) => message.role === opponentStance);
+  const contextHint = context.split(/[.!?\n]/).find((item) => item.trim().length > 12)?.trim();
 
   if (aiStance === "progressive") {
     if (!hasOpponentMessage) {
-      return `${issueSubject}은 취지보다 집행 기준이 중요해. ${contextSummary}라는 목표를 살리려면 현장 부담, 예산, 피해 구제 절차를 함께 공개해야 해.`;
+      return contextHint
+        ? `난 찬성 쪽이야. ${contextHint}라는 점을 보면, 책임 소재를 분명히 해야 이용자 보호가 실제로 작동하지.`
+        : "난 찬성 쪽이야. 시장 자율만 믿으면 책임 회피가 생기니까, 보호 장치랑 정보 공개가 같이 가야 효과가 나지.";
     }
-
     if (round === 2) {
-      return `보수 측은 필요성을 강조하지만 ${issueSubject}은 현장 적용 과정의 부작용도 봐야 해. 대상 범위와 책임 기준을 분리해야 정책 효과를 검증할 수 있어.`;
+      return "부담 우려는 이해해. 그래도 책임 주체와 연락 체계가 명확해야 피해가 났을 때 이용자가 실제로 구제받을 수 있잖아.";
     }
-
-    return `결국 쟁점은 찬반이 아니라 설계의 투명성이야. ${issueSubject}이 실제 개선으로 이어지려면 사전 기준과 사후 평가를 같이 둬야 설득력이 생겨.`;
+    return "결국 쟁점은 부담보다 책임의 실효성이야. 국내 이용자에게 서비스한다면 최소한의 대응 의무는 감수해야 맞지.";
   }
 
   if (!hasOpponentMessage) {
-    return `${issueSubject}은 문제를 미루면 현장의 비용이 더 커져. ${contextSummary}라는 목표를 달성하려면 권한 범위와 책임 주체를 명확히 해 실행력을 높여야 해.`;
+    return contextHint
+      ? `취지는 알겠어. 그래도 ${contextHint} 같은 방향이 과하면 해외 기업엔 진입비용이 커져서 선택지가 줄 수 있어.`
+      : "취지는 알겠어. 그래도 의무가 과하면 해외 기업엔 진입비용이 커져서 국내 이용자의 선택지도 줄 수 있어.";
   }
-
   if (round === 2) {
-    return `진보 측의 통제 장치도 필요하지만 기준만 늘리면 집행 속도가 떨어져. ${issueSubject}은 우선순위와 담당 책임을 정해야 현장에서 바로 작동해.`;
+    return "이용자 보호는 필요하지. 다만 국내 법인 우선 지정처럼 고정비를 키우는 방식보다 위험 기반 규제가 더 균형 있어.";
   }
-
-  return `예측 가능성은 중요하지만 실효성이 빠지면 제도는 선언에 그쳐. ${issueSubject}은 평가 기준을 두되 필요한 조치는 지체 없이 집행해야 효과가 나와.`;
+  return "책임 강화 자체엔 동의해. 하지만 보고 의무와 대리인 요건이 넓게 걸리면 작은 해외 서비스부터 한국을 피할 수 있어.";
 }
 
 export async function POST(request: Request) {
@@ -240,16 +245,26 @@ export async function POST(request: Request) {
       ? body.progressiveContext
       : body.conservativeContext;
   const systemInstruction = [
-    `너는 다음 이슈에 대해 ${aiStanceLabel} 입장을 가진 토론자야.`,
+    `너는 ${aiStanceLabel} 입장으로 이 이슈를 친구와 카톡 채팅하듯 토론해.`,
     "",
     `이슈: ${body.issueTitle}`,
     `${aiStanceLabel} 관점 요약: ${context}`,
+    body.issueBody ? `\n[법안 상세 내용]\n${body.issueBody.slice(0, 1500)}` : "",
     "",
-    "상대의 주장에 논리적으로 반박해.",
-    "- 150자 이내로 핵심만",
-    "- 데이터와 논리로만, 감정적 표현 없이",
-    "- 반말 사용",
-  ].join("\n");
+    "말투 규칙:",
+    "- 친구한테 말하듯 자연스러운 반말. 격식체(~다/~이다/~한다) 금지. 입말(~해/~야/~지/~잖아/~거든)만 사용.",
+    "- '~하는 것이다', '~할 것이다' 같은 딱딱한 표현 금지. '~하는 거야', '~할 거야'로.",
+    "- 너무 정중하거나 학술적인 어휘 피해. 친구 톤으로.",
+    "- '근데', '솔직히', '아니', '그래도' 같은 자연스러운 접속사 가끔 사용.",
+    "",
+    "내용 규칙:",
+    "- 상대 주장에 직접 반박하거나 네 입장을 강하게 펼쳐.",
+    "- 분량은 90~140자. 짧되 근거가 보여야 함.",
+    "- 반드시 문장 끝까지 마무리. 마침표나 종결어미로 완결.",
+    "- 매 발언마다 최소 하나는 구체화: 법안의 대상, 의무, 수치, 절차, 부작용, 보완책 중 하나를 언급.",
+    "- 같은 말 반복 금지. 이전 발언과 다른 근거 또는 다른 반박 포인트를 써.",
+    "- 상대 진영 조롱·비하 금지. 친구끼리 의견 다툼 느낌으로.",
+  ].filter(Boolean).join("\n");
   const prompt = buildDebatePrompt({
     round: body.round,
     issueTitle: body.issueTitle,
@@ -260,8 +275,8 @@ export async function POST(request: Request) {
   try {
     const model = getGeminiModel({
       generationConfig: {
-        temperature: 0.55,
-        maxOutputTokens: 180,
+        temperature: 0.6,
+        maxOutputTokens: 2500,
       },
       systemInstruction,
     });
@@ -269,6 +284,10 @@ export async function POST(request: Request) {
       timeout: 30_000,
     });
     const firstText = await collectGeminiStream(result.stream);
+    console.log(
+      `[debate r${body.round} ${aiStance}] raw(${firstText.length}자):`,
+      firstText.slice(0, 80),
+    );
     let debateText = firstText;
 
     if (isWeakDebateText(firstText, body.issueTitle)) {

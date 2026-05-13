@@ -123,6 +123,7 @@ export function CommentSection({ endpoint }: Props) {
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [moreLoading, setMoreLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   // New comment
@@ -144,29 +145,44 @@ export function CommentSection({ endpoint }: Props) {
 
   useEffect(() => {
     const controller = new AbortController();
+    let active = true;
     setLoading(true);
     setFetchError(null);
     fetch(endpoint, { signal: controller.signal })
       .then(async (r) => {
         const json = await r.json() as TopResponse & { error?: string };
         if (!r.ok) throw new Error(json.error ?? `HTTP ${r.status}`);
+        if (!active) return;
         setComments(json.comments);
         setNextCursor(json.nextCursor);
       })
       .catch((e: unknown) => {
         if (e instanceof Error && e.name === "AbortError") return;
+        if (!active) return;
         setFetchError(e instanceof Error ? e.message : "댓글을 불러오지 못했어요.");
       })
-      .finally(() => setLoading(false));
-    return () => controller.abort();
+      .finally(() => {
+        if (active && !controller.signal.aborted) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [endpoint]);
 
   const loadMore = async () => {
-    if (!nextCursor) return;
-    const r = await fetch(`${endpoint}?cursor=${encodeURIComponent(nextCursor)}`);
-    const { comments: more, nextCursor: nc } = (await r.json()) as TopResponse;
-    setComments((prev) => [...prev, ...more]);
-    setNextCursor(nc);
+    if (!nextCursor || moreLoading) return;
+    setMoreLoading(true);
+    try {
+      const r = await fetch(`${endpoint}?cursor=${encodeURIComponent(nextCursor)}`);
+      const { comments: more, nextCursor: nc } = (await r.json()) as TopResponse;
+      setComments((prev) => [...prev, ...more]);
+      setNextCursor(nc);
+    } finally {
+      setMoreLoading(false);
+    }
   };
 
   // Post top-level comment
@@ -309,8 +325,11 @@ export function CommentSection({ endpoint }: Props) {
   };
 
   return (
-    <Section>
-      <SectionTitle>토론 <CommentCount>({totalCount})</CommentCount></SectionTitle>
+    <Section aria-busy={loading || moreLoading}>
+      <SectionTitle>
+        토론{" "}
+        {loading ? <CommentCountSkeleton aria-hidden="true" /> : <CommentCount>({totalCount})</CommentCount>}
+      </SectionTitle>
 
       {/* New top-level comment */}
       <Form onSubmit={(e) => void handleSubmit(e)}>
@@ -391,9 +410,23 @@ export function CommentSection({ endpoint }: Props) {
           ))}
 
           {nextCursor && (
-            <LoadMoreButton type="button" onClick={() => void loadMore()}>
-              더 보기
-            </LoadMoreButton>
+            moreLoading ? (
+              <SkeletonList>
+                {[1, 2].map((n) => (
+                  <SkeletonItem key={n}>
+                    <SkeletonAvatar />
+                    <SkeletonContent>
+                      <SkeletonLine $w="28%" />
+                      <SkeletonLine $w="74%" />
+                    </SkeletonContent>
+                  </SkeletonItem>
+                ))}
+              </SkeletonList>
+            ) : (
+              <LoadMoreButton type="button" onClick={() => void loadMore()}>
+                더 보기
+              </LoadMoreButton>
+            )
           )}
         </CommentList>
       )}
@@ -417,6 +450,9 @@ const SectionTitle = styled.h2`
   font-size: 18px;
   font-weight: 700;
   color: #191f28;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 `;
 
 const CommentCount = styled.span`
@@ -714,3 +750,9 @@ const shimmer = `
 const SkeletonAvatar = styled.div`width: 36px; height: 36px; border-radius: 50%; ${shimmer}`;
 const SkeletonContent = styled.div`display: grid; gap: 8px; align-content: start;`;
 const SkeletonLine = styled.div<{ $w: string }>`height: 14px; border-radius: 4px; width: ${({ $w }) => $w}; ${shimmer}`;
+const CommentCountSkeleton = styled.span`
+  width: 34px;
+  height: 18px;
+  border-radius: 4px;
+  ${shimmer}
+`;

@@ -52,20 +52,20 @@ function getStanceTone(stance: Stance) {
 function getResultCopy(result: DebateResult) {
   if (result.winner === "progressive") {
     return {
-      title: "진보 AI가 우세했습니다",
+      title: "진보 측 논거가 더 설득력 있게 평가됨",
       color: "#3182f6",
     };
   }
 
   if (result.winner === "conservative") {
     return {
-      title: "보수 AI가 우세했습니다",
+      title: "보수 측 논거가 더 설득력 있게 평가됨",
       color: "#e5484d",
     };
   }
 
   return {
-    title: "팽팽한 승부였습니다",
+    title: "양측 논거가 비슷한 수준으로 평가됨",
     color: "#4e5968",
   };
 }
@@ -90,6 +90,7 @@ async function readDebateStream({
   payload: {
     issueId: string;
     issueTitle: string;
+    issueBody: string;
     progressiveContext: string;
     conservativeContext: string;
     speakerStance: Stance;
@@ -248,6 +249,7 @@ export function ArenaBattle({
         payload: {
           issueId: issue.id,
           issueTitle: issue.title,
+          issueBody: issue.body ?? "",
           progressiveContext: issue.progressive,
           conservativeContext: issue.conservative,
           speakerStance,
@@ -310,6 +312,7 @@ export function ArenaBattle({
         },
         body: JSON.stringify({
           issueTitle: issue.title,
+          issueBody: issue.body ?? "",
           history,
         }),
       });
