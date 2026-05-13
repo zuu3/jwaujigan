@@ -55,41 +55,66 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
           transition={{ duration: 0.4, delay: 0.15 }}
         >
           <PanelTop>
-            <PanelEyebrow>오늘의 흐름</PanelEyebrow>
+            <PanelEyebrow>미리보기</PanelEyebrow>
             <PanelTitle>정치는 멀리서 보지 않게</PanelTitle>
           </PanelTop>
 
-          <PanelList>
-            <PanelListItem>
-              <PanelLabel>1</PanelLabel>
-              <PanelContent>
-                <PanelItemTitle>우리 동네 정치인 찾기</PanelItemTitle>
-                <PanelItemText>
-                  지역구 기준으로 누가 어떤 활동을 하는지 봅니다.
-                </PanelItemText>
-              </PanelContent>
-            </PanelListItem>
+          <PreviewBlock>
+            <PreviewKicker>우리 동네</PreviewKicker>
+            <PoliticianMini>
+              <MiniAvatar aria-hidden="true">김</MiniAvatar>
+              <MiniBody>
+                <MiniLine>
+                  <MiniName>김도읍</MiniName>
+                  <PartyDot $tone="red" aria-hidden="true" />
+                  <MiniMuted>국민의힘</MiniMuted>
+                </MiniLine>
+                <MiniMuted>부산 강서구 · 4선</MiniMuted>
+              </MiniBody>
+              <ReelectionDots aria-label="4선">
+                <Dot />
+                <Dot />
+                <Dot />
+                <Dot />
+              </ReelectionDots>
+            </PoliticianMini>
+          </PreviewBlock>
 
-            <PanelListItem>
-              <PanelLabel>2</PanelLabel>
-              <PanelContent>
-                <PanelItemTitle>같은 이슈를 양쪽 관점으로 보기</PanelItemTitle>
-                <PanelItemText>
-                  핵심 차이를 나란히 확인합니다.
-                </PanelItemText>
-              </PanelContent>
-            </PanelListItem>
+          <PreviewBlock>
+            <PreviewKicker>오늘의 이슈</PreviewKicker>
+            <IssueTitleMini>2026년도 본예산 1차 표결</IssueTitleMini>
+            <VoteBarStack aria-hidden="true">
+              <VoteBarSeg $color="#3182f6" $pct={54} />
+              <VoteBarSeg $color="#b0b8c1" $pct={8} />
+              <VoteBarSeg $color="#e5484d" $pct={38} />
+            </VoteBarStack>
+            <VoteLegend>
+              <LegendItem>
+                <LegendDot $color="#3182f6" />
+                <LegendLabel>진보</LegendLabel>
+                <LegendPct>54%</LegendPct>
+              </LegendItem>
+              <LegendItem>
+                <LegendDot $color="#b0b8c1" />
+                <LegendLabel>모름</LegendLabel>
+                <LegendPct>8%</LegendPct>
+              </LegendItem>
+              <LegendItem>
+                <LegendDot $color="#e5484d" />
+                <LegendLabel>보수</LegendLabel>
+                <LegendPct>38%</LegendPct>
+              </LegendItem>
+            </VoteLegend>
+          </PreviewBlock>
 
-            <PanelListItem>
-              <PanelLabel>3</PanelLabel>
-              <PanelContent>
-                <PanelItemTitle>짧게 이해하고 직접 참여하기</PanelItemTitle>
-                <PanelItemText>
-                  요약을 보고, 투표하고, 의견을 남깁니다.
-                </PanelItemText>
-              </PanelContent>
-            </PanelListItem>
-          </PanelList>
+          <PreviewBlock>
+            <PreviewKicker>국회 발의안</PreviewKicker>
+            <ChipRow>
+              <StatusChip $tone="pass">통과 8</StatusChip>
+              <StatusChip $tone="pending">계류 12</StatusChip>
+              <StatusChip $tone="reject">폐기 3</StatusChip>
+            </ChipRow>
+          </PreviewBlock>
         </HeroPanel>
       </HeroInner>
     </Hero>
@@ -252,54 +277,168 @@ const PanelTitle = styled.h2`
   word-break: keep-all;
 `;
 
-const PanelList = styled.div`
-  display: grid;
-`;
-
-const PanelListItem = styled.div`
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 12px;
+const PreviewBlock = styled.div`
   padding: 16px 0;
   border-bottom: 1px solid var(--line-soft);
 
-  &:last-child {
+  &:last-of-type {
     padding-bottom: 0;
     border-bottom: none;
   }
 `;
 
-const PanelLabel = styled.div`
-  display: grid;
-  width: 24px;
-  height: 24px;
-  place-items: center;
-  border-radius: 999px;
-  color: var(--sub);
-  background: var(--line-soft);
-  font-size: 14px;
+const PreviewKicker = styled.div`
+  color: var(--muted);
+  font-size: 12px;
   font-weight: 600;
-  flex-shrink: 0;
+  letter-spacing: -0.01em;
+  margin-bottom: 10px;
 `;
 
-const PanelContent = styled.div`
+const PoliticianMini = styled.div`
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+`;
+
+const MiniAvatar = styled.div`
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--line-soft);
+  color: var(--sub);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+`;
+
+const MiniBody = styled.div`
+  display: grid;
+  gap: 2px;
   min-width: 0;
 `;
 
-const PanelItemTitle = styled.div`
+const MiniLine = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const MiniName = styled.span`
   color: var(--text);
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+`;
+
+const PartyDot = styled.span<{ $tone: "blue" | "red" }>`
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: ${({ $tone }) => ($tone === "blue" ? "#3182f6" : "#e5484d")};
+`;
+
+const MiniMuted = styled.span`
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+`;
+
+const ReelectionDots = styled.div`
+  display: inline-flex;
+  gap: 3px;
+`;
+
+const Dot = styled.span`
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: #4e5968;
+`;
+
+const IssueTitleMini = styled.div`
+  color: var(--text);
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.02em;
+  margin-bottom: 12px;
   word-break: keep-all;
 `;
 
-const PanelItemText = styled.p`
-  margin: 4px 0 0;
+const VoteBarStack = styled.div`
+  display: flex;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--line-soft);
+`;
+
+const VoteBarSeg = styled.div<{ $color: string; $pct: number }>`
+  height: 100%;
+  background: ${({ $color }) => $color};
+  width: ${({ $pct }) => $pct}%;
+`;
+
+const VoteLegend = styled.div`
+  display: flex;
+  gap: 16px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+`;
+
+const LegendItem = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const LegendDot = styled.span<{ $color: string }>`
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: ${({ $color }) => $color};
+`;
+
+const LegendLabel = styled.span`
   color: var(--sub);
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.55;
+  font-size: 12px;
+  font-weight: 500;
   letter-spacing: -0.01em;
-  word-break: keep-all;
+`;
+
+const LegendPct = styled.span`
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+`;
+
+const ChipRow = styled.div`
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+`;
+
+const StatusChip = styled.span<{ $tone: "pass" | "pending" | "reject" }>`
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  background: ${({ $tone }) =>
+    $tone === "pass" ? "#e8f3ff" : $tone === "reject" ? "#fef2f2" : "#f2f4f6"};
+  color: ${({ $tone }) =>
+    $tone === "pass" ? "#3182f6" : $tone === "reject" ? "#e5484d" : "#6b7684"};
 `;
