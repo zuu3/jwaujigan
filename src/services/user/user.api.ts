@@ -8,6 +8,7 @@ export type UserProfileResponse = {
   points: number;
   streak: number;
   today_active: boolean;
+  is_public: boolean;
 };
 
 export type PoliticalProfilePayload = {

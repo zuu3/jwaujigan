@@ -1,7 +1,7 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { MapPin, RotateCcw } from "lucide-react";
+import { Globe, Link2, Lock, MapPin, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -22,6 +22,7 @@ import { BadgesSection } from "@/components/mypage/BadgesSection";
 import { StreakCalendar } from "@/components/mypage/StreakCalendar";
 import { getLevel } from "@/services/points/points";
 import { useUserProfile } from "@/services/user/user.queries";
+import { useQueryClient } from "@tanstack/react-query";
 
 export type { MyPageProfile, PoliticalProfile, BattleLogItem } from "@/types/mypage";
 
@@ -38,7 +39,28 @@ export function MyPageContainer({
 }: MyPageContainerProps) {
   const [activityData, setActivityData] = useState<ActivityResponse | null>(null);
   const [followedPoliticians, setFollowedPoliticians] = useState<FollowedPolitician[] | null>(null);
+  const [copied, setCopied] = useState(false);
   const profileQuery = useUserProfile();
+  const queryClient = useQueryClient();
+  const isPublic = profileQuery.data?.is_public ?? false;
+  const userId = profileQuery.data?.id ?? null;
+
+  const handleVisibilityToggle = async () => {
+    const next = !isPublic;
+    await fetch("/api/me/visibility", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_public: next }),
+    });
+    void queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+  };
+
+  const handleCopyLink = async () => {
+    if (!userId) return;
+    await navigator.clipboard.writeText(`${window.location.origin}/u/${userId}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -87,10 +109,32 @@ export function MyPageContainer({
             </DistrictLine>
             <PointsBadge points={profileQuery.data?.points ?? profile.points} />
           </ProfileContent>
-          <ProfileAction href="/onboarding">
-            <RotateCcw size={14} />
-            <span>온보딩 다시 하기</span>
-          </ProfileAction>
+          <ProfileActions>
+            <VisibilityRow>
+              <VisibilityLabel>
+                {isPublic ? <Globe size={14} /> : <Lock size={14} />}
+                <span>{isPublic ? "공개" : "비공개"}</span>
+              </VisibilityLabel>
+              <Toggle
+                type="button"
+                $on={isPublic}
+                onClick={() => void handleVisibilityToggle()}
+                aria-label={isPublic ? "프로필 비공개로 전환" : "프로필 공개로 전환"}
+              >
+                <ToggleThumb $on={isPublic} />
+              </Toggle>
+            </VisibilityRow>
+            {isPublic && userId && (
+              <CopyButton type="button" onClick={() => void handleCopyLink()}>
+                <Link2 size={14} />
+                <span>{copied ? "복사됨" : "링크 복사"}</span>
+              </CopyButton>
+            )}
+            <ProfileAction href="/onboarding">
+              <RotateCcw size={14} />
+              <span>온보딩 다시 하기</span>
+            </ProfileAction>
+          </ProfileActions>
         </ProfileSection>
 
         <PoliticalProfileSection politicalProfile={politicalProfile} />
@@ -265,6 +309,80 @@ const ProfileAction = styled(Link)`
 
   @media (max-width: 720px) {
     grid-column: 1 / -1;
+  }
+`;
+
+const ProfileActions = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+
+  @media (max-width: 720px) {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+`;
+
+const VisibilityRow = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const VisibilityLabel = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #4e5968;
+  font-size: 13px;
+  font-weight: 500;
+`;
+
+const Toggle = styled.button<{ $on: boolean }>`
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  background: ${({ $on }) => ($on ? "#3182f6" : "#e5e8eb")};
+  transition: background 150ms;
+  flex-shrink: 0;
+`;
+
+const ToggleThumb = styled.span<{ $on: boolean }>`
+  position: absolute;
+  top: 2px;
+  left: ${({ $on }) => ($on ? "18px" : "2px")};
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: left 150ms;
+`;
+
+const CopyButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e8eb;
+  background: #ffffff;
+  color: #4e5968;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 150ms;
+
+  &:hover {
+    border-color: #3182f6;
+    color: #3182f6;
   }
 `;
 
