@@ -11,9 +11,21 @@ export type PollDetail = {
   expires_at: string;
   created_at: string;
   option_counts: Record<string, number>;
+  option_counts_by_tendency: Record<string, Record<string, number>>;
+  total_with_profile: number;
   total_count: number;
   user_option_id: string | null;
 };
+
+function getTendencyGroup(politicalType: string | null | undefined) {
+  if (!politicalType) return null;
+  if (politicalType.includes("중도진보")) return "moderate_progressive";
+  if (politicalType.includes("중도보수")) return "moderate_conservative";
+  if (politicalType.includes("진보")) return "progressive";
+  if (politicalType.includes("보수")) return "conservative";
+  if (politicalType.includes("중도") || politicalType.includes("실용")) return "moderate";
+  return "moderate";
+}
 
 export async function GET(
   _request: Request,
@@ -35,7 +47,7 @@ export async function GET(
 
   const { data: votes } = await supabase
     .from("poll_votes")
-    .select("option_id")
+    .select("user_id, option_id")
     .eq("poll_id", pollId);
 
   const option_counts: Record<string, number> = {};
@@ -52,6 +64,31 @@ export async function GET(
   }
 
   const total_count = (votes ?? []).length;
+  const userIds = Array.from(new Set((votes ?? []).map((vote) => vote.user_id)));
+  const option_counts_by_tendency: Record<string, Record<string, number>> = {};
+  let total_with_profile = 0;
+
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from("user_political_profiles")
+      .select("user_id, political_type")
+      .in("user_id", userIds);
+    const profileMap = new Map(
+      (profiles ?? []).map((profile) => [profile.user_id, profile.political_type]),
+    );
+
+    for (const vote of votes ?? []) {
+      const group = getTendencyGroup(profileMap.get(vote.user_id));
+      if (!group) continue;
+      option_counts_by_tendency[group] ??= {};
+      for (const opt of options) {
+        option_counts_by_tendency[group][opt.id] ??= 0;
+      }
+      option_counts_by_tendency[group][vote.option_id] =
+        (option_counts_by_tendency[group][vote.option_id] ?? 0) + 1;
+      total_with_profile++;
+    }
+  }
 
   let user_option_id: string | null = null;
   if (session?.user?.email) {
@@ -81,6 +118,8 @@ export async function GET(
     expires_at: poll.expires_at,
     created_at: poll.created_at,
     option_counts,
+    option_counts_by_tendency,
+    total_with_profile,
     total_count,
     user_option_id,
   };

@@ -12,6 +12,20 @@ import type { PollOption } from "@/services/community/community.api";
 import { CommentSection } from "@/components/arena/CommentSection";
 
 const OPTION_COLORS = ["#3182f6", "#e5484d", "#03b26c", "#fe9800"] as const;
+const TENDENCY_LABEL: Record<string, string> = {
+  progressive: "진보 성향",
+  moderate_progressive: "중도진보 성향",
+  moderate: "중도 성향",
+  moderate_conservative: "중도보수 성향",
+  conservative: "보수 성향",
+};
+const TENDENCY_ORDER = [
+  "progressive",
+  "moderate_progressive",
+  "moderate",
+  "moderate_conservative",
+  "conservative",
+];
 
 function timeLeft(expiresAt: string): string {
   const diff = new Date(expiresAt).getTime() - Date.now();
@@ -32,7 +46,104 @@ function formatDate(iso: string): string {
   });
 }
 
+function getOptionText(options: PollOption[], optionId: string | null | undefined) {
+  if (!optionId) return null;
+  return options.find((option) => option.id === optionId)?.text ?? null;
+}
+
+function getTopOptionId(counts: Record<string, number>) {
+  const entries = Object.entries(counts);
+  if (entries.length === 0) return null;
+  return entries.reduce((top, current) => (current[1] > top[1] ? current : top))[0];
+}
+
 type Props = { pollId: string };
+type TendencyRowData = {
+  key: string;
+  total: number;
+  leadingOptionId: string | null;
+  leadingText: string | null;
+  pct: number;
+};
+
+function PollInsightSummary({
+  copied,
+  isMajorityChoice,
+  onCopy,
+  selectedPct,
+  selectedText,
+  tendencyRows,
+  topText,
+  totalWithProfile,
+}: {
+  copied: boolean;
+  isMajorityChoice: boolean;
+  onCopy: () => void;
+  selectedPct: number;
+  selectedText: string | null;
+  tendencyRows: TendencyRowData[];
+  topText: string | null;
+  totalWithProfile: number;
+}) {
+  return (
+    <SummaryStack>
+      <SummaryHeader>
+        <SummaryTitle>민심 요약</SummaryTitle>
+        <SummarySubtle>실시간 결과</SummarySubtle>
+      </SummaryHeader>
+      <InsightCard $majority={isMajorityChoice}>
+        <InsightEyebrow>내 민심 위치</InsightEyebrow>
+        {selectedText ? (
+          <>
+            <InsightTitle>
+              {isMajorityChoice ? "현재 다수 의견과 같아요" : "현재 소수 의견이에요"}
+            </InsightTitle>
+            <InsightBody>
+              내 선택 <strong>{selectedText}</strong>은 전체의 <strong>{selectedPct}%</strong>
+              {isMajorityChoice
+                ? "가 고른 선택이에요."
+                : topText
+                ? `이고, 현재 1위는 ${topText}예요.`
+                : "가 고른 선택이에요."}
+            </InsightBody>
+          </>
+        ) : (
+          <>
+            <InsightTitle>현재 민심을 확인해보세요</InsightTitle>
+            <InsightBody>
+              투표에 참여하면 내 선택이 전체 민심에서 어디쯤인지 바로 볼 수 있어요.
+            </InsightBody>
+          </>
+        )}
+      </InsightCard>
+
+      {tendencyRows.length > 0 ? (
+        <TendencyCard>
+          <TendencyHeader>
+            <TendencyTitle>성향별 민심</TendencyTitle>
+            <TendencyMeta>성향 분석 완료 {totalWithProfile.toLocaleString()}명 기준</TendencyMeta>
+          </TendencyHeader>
+          <TendencyList>
+            {tendencyRows.map((row) => (
+              <TendencyRow key={row.key}>
+                <TendencyName>{TENDENCY_LABEL[row.key] ?? row.key}</TendencyName>
+                <TendencyChoice>
+                  <span>{row.leadingText}</span>
+                  <strong>{row.pct}%</strong>
+                </TendencyChoice>
+              </TendencyRow>
+            ))}
+          </TendencyList>
+        </TendencyCard>
+      ) : null}
+
+      <SummaryShareButton type="button" onClick={onCopy}>
+        {copied ? <Check size={16} /> : <Share2 size={16} />}
+        {copied ? "복사됨" : "결과 공유하기"}
+      </SummaryShareButton>
+    </SummaryStack>
+  );
+}
 
 export function PollDetailContainer({ pollId }: Props) {
   const router = useRouter();
@@ -57,7 +168,15 @@ export function PollDetailContainer({ pollId }: Props) {
 
   async function handleCopy() {
     const url = typeof window !== "undefined" ? window.location.href : "";
-    await navigator.clipboard.writeText(url);
+    const selectedText = getOptionText(poll?.options ?? [], poll?.user_option_id);
+    const shareText = poll
+      ? [
+          `좌우지간 민심투표: ${poll.question}`,
+          selectedText ? `내 선택: ${selectedText}` : null,
+          url,
+        ].filter(Boolean).join("\n")
+      : url;
+    await navigator.clipboard.writeText(shareText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -95,6 +214,28 @@ export function PollDetailContainer({ pollId }: Props) {
   }
 
   const totalCount = poll.total_count;
+  const selectedCount = poll.user_option_id ? poll.option_counts[poll.user_option_id] ?? 0 : 0;
+  const selectedPct = totalCount > 0 ? Math.round((selectedCount / totalCount) * 100) : 0;
+  const topOptionId = getTopOptionId(poll.option_counts);
+  const selectedText = getOptionText(poll.options, poll.user_option_id);
+  const topText = getOptionText(poll.options, topOptionId);
+  const isMajorityChoice = Boolean(poll.user_option_id && poll.user_option_id === topOptionId);
+  const tendencyRows: TendencyRowData[] = TENDENCY_ORDER
+    .map((key) => {
+      const counts = poll.option_counts_by_tendency[key];
+      if (!counts) return null;
+      const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+      const leadingOptionId = getTopOptionId(counts);
+      const leadingCount = leadingOptionId ? counts[leadingOptionId] ?? 0 : 0;
+      return {
+        key,
+        total,
+        leadingOptionId,
+        leadingText: getOptionText(poll.options, leadingOptionId),
+        pct: total > 0 ? Math.round((leadingCount / total) * 100) : 0,
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => Boolean(row && row.total > 0 && row.leadingText));
 
   return (
     <Page>
@@ -104,68 +245,104 @@ export function PollDetailContainer({ pollId }: Props) {
             <ArrowLeft size={18} />
             민심투표
           </BackBtn>
-          <ShareBtn onClick={() => { void handleCopy(); }}>
+          <ShareBtn $hideOnDesktop={showResults} onClick={() => { void handleCopy(); }}>
             {copied ? <Check size={16} /> : <Share2 size={16} />}
             {copied ? "복사됨" : "공유"}
           </ShareBtn>
         </TopRow>
 
-        <QuestionCard>
-          <PollMeta>
-            {expired ? (
-              <StatusBadge $expired>마감된 투표</StatusBadge>
-            ) : (
-              <StatusBadge $expired={false}>{timeLeft(poll.expires_at)}</StatusBadge>
-            )}
-            <MetaRight>{formatDate(poll.created_at)}</MetaRight>
-          </PollMeta>
-          <PollQuestion>{poll.question}</PollQuestion>
-          <TotalCount>
-            {totalCount.toLocaleString()}명 참여
-          </TotalCount>
-        </QuestionCard>
+        <DetailLayout>
+          <MainColumn>
+            <QuestionCard>
+              <PollMeta>
+                {expired ? (
+                  <StatusBadge $expired>마감된 투표</StatusBadge>
+                ) : (
+                  <StatusBadge $expired={false}>{timeLeft(poll.expires_at)}</StatusBadge>
+                )}
+                <MetaRight>{formatDate(poll.created_at)}</MetaRight>
+              </PollMeta>
+              <PollQuestion>{poll.question}</PollQuestion>
+              <TotalCount>
+                {totalCount.toLocaleString()}명 참여
+              </TotalCount>
+            </QuestionCard>
 
-        <OptionsSection>
-          {poll.options.map((opt, idx) => {
-            const color = OPTION_COLORS[idx] ?? "#8b95a1";
-            const count = poll.option_counts[opt.id] ?? 0;
-            const pct = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0;
-            const isMine = poll.user_option_id === opt.id;
+            <OptionsSection>
+              {poll.options.map((opt, idx) => {
+                const color = OPTION_COLORS[idx] ?? "#8b95a1";
+                const count = poll.option_counts[opt.id] ?? 0;
+                const pct = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0;
+                const isMine = poll.user_option_id === opt.id;
 
-            if (showResults) {
-              return (
-                <ResultRow key={opt.id} $mine={isMine}>
-                  <ResultTop>
-                    <ResultLabel $mine={isMine}>
-                      {isMine && <CheckMark />}
-                      {opt.text}
-                    </ResultLabel>
-                    <ResultPct $color={color}>{pct}%</ResultPct>
-                  </ResultTop>
-                  <BarTrack>
-                    <BarFill $color={color} $pct={pct} />
-                  </BarTrack>
-                  <ResultCount>{count.toLocaleString()}명</ResultCount>
-                </ResultRow>
-              );
-            }
+                if (showResults) {
+                  return (
+                    <ResultRow key={opt.id} $mine={isMine}>
+                      <ResultTop>
+                        <ResultLabel $mine={isMine}>
+                          {isMine && <CheckMark />}
+                          {opt.text}
+                        </ResultLabel>
+                        <ResultPct $color={color}>{pct}%</ResultPct>
+                      </ResultTop>
+                      <BarTrack>
+                        <BarFill $color={color} $pct={pct} />
+                      </BarTrack>
+                      <ResultCount>{count.toLocaleString()}명</ResultCount>
+                    </ResultRow>
+                  );
+                }
 
-            return (
-              <VoteBtn
-                key={opt.id}
-                $color={color}
-                onClick={() => { void handleVote(opt); }}
-                disabled={voteMutation.isPending}
-              >
-                {opt.text}
-              </VoteBtn>
-            );
-          })}
+                return (
+                  <VoteBtn
+                    key={opt.id}
+                    $color={color}
+                    onClick={() => { void handleVote(opt); }}
+                    disabled={voteMutation.isPending}
+                  >
+                    {opt.text}
+                  </VoteBtn>
+                );
+              })}
 
-          {voteError && <ErrorText>{voteError}</ErrorText>}
-        </OptionsSection>
+              {voteError && <ErrorText>{voteError}</ErrorText>}
+            </OptionsSection>
 
-        <CommentSection endpoint={`/api/polls/${pollId}/comments`} />
+            {showResults ? (
+              <MobileSummary>
+                <PollInsightSummary
+                  copied={copied}
+                  isMajorityChoice={isMajorityChoice}
+                  onCopy={() => { void handleCopy(); }}
+                  selectedPct={selectedPct}
+                  selectedText={selectedText}
+                  tendencyRows={tendencyRows}
+                  topText={topText}
+                  totalWithProfile={poll.total_with_profile}
+                />
+              </MobileSummary>
+            ) : null}
+
+            <CommentSection endpoint={`/api/polls/${pollId}/comments`} />
+          </MainColumn>
+
+          {showResults ? (
+            <AsideColumn>
+              <StickySummary>
+                <PollInsightSummary
+                  copied={copied}
+                  isMajorityChoice={isMajorityChoice}
+                  onCopy={() => { void handleCopy(); }}
+                  selectedPct={selectedPct}
+                  selectedText={selectedText}
+                  tendencyRows={tendencyRows}
+                  topText={topText}
+                  totalWithProfile={poll.total_with_profile}
+                />
+              </StickySummary>
+            </AsideColumn>
+          ) : null}
+        </DetailLayout>
       </Shell>
     </Page>
   );
@@ -180,7 +357,7 @@ const Page = styled.main`
 `;
 
 const Shell = styled.div`
-  max-width: 480px;
+  max-width: 930px;
   margin: 0 auto;
   padding: 16px 20px 0;
   display: flex;
@@ -192,6 +369,80 @@ const TopRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: min(100%, 640px);
+  margin: 0 auto;
+`;
+
+const DetailLayout = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 520px) 260px;
+  justify-content: center;
+  align-items: start;
+  gap: 24px;
+
+  @media (max-width: 900px) {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+`;
+
+const MainColumn = styled.div`
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 20px;
+`;
+
+const AsideColumn = styled.aside`
+  width: 100%;
+
+  @media (max-width: 900px) {
+    display: none;
+  }
+`;
+
+const StickySummary = styled.div`
+  position: sticky;
+  top: 88px;
+`;
+
+const MobileSummary = styled.div`
+  display: none;
+
+  @media (max-width: 900px) {
+    display: block;
+  }
+`;
+
+const SummaryStack = styled.div`
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid #e5e8eb;
+  border-radius: 12px;
+  background: #ffffff;
+`;
+
+const SummaryHeader = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+`;
+
+const SummaryTitle = styled.h2`
+  margin: 0;
+  color: #191f28;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+`;
+
+const SummarySubtle = styled.span`
+  color: #8b95a1;
+  font-size: 12px;
+  font-weight: 600;
 `;
 
 const BackBtn = styled.button`
@@ -214,7 +465,7 @@ const BackBtn = styled.button`
   }
 `;
 
-const ShareBtn = styled.button`
+const ShareBtn = styled.button<{ $hideOnDesktop?: boolean }>`
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -232,6 +483,10 @@ const ShareBtn = styled.button`
   &:hover {
     border-color: #3182f6;
     color: #3182f6;
+  }
+
+  @media (min-width: 901px) {
+    display: ${({ $hideOnDesktop }) => ($hideOnDesktop ? "none" : "inline-flex")};
   }
 `;
 
@@ -394,6 +649,130 @@ const ResultCount = styled.span`
   font-weight: 400;
   color: #8b95a1;
   font-variant-numeric: tabular-nums;
+`;
+
+const InsightCard = styled.div<{ $majority: boolean }>`
+  display: grid;
+  gap: 8px;
+  padding: 0 0 16px;
+  border-bottom: 1px solid #f2f4f6;
+`;
+
+const InsightEyebrow = styled.div`
+  color: #8b95a1;
+  font-size: 12px;
+  font-weight: 600;
+`;
+
+const InsightTitle = styled.div`
+  color: #191f28;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+`;
+
+const InsightBody = styled.p`
+  margin: 0;
+  color: #4e5968;
+  font-size: 13px;
+  line-height: 1.7;
+  word-break: keep-all;
+
+  strong {
+    color: #191f28;
+    font-weight: 800;
+  }
+`;
+
+const TendencyCard = styled.div`
+  display: grid;
+  gap: 12px;
+  padding: 0 0 4px;
+`;
+
+const TendencyHeader = styled.div`
+  display: grid;
+  gap: 3px;
+`;
+
+const TendencyTitle = styled.h2`
+  margin: 0;
+  color: #191f28;
+  font-size: 14px;
+  font-weight: 800;
+`;
+
+const TendencyMeta = styled.div`
+  color: #8b95a1;
+  font-size: 12px;
+  font-weight: 500;
+`;
+
+const TendencyList = styled.div`
+  display: grid;
+  gap: 8px;
+`;
+
+const TendencyRow = styled.div`
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+`;
+
+const TendencyName = styled.div`
+  color: #6b7684;
+  font-size: 12px;
+  font-weight: 700;
+`;
+
+const TendencyChoice = styled.div`
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0;
+  background: transparent;
+  color: #191f28;
+  font-size: 12px;
+  font-weight: 600;
+
+  span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  strong {
+    color: #191f28;
+    font-size: 14px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+`;
+
+const SummaryShareButton = styled.button`
+  display: inline-flex;
+  width: 100%;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 8px;
+  background: #191f28;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 150ms;
+
+  &:hover {
+    opacity: 0.86;
+  }
 `;
 
 const SkeletonBlock = styled.div`
