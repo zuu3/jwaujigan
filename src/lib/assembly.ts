@@ -165,10 +165,25 @@ function buildUrl(endpoint: string, params: Record<string, string | number | und
   return url;
 }
 
-async function fetchAssemblyJson(endpoint: string, params: Record<string, string | number | undefined>) {
+function formatAssemblyError(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+    };
+  }
+
+  return { message: String(error) };
+}
+
+async function fetchAssemblyJson(
+  endpoint: string,
+  params: Record<string, string | number | undefined>,
+  options: { timeoutMs?: number } = {},
+) {
   const response = await fetch(buildUrl(endpoint, params), {
     cache: "no-store",
-    signal: AbortSignal.timeout(7000),
+    signal: AbortSignal.timeout(options.timeoutMs ?? 7000),
     headers: {
       "User-Agent": "jwaujigan/1.0",
       Accept: "application/json",
@@ -271,14 +286,98 @@ async function fetchPersonalMembersByDistrict(district: string) {
   const searchTokens = getDistrictSearchTokens(district);
   const collected = new Map<string, PersonalMemberRow>();
 
-  for (const token of searchTokens) {
-    const payload = await fetchAssemblyJson("nwvrqwxyaytdsfvhu", {
-      ORIG_NM: token,
-    });
-    const rows = extractRows<PersonalMemberRow>(payload, "nwvrqwxyaytdsfvhu");
+  const settled = await Promise.allSettled(
+    searchTokens.map(async (token) => {
+      const payload = await fetchAssemblyJson("nwvrqwxyaytdsfvhu", {
+        ORIG_NM: token,
+      }, { timeoutMs: 3000 });
+      return { token, rows: extractRows<PersonalMemberRow>(payload, "nwvrqwxyaytdsfvhu") };
+    }),
+  );
 
-    for (const row of filterRowsByDistrict(rows, district, entry?.province ?? null)) {
+  for (const result of settled) {
+    if (result.status === "rejected") {
+      console.warn("[assembly] local member lookup failed", {
+        district,
+        error: formatAssemblyError(result.reason),
+      });
+      continue;
+    }
+
+    for (const row of filterRowsByDistrict(result.value.rows, district, entry?.province ?? null)) {
       collected.set(row.MONA_CD, row);
+    }
+  }
+
+  return [...collected.values()];
+}
+
+function filterIntegratedRowsByDistrict(
+  rows: IntegratedMemberRow[],
+  district: string,
+) {
+  const entry = getDistrictEntryByName(district);
+  const districtStem = district.replace(/선거구$/, "");
+  const candidates = [
+    normalizeKoreanText(`${getProvinceShortName(entry?.province ?? null)} ${districtStem}`),
+    normalizeKoreanText(districtStem),
+  ];
+  return rows.filter((row) => {
+    const districts = (row.ELECD_NM ?? "").split("/").map(normalizeKoreanText);
+    return candidates.some((candidate) =>
+      districts.some((item) => item.includes(candidate) || candidate.includes(item)),
+    );
+  });
+}
+
+async function fetchAllIntegratedMembersByDistrict(district: string) {
+  const payload = await fetchAssemblyJson("ALLNAMEMBER", {
+    pSize: 320,
+  }, { timeoutMs: 4000 });
+  const rows = extractRows<IntegratedMemberRow>(payload, "ALLNAMEMBER");
+
+  return filterIntegratedRowsByDistrict(rows, district);
+}
+
+async function fetchIntegratedMembersByDistrict(district: string) {
+  const searchTokens = getDistrictSearchTokens(district);
+  const collected = new Map<string, IntegratedMemberRow>();
+
+  try {
+    for (const row of await fetchAllIntegratedMembersByDistrict(district)) {
+      collected.set(row.NAAS_CD, row);
+    }
+
+    if (collected.size > 0) {
+      return [...collected.values()];
+    }
+  } catch (error) {
+    console.warn("[assembly] integrated all-member lookup failed", {
+      district,
+      error: formatAssemblyError(error),
+    });
+  }
+
+  const settled = await Promise.allSettled(
+    searchTokens.map(async (token) => {
+      const payload = await fetchAssemblyJson("ALLNAMEMBER", {
+        ELECD_NM: token,
+      }, { timeoutMs: 2500 });
+      return extractRows<IntegratedMemberRow>(payload, "ALLNAMEMBER");
+    }),
+  );
+
+  for (const result of settled) {
+    if (result.status === "rejected") {
+      console.warn("[assembly] integrated local member lookup failed", {
+        district,
+        error: formatAssemblyError(result.reason),
+      });
+      continue;
+    }
+
+    for (const row of filterIntegratedRowsByDistrict(result.value, district)) {
+      collected.set(row.NAAS_CD, row);
     }
   }
 
@@ -319,13 +418,22 @@ async function fetchMemberPicture(
   district: string,
   province: string | null,
 ) {
-  const payload = await fetchAssemblyJson("ALLNAMEMBER", {
-    NAAS_NM: name,
-  });
-  const rows = extractRows<IntegratedMemberRow>(payload, "ALLNAMEMBER");
-  const matched = pickBestIntegratedRow(rows, name, district, province);
+  try {
+    const payload = await fetchAssemblyJson("ALLNAMEMBER", {
+      NAAS_NM: name,
+    });
+    const rows = extractRows<IntegratedMemberRow>(payload, "ALLNAMEMBER");
+    const matched = pickBestIntegratedRow(rows, name, district, province);
 
-  return matched?.NAAS_PIC ?? null;
+    return matched?.NAAS_PIC ?? null;
+  } catch (error) {
+    console.warn("[assembly] member picture lookup failed", {
+      name,
+      district,
+      error: formatAssemblyError(error),
+    });
+    return null;
+  }
 }
 
 async function fetchPersonalMemberById(monaCd: string) {
@@ -337,11 +445,34 @@ async function fetchPersonalMemberById(monaCd: string) {
   return rows[0] ?? null;
 }
 
+async function fetchIntegratedMemberById(naasCd: string) {
+  const payload = await fetchAssemblyJson("ALLNAMEMBER", {
+    NAAS_CD: naasCd,
+  }, { timeoutMs: 5000 });
+  const rows = extractRows<IntegratedMemberRow>(payload, "ALLNAMEMBER");
+
+  return rows[0] ?? null;
+}
+
 export async function getLocalPoliticiansByDistrict(
   district: string,
 ): Promise<LocalPolitician[]> {
   const entry = getDistrictEntryByName(district);
   const members = await fetchPersonalMembersByDistrict(district);
+
+  if (members.length === 0) {
+    const integratedMembers = await fetchIntegratedMembersByDistrict(district);
+    return integratedMembers.map((member) => ({
+      id: member.NAAS_CD,
+      name: member.NAAS_NM,
+      party: member.PLPT_NM ?? "",
+      district: member.ELECD_NM ?? district,
+      committee: member.BLNG_CMIT_NM ?? null,
+      reelection: null,
+      office: null,
+      image: member.NAAS_PIC ?? null,
+    }));
+  }
 
   const politicians = await Promise.all(
     members.map(async (member) => ({
@@ -362,10 +493,52 @@ export async function getLocalPoliticiansByDistrict(
 export async function getPoliticianDetailById(
   monaCd: string,
 ): Promise<PoliticianDetail | null> {
-  const member = await fetchPersonalMemberById(monaCd);
+  let member: PersonalMemberRow | null = null;
+
+  try {
+    member = await fetchPersonalMemberById(monaCd);
+  } catch (error) {
+    console.warn("[assembly] personal member detail lookup failed", {
+      monaCd,
+      error: formatAssemblyError(error),
+    });
+  }
 
   if (!member) {
-    return null;
+    try {
+      const integrated = await fetchIntegratedMemberById(monaCd);
+      if (!integrated) {
+        return null;
+      }
+
+      return {
+        id: integrated.NAAS_CD,
+        name: integrated.NAAS_NM,
+        nameHanja: null,
+        nameEnglish: null,
+        birthDate: null,
+        jobTitle: null,
+        party: integrated.PLPT_NM ?? "",
+        district: integrated.ELECD_NM ?? "",
+        electionType: null,
+        committee: integrated.BLNG_CMIT_NM ?? null,
+        reelection: null,
+        terms: null,
+        gender: null,
+        phone: null,
+        email: null,
+        homepage: null,
+        office: null,
+        biography: null,
+        image: integrated.NAAS_PIC ?? null,
+      };
+    } catch (error) {
+      console.warn("[assembly] integrated member detail lookup failed", {
+        monaCd,
+        error: formatAssemblyError(error),
+      });
+      return null;
+    }
   }
 
   const image = await fetchMemberPicture(member.HG_NM, member.ORIG_NM, null);
@@ -403,16 +576,12 @@ export async function getRecentIssueBills(): Promise<AssemblyIssueBill[]> {
 
   return rows
     .filter((row) => {
-      const haystack = [
-        row.BILL_NAME,
-        row.COMMITTEE,
-        row.CURR_COMMITTEE,
-      ]
+      const haystack = [row.BILL_NAME, row.COMMITTEE, row.CURR_COMMITTEE]
         .filter(Boolean)
         .join(" ");
-
       return ISSUE_KEYWORDS.some((keyword) => haystack.includes(keyword));
     })
+    .slice(0, 5)
     .map((row) => ({
       billId: row.BILL_ID ?? row.BILL_NO ?? "",
       title: row.BILL_NAME?.trim() ?? "",
@@ -422,8 +591,7 @@ export async function getRecentIssueBills(): Promise<AssemblyIssueBill[]> {
       publishedAt: toIsoDate(row.PROPOSE_DT),
       sourceUrl: row.DETAIL_LINK?.trim() ?? row.LINK_URL?.trim() ?? null,
     }))
-    .filter((bill) => bill.billId && bill.title)
-    .slice(0, 5);
+    .filter((bill) => bill.billId && bill.title);
 }
 
 export type PoliticianSearchResult = {
