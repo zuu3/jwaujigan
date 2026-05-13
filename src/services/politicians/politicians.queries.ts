@@ -6,9 +6,15 @@ import {
   fetchFollowStatus,
 } from "./politicians.api";
 
-export function useLocalPoliticians({ enabled }: { enabled: boolean }) {
+export function useLocalPoliticians({
+  district,
+  enabled,
+}: {
+  district: string | null;
+  enabled: boolean;
+}) {
   return useQuery({
-    queryKey: ["local-politicians"],
+    queryKey: ["local-politicians", district],
     enabled,
     queryFn: fetchLocalPoliticians,
     staleTime: 1000 * 60 * 60 * 12,

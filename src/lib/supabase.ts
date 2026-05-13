@@ -16,6 +16,7 @@ export type Database = {
           id: string;
           title: string;
           summary: string;
+          body: string | null;
           progressive: string;
           conservative: string;
           source_url: string | null;
@@ -31,6 +32,7 @@ export type Database = {
           id?: string;
           title: string;
           summary: string;
+          body?: string | null;
           progressive: string;
           conservative: string;
           source_url?: string | null;
@@ -46,6 +48,7 @@ export type Database = {
           id?: string;
           title?: string;
           summary?: string;
+          body?: string | null;
           progressive?: string;
           conservative?: string;
           source_url?: string | null;

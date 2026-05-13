@@ -113,9 +113,14 @@ export function PoliticianCard({
         {isExpanded ? (
           <PoliticianInlineDetail>
             {isDetailLoading ? (
-              <InlineDetailText>
-                상세 정보를 불러오는 중이에요.
-              </InlineDetailText>
+              <InlineDetailSkeleton>
+                {[0, 1, 2, 3].map((item) => (
+                  <InlineDetailSkeletonItem key={item}>
+                    <InlineDetailSkeletonLine $w="32%" />
+                    <InlineDetailSkeletonLine $w={item % 2 === 0 ? "72%" : "54%"} />
+                  </InlineDetailSkeletonItem>
+                ))}
+              </InlineDetailSkeleton>
             ) : isDetailError ? (
               <InlineDetailText>
                 상세 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.
@@ -365,6 +370,38 @@ const InlineDetailText = styled.p`
   color: #8b95a1;
   font-size: 14px;
   line-height: 1.6;
+`;
+
+const shimmer = `
+  background: linear-gradient(90deg, #f2f4f6 0%, #ffffff 50%, #f2f4f6 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+`;
+
+const InlineDetailSkeleton = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 24px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const InlineDetailSkeletonItem = styled.div`
+  display: grid;
+  gap: 8px;
+`;
+
+const InlineDetailSkeletonLine = styled.div<{ $w: string }>`
+  width: ${({ $w }) => $w};
+  height: 14px;
+  border-radius: 4px;
+  ${shimmer}
 `;
 
 const InlineExternalLink = styled.a`

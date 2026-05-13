@@ -11,6 +11,7 @@ import { useVoteIssue } from "@/services/issues/issues.mutations";
 import { useUserProfile } from "@/services/user/user.queries";
 import { useLocalPoliticians, usePoliticianDetail, useFollowedPoliticianNames } from "@/services/politicians/politicians.queries";
 import { useSearch } from "@/services/search/search.queries";
+import { usePollsQuery } from "@/services/community/community.queries";
 import type { HotIssue } from "@/types/issue";
 import { SearchBar } from "@/components/home/search";
 import { PoliticianCard } from "@/components/home/politician-card";
@@ -66,6 +67,7 @@ export function HomeContainer({ session }: HomeContainerProps) {
   const [expandedIssueId, setExpandedIssueId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [now] = useState(() => Date.now());
   const [balanceMode, setBalanceMode] = useState(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("balance-mode") === "1";
@@ -96,10 +98,13 @@ export function HomeContainer({ session }: HomeContainerProps) {
     needsPoliticalProfile,
   });
 
-  const politiciansQuery = useLocalPoliticians({ enabled: Boolean(district) });
+  const politiciansQuery = useLocalPoliticians({ district, enabled: Boolean(district) });
   const politicianDetailQuery = usePoliticianDetail(expandedPoliticianId);
   const followedNamesQuery = useFollowedPoliticianNames();
   const followedNames = new Set<string>(followedNamesQuery.data ?? []);
+
+  const pollsQuery = usePollsQuery("hot");
+  const hotPolls = (pollsQuery.data ?? []).slice(0, 3);
 
   const politicians = politiciansQuery.data?.politicians ?? [];
   const issues = issuesQuery.data?.issues ?? [];
@@ -180,7 +185,18 @@ export function HomeContainer({ session }: HomeContainerProps) {
             </SectionHeader>
 
             {politiciansQuery.isLoading ? (
-              <EmptyCard>의원 정보를 불러오는 중이에요.</EmptyCard>
+              <PoliticianList aria-busy="true">
+                {[0, 1, 2].map((item) => (
+                  <PoliticianSkeletonRow key={item}>
+                    <SkeletonCircle />
+                    <SkeletonStack>
+                      <SkeletonLine $w={item === 0 ? "62%" : "48%"} />
+                      <SkeletonLine $w={item === 2 ? "44%" : "70%"} $small />
+                      <SkeletonLine $w="32%" $small />
+                    </SkeletonStack>
+                  </PoliticianSkeletonRow>
+                ))}
+              </PoliticianList>
             ) : politiciansQuery.isError ? (
               <EmptyCard>
                 <EmptyCardTitle>의원 정보를 불러오지 못했어요.</EmptyCardTitle>
@@ -283,7 +299,20 @@ export function HomeContainer({ session }: HomeContainerProps) {
 
           <IssueLayout>
             {issuesQuery.isLoading ? (
-              <EmptyCard>핫이슈를 불러오는 중이에요.</EmptyCard>
+              <IssueSkeletonList aria-busy="true">
+                {[0, 1, 2].map((item) => (
+                  <IssueSkeletonCard key={item}>
+                    <SkeletonLine $w={item === 0 ? "74%" : "58%"} />
+                    <SkeletonLine $w="92%" $small />
+                    <SkeletonLine $w="64%" $small />
+                    <IssueSkeletonActions>
+                      <SkeletonPill />
+                      <SkeletonPill />
+                      <SkeletonPill />
+                    </IssueSkeletonActions>
+                  </IssueSkeletonCard>
+                ))}
+              </IssueSkeletonList>
             ) : issuesQuery.isError ? (
               <EmptyCard>
                 <EmptyCardTitle>핫이슈를 불러오지 못했어요.</EmptyCardTitle>
@@ -324,6 +353,58 @@ export function HomeContainer({ session }: HomeContainerProps) {
               </EmptyCard>
             )}
           </IssueLayout>
+        </MotionSection>
+
+        <MotionSection id="hot-polls">
+          <SectionHeader>
+            <SectionMeta>
+              <SectionTitleRow>
+                <SectionTitle>민심투표</SectionTitle>
+              </SectionTitleRow>
+            </SectionMeta>
+            <SectionMoreLink href="/community">더 보기</SectionMoreLink>
+          </SectionHeader>
+
+          {pollsQuery.isLoading ? (
+            <PollPreviewList aria-busy="true">
+              {[0, 1, 2].map((item) => (
+                <PollPreviewSkeleton key={item}>
+                  <SkeletonLine $w={item === 1 ? "88%" : "70%"} />
+                  <SkeletonLine $w="42%" $small />
+                </PollPreviewSkeleton>
+              ))}
+            </PollPreviewList>
+          ) : hotPolls.length === 0 ? (
+            <EmptyCard>
+              <EmptyCardTitle>아직 진행 중인 투표가 없어요.</EmptyCardTitle>
+              <EmptyCardText>커뮤니티에서 첫 번째 투표를 만들어보세요.</EmptyCardText>
+            </EmptyCard>
+          ) : (
+            <PollPreviewList>
+              {hotPolls.map((poll) => {
+                const expiresAt = new Date(poll.expires_at).getTime();
+                const msLeft = expiresAt - now;
+                const hoursLeft = Math.max(0, Math.floor(msLeft / 3_600_000));
+                const daysLeft = Math.floor(hoursLeft / 24);
+                const timeLabel =
+                  msLeft <= 0
+                    ? "마감"
+                    : daysLeft >= 1
+                    ? `${daysLeft}일 남음`
+                    : `${hoursLeft}시간 남음`;
+                const expired = msLeft <= 0;
+                return (
+                  <PollPreviewCard key={poll.id} href={`/community/polls/${poll.id}`}>
+                    <PollPreviewQuestion>{poll.question}</PollPreviewQuestion>
+                    <PollPreviewMeta>
+                      <PollPreviewVotes>{poll.total_count.toLocaleString("ko-KR")}명 참여</PollPreviewVotes>
+                      <PollPreviewTime $expired={expired}>{timeLabel}</PollPreviewTime>
+                    </PollPreviewMeta>
+                  </PollPreviewCard>
+                );
+              })}
+            </PollPreviewList>
+          )}
         </MotionSection>
       </Main>
     </Page>
@@ -526,6 +607,46 @@ const PoliticianList = styled.div`
   gap: 0;
 `;
 
+const shimmer = `
+  background: linear-gradient(90deg, #f2f4f6 0%, #ffffff 50%, #f2f4f6 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+`;
+
+const SkeletonCircle = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  ${shimmer}
+`;
+
+const SkeletonStack = styled.div`
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  min-width: 0;
+`;
+
+const SkeletonLine = styled.div<{ $w: string; $small?: boolean }>`
+  width: ${({ $w }) => $w};
+  height: ${({ $small }) => ($small ? 13 : 16)}px;
+  border-radius: 4px;
+  ${shimmer}
+`;
+
+const PoliticianSkeletonRow = styled.div`
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 16px 0;
+  border-bottom: 1px solid #f2f4f6;
+`;
+
 const EmptyCard = styled.div`
   display: grid;
   gap: 8px;
@@ -573,6 +694,32 @@ const RetryButton = styled.button`
 const IssueLayout = styled.div`
   display: grid;
   gap: 0;
+`;
+
+const IssueSkeletonList = styled.div`
+  display: grid;
+  gap: 12px;
+`;
+
+const IssueSkeletonCard = styled.div`
+  display: grid;
+  gap: 10px;
+  padding: 18px 0;
+  border-bottom: 1px solid #f2f4f6;
+`;
+
+const IssueSkeletonActions = styled.div`
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+`;
+
+const SkeletonPill = styled.div`
+  width: 86px;
+  height: 34px;
+  border-radius: 9999px;
+  ${shimmer}
 `;
 
 const FirstRunGuide = styled.div`
@@ -669,4 +816,76 @@ const BalanceBadge = styled.span`
   border-radius: 4px;
   padding: 1px 4px;
   line-height: 1.4;
+`;
+
+const SectionMoreLink = styled(Link)`
+  color: #8b95a1;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 150ms;
+
+  &:hover {
+    color: #3182f6;
+  }
+`;
+
+const PollPreviewList = styled.div`
+  display: grid;
+  gap: 0;
+`;
+
+const PollPreviewSkeleton = styled.div`
+  display: grid;
+  gap: 8px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f2f4f6;
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const PollPreviewCard = styled(Link)`
+  display: grid;
+  gap: 6px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f2f4f6;
+  text-decoration: none;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover > * {
+    color: #3182f6;
+  }
+`;
+
+const PollPreviewQuestion = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: #191f28;
+  word-break: keep-all;
+  line-height: 1.5;
+  transition: color 150ms;
+`;
+
+const PollPreviewMeta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const PollPreviewVotes = styled.span`
+  font-size: 12px;
+  color: #8b95a1;
+  font-weight: 400;
+`;
+
+const PollPreviewTime = styled.span<{ $expired: boolean }>`
+  font-size: 12px;
+  font-weight: 600;
+  color: ${({ $expired }) => ($expired ? "#b0b8c1" : "#3182f6")};
 `;
