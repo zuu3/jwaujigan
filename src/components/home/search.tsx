@@ -51,9 +51,16 @@ export function SearchBar({
       </SearchBarRoot>
 
       {isSearchActive ? (
-        <SearchResults>
+        <SearchResults aria-busy={isLoading}>
           {isLoading ? (
-            <SearchEmpty>검색 중...</SearchEmpty>
+            <SearchSkeletonList>
+              {[0, 1, 2].map((item) => (
+                <SearchSkeletonRow key={item}>
+                  <SearchSkeletonLine $w={item === 0 ? "34%" : "48%"} />
+                  <SearchSkeletonLine $w={item === 0 ? "72%" : "58%"} $small />
+                </SearchSkeletonRow>
+              ))}
+            </SearchSkeletonList>
           ) : (
             <>
               <SearchSection>
@@ -62,7 +69,7 @@ export function SearchBar({
                   <SearchEmpty>이슈 결과가 없어요.</SearchEmpty>
                 ) : (
                   searchResults?.issues.map((issue) => (
-                    <SearchIssueRow key={issue.id} href={`/arena?issueId=${issue.id}`}>
+                    <SearchIssueRow key={issue.id} href={`/issues/${issue.id}`}>
                       <SearchIssueTitle>{issue.title}</SearchIssueTitle>
                       <SearchIssueMeta>{issue.summary}</SearchIssueMeta>
                     </SearchIssueRow>
@@ -224,4 +231,33 @@ const SearchPoliticianName = styled.div`
 const SearchPoliticianMeta = styled.div`
   font-size: 12px;
   color: #8b95a1;
+`;
+
+const shimmer = `
+  background: linear-gradient(90deg, #f2f4f6 0%, #ffffff 50%, #f2f4f6 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+`;
+
+const SearchSkeletonList = styled.div`
+  display: grid;
+  gap: 4px;
+  padding-top: 8px;
+`;
+
+const SearchSkeletonRow = styled.div`
+  display: grid;
+  gap: 7px;
+  padding: 10px 12px;
+`;
+
+const SearchSkeletonLine = styled.div<{ $w: string; $small?: boolean }>`
+  width: ${({ $w }) => $w};
+  height: ${({ $small }) => ($small ? 12 : 15)}px;
+  border-radius: 4px;
+  ${shimmer}
 `;

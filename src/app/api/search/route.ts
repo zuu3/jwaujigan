@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 import { searchPoliticiansByName, type PoliticianSearchResult } from "@/lib/assembly";
 import type { HotIssue } from "@/types/issue";
@@ -11,12 +10,16 @@ export type SearchResponse = {
   politicians: PoliticianSearchResult[];
 };
 
-export async function GET(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("timeout")), ms)
+    ),
+  ]);
+}
 
+export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q")?.trim() ?? "";
 
@@ -30,10 +33,10 @@ export async function GET(request: Request) {
     supabase
       .from("issues")
       .select("id, title, summary, bill_id, committee, published_at")
-      .gt("expires_at", new Date().toISOString())
       .or(`title.ilike.%${q}%,summary.ilike.%${q}%`)
+      .order("created_at", { ascending: false })
       .limit(5),
-    searchPoliticiansByName(q),
+    withTimeout(searchPoliticiansByName(q), 3000),
   ]);
 
   const issues: SearchIssue[] =

@@ -26,17 +26,7 @@ function getVotePercent(count: number, total: number): number {
 }
 
 function getIssueLink(issue: HotIssue) {
-  const searchParams = new URLSearchParams();
-
-  if (issue.id) {
-    searchParams.set("issueId", issue.id);
-  }
-
-  if (issue.bill_id) {
-    searchParams.set("billId", issue.bill_id);
-  }
-
-  return `/arena?${searchParams.toString()}`;
+  return `/issues/${issue.id}`;
 }
 
 function getIssueMetaLabel(issue: HotIssue) {
@@ -77,7 +67,7 @@ export function IssueCard({
     <IssueItem>
       <IssueRow>
         <IssueRowMeta>{getIssueMetaLabel(issue)}</IssueRowMeta>
-        <IssueRowBody>
+        <IssueRowBody href={getIssueLink(issue)}>
           <IssueTitle>{issue.title}</IssueTitle>
           <IssueSummary>{issue.summary}</IssueSummary>
           {(issue.committee ?? issue.proposer ?? issue.bill_status) ? (
@@ -233,9 +223,17 @@ const IssueRowMeta = styled.div`
   padding-top: 4px;
 `;
 
-const IssueRowBody = styled.div`
+const IssueRowBody = styled(Link)`
   display: grid;
   gap: 6px;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover h3 {
+    color: #3182f6;
+  }
 `;
 
 const IssueTitle = styled.h3`
