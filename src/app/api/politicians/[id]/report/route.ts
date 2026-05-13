@@ -162,7 +162,7 @@ export async function POST(
 
   let summary = "분석 데이터를 불러오는 데 실패했어요.";
   try {
-    const model = getGeminiModel({ generationConfig: { maxOutputTokens: 300, temperature: 0.3 } });
+    const model = getGeminiModel({ generationConfig: { maxOutputTokens: 600, temperature: 0.3 } });
     const result = await model.generateContent(prompt);
     summary = result.response.text().trim();
   } catch (e) {
