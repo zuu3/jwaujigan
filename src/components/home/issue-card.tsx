@@ -4,6 +4,7 @@ import styled from "@emotion/styled";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import type { HotIssue, IssueVoteStance } from "@/types/issue";
+import { TendencySection } from "@/containers/community/tendency-section";
 
 type VoteOption = {
   stance: IssueVoteStance;
@@ -192,6 +193,9 @@ export function IssueCard({
               </BattleCTA>
             ) : null}
           </IssueVoteSection>
+          <TendencySpacer>
+            <TendencySection issueId={issue.id} />
+          </TendencySpacer>
         </IssueExpanded>
       ) : null}
     </IssueItem>
@@ -535,4 +539,8 @@ const BattleCTA = styled(Link)`
 const BattleCTAIcon = styled.span`
   font-size: 15px;
   line-height: 1;
+`;
+
+const TendencySpacer = styled.div`
+  margin-top: 16px;
 `;

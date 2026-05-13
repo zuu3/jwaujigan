@@ -4,14 +4,14 @@ import type { CreatePollInput } from "./community.api";
 
 export const pollKeys = {
   all: ["polls"] as const,
-  list: () => [...pollKeys.all, "list"] as const,
+  list: (sort: "latest" | "hot" = "latest") => [...pollKeys.all, "list", sort] as const,
   detail: (id: string) => [...pollKeys.all, "detail", id] as const,
 };
 
-export function usePollsQuery() {
+export function usePollsQuery(sort: "latest" | "hot" = "latest") {
   return useQuery({
-    queryKey: pollKeys.list(),
-    queryFn: () => fetchPolls(),
+    queryKey: pollKeys.list(sort),
+    queryFn: () => fetchPolls(undefined, sort),
     select: (data) => data.polls,
   });
 }
@@ -29,7 +29,8 @@ export function useCreatePollMutation() {
   return useMutation({
     mutationFn: (input: CreatePollInput) => createPoll(input),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: pollKeys.list() });
+      // 정렬 탭 모두 무효화하기 위해 상위 키 사용
+      void qc.invalidateQueries({ queryKey: pollKeys.all });
     },
   });
 }

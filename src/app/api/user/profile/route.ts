@@ -53,7 +53,7 @@ export async function GET() {
       image: session.user.image ?? null,
       district: gateState.district ?? session.user.district ?? null,
       points: 0,
-      is_public: false,
+      is_public: true,
     }),
     district: gateState.district ?? data?.district ?? session.user.district ?? null,
     hasPoliticalProfile: gateState.hasPoliticalProfile,

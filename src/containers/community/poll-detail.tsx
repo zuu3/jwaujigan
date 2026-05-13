@@ -9,6 +9,7 @@ import {
   useVotePollMutation,
 } from "@/services/community/community.queries";
 import type { PollOption } from "@/services/community/community.api";
+import { CommentSection } from "@/components/arena/CommentSection";
 
 const OPTION_COLORS = ["#3182f6", "#e5484d", "#03b26c", "#fe9800"] as const;
 
@@ -163,6 +164,8 @@ export function PollDetailContainer({ pollId }: Props) {
 
           {voteError && <ErrorText>{voteError}</ErrorText>}
         </OptionsSection>
+
+        <CommentSection endpoint={`/api/polls/${pollId}/comments`} />
       </Shell>
     </Page>
   );

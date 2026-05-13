@@ -28,6 +28,7 @@ function randomId() {
 }
 
 export function CommunityContainer() {
+  const [sort, setSort] = useState<"latest" | "hot">("latest");
   const [showForm, setShowForm] = useState(false);
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState<PollOption[]>([
@@ -37,7 +38,7 @@ export function CommunityContainer() {
   const [expireDays, setExpireDays] = useState<1 | 3 | 7>(7);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const { data: polls, isLoading, error } = usePollsQuery();
+  const { data: polls, isLoading, error } = usePollsQuery(sort);
   const createMutation = useCreatePollMutation();
 
   const uid = useId();
@@ -102,6 +103,23 @@ export function CommunityContainer() {
             투표 만들기
           </CreateBtn>
         </PageHeader>
+
+        <SortTabs>
+          <SortTab
+            type="button"
+            $active={sort === "latest"}
+            onClick={() => setSort("latest")}
+          >
+            최신
+          </SortTab>
+          <SortTab
+            type="button"
+            $active={sort === "hot"}
+            onClick={() => setSort("hot")}
+          >
+            핫
+          </SortTab>
+        </SortTabs>
 
         {showForm && (
           <FormCard>
@@ -611,4 +629,26 @@ const OptionTag = styled.span<{ $mine: boolean }>`
   color: ${({ $mine }) => ($mine ? "#3182f6" : "#6b7684")};
   font-size: 12px;
   font-weight: ${({ $mine }) => ($mine ? 600 : 400)};
+`;
+
+const SortTabs = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const SortTab = styled.button<{ $active: boolean }>`
+  height: 32px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  background: ${({ $active }) => ($active ? "#191f28" : "#f2f4f6")};
+  color: ${({ $active }) => ($active ? "#ffffff" : "#4e5968")};
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms, color 150ms;
+
+  &:hover {
+    background: ${({ $active }) => ($active ? "#191f28" : "#e5e8eb")};
+  }
 `;

@@ -42,7 +42,7 @@ export function MyPageContainer({
   const [copied, setCopied] = useState(false);
   const profileQuery = useUserProfile();
   const queryClient = useQueryClient();
-  const isPublic = profileQuery.data?.is_public ?? false;
+  const isPublic = profileQuery.data?.is_public ?? true;
   const userId = profileQuery.data?.id ?? null;
 
   const handleVisibilityToggle = async () => {

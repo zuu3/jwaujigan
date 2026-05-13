@@ -387,6 +387,48 @@ export type Database = {
         };
         Relationships: [];
       };
+      poll_comments: {
+        Row: {
+          id: string;
+          poll_id: string;
+          user_id: string;
+          content: string;
+          parent_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          poll_id: string;
+          user_id: string;
+          content: string;
+          parent_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          poll_id?: string;
+          user_id?: string;
+          content?: string;
+          parent_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "poll_comments_poll_id_fkey";
+            columns: ["poll_id"];
+            isOneToOne: false;
+            referencedRelation: "polls";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "poll_comments_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       issue_vote_counts: {

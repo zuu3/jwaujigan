@@ -156,6 +156,7 @@ export function ArenaIssueDetail({ issue }: IssueDetailProps) {
               구경만 할래요
             </WatchButton>
           </StanceActions>
+
         </DetailPanel>
       </Shell>
     </Page>

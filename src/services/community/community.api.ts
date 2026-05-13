@@ -16,8 +16,15 @@ export type PollVoteResult = {
   points_earned: number;
 };
 
-export async function fetchPolls(cursor?: string): Promise<{ polls: PollRow[] }> {
-  const url = cursor ? `/api/polls?cursor=${encodeURIComponent(cursor)}` : "/api/polls";
+export async function fetchPolls(
+  cursor?: string,
+  sort: "latest" | "hot" = "latest",
+): Promise<{ polls: PollRow[] }> {
+  const params = new URLSearchParams();
+  if (cursor) params.set("cursor", cursor);
+  if (sort !== "latest") params.set("sort", sort);
+  const qs = params.toString();
+  const url = qs ? `/api/polls?${qs}` : "/api/polls";
   const res = await fetch(url);
   if (!res.ok) throw new Error("투표 목록을 불러오지 못했습니다.");
   return res.json() as Promise<{ polls: PollRow[] }>;

@@ -22,15 +22,48 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const cursor = searchParams.get("cursor");
+  const sort = searchParams.get("sort") === "hot" ? "hot" : "latest";
+
+  // hot 정렬: poll_votes 집계 후 내림차순으로 ID 목록 구성
+  let hotOrderedIds: string[] | null = null;
+  let precomputedVoteCountMap: Record<string, number> | null = null;
+
+  if (sort === "hot") {
+    const { data: voteSummary } = await supabase
+      .from("poll_votes")
+      .select("poll_id");
+
+    const voteCount: Record<string, number> = {};
+    for (const v of voteSummary ?? []) {
+      voteCount[v.poll_id] = (voteCount[v.poll_id] ?? 0) + 1;
+    }
+    precomputedVoteCountMap = voteCount;
+
+    // 투표 수 내림차순으로 정렬
+    const sortedByVotes = Object.entries(voteCount)
+      .sort((a, b) => b[1] - a[1])
+      .map(([id]) => id);
+
+    // 투표가 0건인 poll도 뒤에 포함
+    const { data: allPolls } = await supabase.from("polls").select("id");
+    const allPollIds = (allPolls ?? []).map((p) => p.id);
+    const zeroVoteIds = allPollIds.filter((id) => !voteCount[id]);
+
+    hotOrderedIds = [...sortedByVotes, ...zeroVoteIds];
+  }
 
   let query = supabase
     .from("polls")
     .select("id, user_id, question, options, expires_at, created_at")
-    .order("created_at", { ascending: false })
     .limit(20);
 
-  if (cursor) {
-    query = query.lt("created_at", cursor);
+  if (sort === "hot" && hotOrderedIds) {
+    query = query.in("id", hotOrderedIds.slice(0, 20));
+  } else {
+    query = query.order("created_at", { ascending: false });
+    if (cursor) {
+      query = query.lt("created_at", cursor);
+    }
   }
 
   const { data: polls, error } = await query;
@@ -43,17 +76,22 @@ export async function GET(request: Request) {
     return NextResponse.json({ polls: [] });
   }
 
-  const pollIds = polls.map((p) => p.id);
+  const fetchedPollIds = polls.map((p) => p.id);
 
-  // 각 poll의 투표 수
-  const { data: voteCounts } = await supabase
-    .from("poll_votes")
-    .select("poll_id")
-    .in("poll_id", pollIds);
+  // 투표 수 집계 (hot 모드에서는 이미 계산된 값 재사용)
+  let totalCountMap: Record<string, number>;
+  if (precomputedVoteCountMap) {
+    totalCountMap = precomputedVoteCountMap;
+  } else {
+    const { data: voteCounts } = await supabase
+      .from("poll_votes")
+      .select("poll_id")
+      .in("poll_id", fetchedPollIds);
 
-  const countMap: Record<string, number> = {};
-  for (const v of voteCounts ?? []) {
-    countMap[v.poll_id] = (countMap[v.poll_id] ?? 0) + 1;
+    totalCountMap = {};
+    for (const v of voteCounts ?? []) {
+      totalCountMap[v.poll_id] = (totalCountMap[v.poll_id] ?? 0) + 1;
+    }
   }
 
   // 내 투표 여부
@@ -70,7 +108,7 @@ export async function GET(request: Request) {
         .from("poll_votes")
         .select("poll_id, option_id")
         .eq("user_id", userRow.id)
-        .in("poll_id", pollIds);
+        .in("poll_id", fetchedPollIds);
 
       for (const v of myVotes ?? []) {
         myVoteMap[v.poll_id] = v.option_id;
@@ -78,14 +116,22 @@ export async function GET(request: Request) {
     }
   }
 
-  const result: PollRow[] = polls.map((p) => ({
+  // hot 모드: in()은 순서를 보장하지 않으므로 hotOrderedIds 순으로 재정렬
+  const orderedPolls =
+    sort === "hot" && hotOrderedIds
+      ? hotOrderedIds
+          .map((id) => polls.find((p) => p.id === id))
+          .filter((p): p is NonNullable<typeof p> => p !== undefined)
+      : polls;
+
+  const result: PollRow[] = orderedPolls.map((p) => ({
     id: p.id,
     user_id: p.user_id,
     question: p.question,
     options: p.options as PollOption[],
     expires_at: p.expires_at,
     created_at: p.created_at,
-    total_count: countMap[p.id] ?? 0,
+    total_count: totalCountMap[p.id] ?? 0,
     user_option_id: myVoteMap[p.id] ?? null,
   }));
 
