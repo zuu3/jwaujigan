@@ -10,12 +10,21 @@ const EMPTY_COUNTS: IssueVoteCounts = { progressive: 0, conservative: 0, neutral
 
 async function getVoteCounts(issueId: string): Promise<IssueVoteCounts> {
   const supabase = createServiceRoleSupabaseClient();
-  const { data } = await supabase
-    .from("issue_vote_counts")
-    .select("progressive, conservative, neutral, total")
-    .eq("issue_id", issueId)
-    .single();
-  return data ?? EMPTY_COUNTS;
+  const { data, error } = await supabase
+    .from("issue_votes")
+    .select("stance")
+    .eq("issue_id", issueId);
+
+  if (error) {
+    console.error("[vote] failed to fetch vote counts", error);
+    return EMPTY_COUNTS;
+  }
+
+  return (data ?? []).reduce<IssueVoteCounts>((counts, vote) => {
+    counts[vote.stance as IssueVoteStance]++;
+    counts.total++;
+    return counts;
+  }, { ...EMPTY_COUNTS });
 }
 
 export async function POST(
@@ -49,24 +58,33 @@ export async function POST(
   }
 
   // 유효한 이슈인지 확인
-  const { data: issue } = await supabase
+  const { data: issue, error: issueError } = await supabase
     .from("issues")
     .select("id")
     .eq("id", issueId)
     .gt("expires_at", new Date().toISOString())
-    .single();
+    .maybeSingle();
 
-  if (!issue) {
+  if (issueError) {
+    console.error("[vote] issue lookup failed", issueError);
+  }
+
+  if (issueError || !issue) {
     return NextResponse.json({ message: "Issue not found or expired" }, { status: 404 });
   }
 
   // 기존 투표 확인
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from("issue_votes")
-    .select("stance")
+    .select("id, stance")
     .eq("issue_id", issueId)
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
+
+  if (existingError) {
+    console.error("[vote] existing vote lookup failed", existingError);
+    return NextResponse.json({ message: "투표 상태를 확인하지 못했습니다." }, { status: 500 });
+  }
 
   let userVote: IssueVoteStance | null;
   let daily_bonus_earned = false;
@@ -74,20 +92,32 @@ export async function POST(
 
   if (existing?.stance === stance) {
     // 동일 입장 재클릭 → 취소
-    await supabase
+    const { error: deleteError } = await supabase
       .from("issue_votes")
       .delete()
-      .eq("issue_id", issueId)
-      .eq("user_id", userId);
+      .eq("id", existing.id);
+
+    if (deleteError) {
+      console.error("[vote] delete failed", deleteError);
+      return NextResponse.json({ message: "투표를 취소하지 못했습니다." }, { status: 500 });
+    }
     userVote = null;
   } else {
     // 신규 또는 입장 변경
-    await supabase
-      .from("issue_votes")
-      .upsert(
-        { issue_id: issueId, user_id: userId, stance, updated_at: new Date().toISOString() },
-        { onConflict: "issue_id,user_id" },
-      );
+    const now = new Date().toISOString();
+    const voteWrite = existing
+      ? await supabase
+          .from("issue_votes")
+          .update({ stance, updated_at: now })
+          .eq("id", existing.id)
+      : await supabase
+          .from("issue_votes")
+          .insert({ issue_id: issueId, user_id: userId, stance, updated_at: now });
+
+    if (voteWrite.error) {
+      console.error("[vote] write failed", voteWrite.error);
+      return NextResponse.json({ message: "투표를 저장하지 못했습니다." }, { status: 500 });
+    }
     userVote = stance;
 
     // 포인트는 이 이슈에 처음 투표할 때만 지급 (입장 변경 시 제외)

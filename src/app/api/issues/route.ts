@@ -10,12 +10,13 @@ const LOCK_TTL_MS = 60 * 1000;
 const LOCK_WAIT_MS = 3_000;
 
 const ISSUE_SELECT =
-  "id, title, summary, progressive, conservative, source_url, bill_id, published_at, proposer, committee, bill_status, created_at" as const;
+  "id, title, summary, body, progressive, conservative, source_url, bill_id, published_at, proposer, committee, bill_status, created_at" as const;
 
 type IssueRow = {
   id: string;
   title: string;
   summary: string;
+  body: string | null;
   progressive: string;
   conservative: string;
   source_url: string | null;
@@ -85,6 +86,21 @@ export async function GET() {
     return NextResponse.json({ issues } satisfies HotIssuesResponse);
   }
 
+  const { data: staleIssues, error: staleIssuesError } = await supabase
+    .from("issues")
+    .select(ISSUE_SELECT)
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .limit(5);
+
+  if (staleIssuesError) {
+    console.error("Failed to fetch stale issues", staleIssuesError);
+  }
+
+  if ((staleIssues?.length ?? 0) > 0) {
+    const issues = await enrichWithVotes(staleIssues ?? [], userId);
+    return NextResponse.json({ issues } satisfies HotIssuesResponse);
+  }
+
   // 만료된 스테일 락 제거 후 락 획득 시도
   await supabase
     .from("generation_locks")
@@ -143,19 +159,7 @@ export async function GET() {
     const issues = await enrichWithVotes(insertedIssues ?? [], userId);
     return NextResponse.json({ issues } satisfies HotIssuesResponse);
   } catch (generateError) {
-    console.error("Failed to generate issues from Assembly API", generateError);
-
-    // 타임아웃/에러 시 만료된 스테일 캐시라도 반환
-    const { data: staleIssues } = await supabase
-      .from("issues")
-      .select(ISSUE_SELECT)
-      .order("published_at", { ascending: false, nullsFirst: false })
-      .limit(5);
-
-    if (staleIssues && staleIssues.length > 0) {
-      const issues = await enrichWithVotes(staleIssues, userId);
-      return NextResponse.json({ issues } satisfies HotIssuesResponse);
-    }
+    console.warn("Failed to generate issues from Assembly API", generateError);
 
     return NextResponse.json({ issues: [] satisfies HotIssue[] });
   } finally {
