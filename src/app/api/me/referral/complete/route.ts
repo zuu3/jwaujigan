@@ -21,73 +21,53 @@ export async function POST(req: Request) {
   const supabase = createServiceRoleSupabaseClient();
 
   // referral_code로 referrer 조회
-  const { data: referrer, error: referrerError } = await supabase
+  const { data: referrer } = await supabase
     .from("users")
     .select("id")
     .eq("referral_code" as "id", referralCode)
     .maybeSingle();
 
-  if (referrerError) {
-    console.error("Failed to look up referrer", referrerError);
-    return NextResponse.json({ message: "서버 오류가 발생했어요." }, { status: 500 });
-  }
-
   if (!referrer) {
-    return NextResponse.json({ message: "유효하지 않은 초대 코드입니다." }, { status: 404 });
+    return NextResponse.json({ message: "유효하지 않은 추천인 코드입니다." }, { status: 404 });
   }
 
-  // 자기 자신 초대 방지
   if (referrer.id === referredId) {
-    return NextResponse.json({ message: "자신의 초대 코드는 사용할 수 없습니다." }, { status: 400 });
+    return NextResponse.json({ message: "자신의 코드는 사용할 수 없습니다." }, { status: 400 });
   }
 
-  // pending 상태인 referral 조회
-  const { data: referral, error: referralError } = await supabase
+  // 이미 추천인 코드를 사용한 경우 무시
+  const { data: existing } = await supabase
     .from("referrals" as "users")
-    .select("id, status")
+    .select("id")
     .eq("referred_id" as "id", referredId)
-    .eq("referrer_id" as "id", referrer.id)
     .maybeSingle();
 
-  if (referralError) {
-    console.error("Failed to query referral", referralError);
-    return NextResponse.json({ message: "서버 오류가 발생했어요." }, { status: 500 });
+  if (existing) {
+    return NextResponse.json({ ok: true, alreadyUsed: true });
   }
 
-  if (!referral) {
-    return NextResponse.json({ message: "초대 기록을 찾을 수 없습니다." }, { status: 404 });
-  }
-
-  const referralRow = referral as unknown as { id: string; status: string };
-
-  if (referralRow.status === "completed") {
-    return NextResponse.json({ ok: true, alreadyCompleted: true });
-  }
-
-  // status → completed 업데이트
-  const { error: updateError } = await supabase
+  // 한 번에 completed로 INSERT
+  const { error: insertError } = await supabase
     .from("referrals" as "users")
-    .update({
+    .insert({
+      referrer_id: referrer.id,
+      referred_id: referredId,
       status: "completed",
       completed_at: new Date().toISOString(),
-    } as never)
-    .eq("id" as "id", referralRow.id);
+    } as never);
 
-  if (updateError) {
-    console.error("Failed to complete referral", updateError);
+  if (insertError) {
+    if (insertError.code === "23505") {
+      return NextResponse.json({ ok: true, alreadyUsed: true });
+    }
     return NextResponse.json({ message: "서버 오류가 발생했어요." }, { status: 500 });
   }
 
-  // 초대자에게 포인트 지급
-  const { error: pointsError } = await supabase.rpc("increment_user_points", {
+  // 추천인에게 포인트 지급
+  await supabase.rpc("increment_user_points", {
     p_user_id: referrer.id,
     p_amount: REFERRAL_REWARD_POINTS,
   });
-
-  if (pointsError) {
-    console.error("Failed to grant referral points", pointsError);
-    // 포인트 지급 실패는 soft error — 완료 처리는 이미 됐으므로 그대로 응답
-  }
 
   return NextResponse.json({ ok: true });
 }

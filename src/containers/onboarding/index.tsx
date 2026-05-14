@@ -3,7 +3,7 @@
 import styled from "@emotion/styled";
 import { useFunnel } from "@use-funnel/browser";
 import { useRouter } from "next/navigation";
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { FullScreenLoader } from "@/components/loading/full-screen-loader";
 import { DISTRICT_AREA_OPTIONS, normalizeKoreanText } from "@/lib/districts/catalog";
 import { ONBOARDING_SKIP_COOKIE } from "@/lib/onboarding";
@@ -119,6 +119,12 @@ export function OnboardingContainer({
   const [savingManualOptionId, setSavingManualOptionId] = useState<string | null>(null);
   const [selectedProvince, setSelectedProvince] = useState("all");
   const [manualQuery, setManualQuery] = useState("");
+  const [referralCode, setReferralCode] = useState("");
+
+  useEffect(() => {
+    const stored = localStorage.getItem("referral_code");
+    if (stored) setReferralCode(stored);
+  }, []);
 
   const question = questions[currentIndex];
   const isLastQuestion = currentIndex === questions.length - 1;
@@ -315,18 +321,14 @@ export function OnboardingContainer({
         throw new Error("Failed to save political profile.");
       }
 
-      // 초대 코드가 localStorage에 있으면 referral complete 처리 (fire-and-forget)
-      const storedRefCode = typeof window !== "undefined"
-        ? localStorage.getItem("referral_code")
-        : null;
-      if (storedRefCode) {
+      const trimmedCode = referralCode.trim().toUpperCase();
+      if (trimmedCode) {
         void fetch("/api/me/referral/complete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ referralCode: storedRefCode }),
-        }).then(() => {
-          localStorage.removeItem("referral_code");
+          body: JSON.stringify({ referralCode: trimmedCode }),
         }).catch(() => null);
+        localStorage.removeItem("referral_code");
       }
 
       document.cookie = `${ONBOARDING_SKIP_COOKIE}=; path=/; max-age=0`;
@@ -412,6 +414,22 @@ export function OnboardingContainer({
                 onAnswer={handleAnswer}
                 onBackToDistrictStep={handleBackToDistrictStep}
               />
+
+              {isLastQuestion && (
+                <ReferralRow>
+                  <ReferralLabel htmlFor="referral-code">추천인 코드 (선택)</ReferralLabel>
+                  <ReferralInput
+                    id="referral-code"
+                    type="text"
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                    placeholder="예: A1B2C3D4"
+                    maxLength={8}
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                </ReferralRow>
+              )}
             </>
           )}
         </ContentInner>
@@ -419,6 +437,40 @@ export function OnboardingContainer({
     </Page>
   );
 }
+
+const ReferralRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 0 0;
+  border-top: 1px solid #f2f4f6;
+  margin-top: 8px;
+`;
+
+const ReferralLabel = styled.label`
+  font-size: 13px;
+  font-weight: 600;
+  color: #8b95a1;
+`;
+
+const ReferralInput = styled.input`
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  background: #f2f4f6;
+  color: #191f28;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+
+  &::placeholder { color: #b0b8c1; font-weight: 400; letter-spacing: 0; }
+  &:focus { border-color: #3182f6; background: #ffffff; }
+`;
 
 // Shared styled components — exported for use in DistrictStep and QuestionsStep
 export const StatusLabel = styled.div`

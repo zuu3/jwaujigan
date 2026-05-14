@@ -81,18 +81,7 @@ export function HomeContainer({ session }: HomeContainerProps) {
     return () => clearTimeout(t);
   }, [searchQuery]);
 
-  // 초대 코드가 localStorage에 있으면 referral 등록 (fire-and-forget)
-  useEffect(() => {
-    const refCode = localStorage.getItem("referral_code");
-    if (!refCode) return;
-    void fetch("/api/referral/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: refCode }),
-    }).catch(() => null);
-  }, []);
-
-  const searchResultsQuery = useSearch(debouncedQuery);
+const searchResultsQuery = useSearch(debouncedQuery);
   const profileQuery = useUserProfile();
   const issuesQuery = useIssues();
 
