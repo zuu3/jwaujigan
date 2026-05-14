@@ -1,7 +1,7 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { Gift, Globe, Link2, Lock, MapPin, RotateCcw, Share2 } from "lucide-react";
+import { Gift, Globe, Link2, Lock, MapPin, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -81,19 +81,7 @@ export function MyPageContainer({
     }
   };
 
-  const handleShareProfile = async () => {
-    if (!userId) return;
-    const url = `${window.location.origin}/u/${userId}`;
-    const shareData = { title: "좌우지간 정치 성향 프로필", url };
-    if (navigator.share && navigator.canShare?.(shareData)) {
-      await navigator.share(shareData);
-    } else {
-      await navigator.clipboard.writeText(url);
-      showToast("프로필 링크가 복사됐어요.");
-    }
-  };
-
-  useEffect(() => {
+useEffect(() => {
     const controller = new AbortController();
     fetch("/api/politicians/follows", { signal: controller.signal })
       .then((r) => r.json() as Promise<{ follows: FollowedPolitician[] }>)
@@ -147,16 +135,10 @@ export function MyPageContainer({
               </Toggle>
             </VisibilityRow>
             {isPublic && userId && (
-              <>
-                <CopyButton type="button" onClick={() => void handleCopyLink()}>
-                  <Link2 size={14} />
-                  <span>{copied ? "복사됨" : "링크 복사"}</span>
-                </CopyButton>
-                <CopyButton type="button" onClick={() => void handleShareProfile()}>
-                  <Share2 size={14} />
-                  <span>성향 공유</span>
-                </CopyButton>
-              </>
+              <CopyButton type="button" onClick={() => void handleCopyLink()}>
+                <Link2 size={14} />
+                <span>{copied ? "복사됨" : "링크 복사"}</span>
+              </CopyButton>
             )}
             <CopyButton type="button" onClick={() => void handleInvite()}>
               <Gift size={14} />
