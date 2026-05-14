@@ -54,7 +54,7 @@ export default function NotFound() {
             alignItems: "center",
             height: 44,
             padding: "0 20px",
-            background: "#191f28",
+            background: "#3182f6",
             color: "#ffffff",
             fontSize: 14,
             fontWeight: 600,

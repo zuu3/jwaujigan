@@ -14,9 +14,42 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://jwaujigan.com";
+
 export const metadata: Metadata = {
-  title: "좌우지간",
-  description: "우리 동네 정치인 정보와 이슈 분석, AI 토론을 한 흐름으로 확인하세요.",
+  metadataBase: new URL(BASE_URL),
+  title: {
+    default: "좌우지간",
+    template: "%s | 좌우지간",
+  },
+  description: "선동 없는 정치 정보. 국회 법안을 진보·보수 두 시각으로 정리해드려요.",
+  keywords: ["정치", "국회", "법안", "진보", "보수", "MZ세대", "정치 리터러시"],
+  authors: [{ name: "좌우지간" }],
+  openGraph: {
+    type: "website",
+    locale: "ko_KR",
+    url: BASE_URL,
+    siteName: "좌우지간",
+    title: "좌우지간 — 선동 없는 정치 정보",
+    description: "국회 법안을 진보·보수 두 시각으로 정리해드려요.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "좌우지간",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "좌우지간 — 선동 없는 정치 정보",
+    description: "국회 법안을 진보·보수 두 시각으로 정리해드려요.",
+    images: ["/og-image.png"],
+  },
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
