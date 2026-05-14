@@ -23,6 +23,7 @@
     "@toss/tds-colors": "^0.1.0",
     "@toss/tds-typography": "^0.0.3",
     "@use-funnel/browser": "^0.0.17",
+    "@vercel/analytics": "^2.0.1",
     "framer-motion": "^12.38.0",
     "gsap": "^3.14.2",
     "lucide-react": "^1.7.0",
