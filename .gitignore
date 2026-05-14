@@ -48,3 +48,6 @@ next-env.d.ts
 skills-lock.json
 test-results/
 playwright-report/
+
+# Sentry Config File
+.env.sentry-build-plugin
