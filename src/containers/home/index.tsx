@@ -2,6 +2,7 @@
 
 import styled from "@emotion/styled";
 import { ArrowRight, SlidersHorizontal } from "lucide-react";
+
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { Session } from "next-auth";
@@ -130,8 +131,7 @@ export function HomeContainer({ session }: HomeContainerProps) {
 
   return (
     <Page>
-
-      <Main>
+<Main>
         <MotionIntro>
           <IntroCopy>
             <IntroEyebrow>{introEyebrow}</IntroEyebrow>
