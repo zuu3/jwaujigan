@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { showToast } from "@/lib/toast";
 
 type Props = {
   issueId?: string;
@@ -20,9 +21,9 @@ export function IssueActions({ issueId, expired }: Props) {
           try {
             const res = await fetch("/api/admin/cron", { method: "POST" });
             const data = await res.json() as { message?: string };
-            alert(data.message ?? "크론 실행 완료");
+            showToast(data.message ?? "크론 실행 완료", "success");
           } catch {
-            alert("실행 실패");
+            showToast("실행 실패", "error");
           } finally {
             setLoading(false);
           }
@@ -61,9 +62,9 @@ export function IssueActions({ issueId, expired }: Props) {
             body: JSON.stringify({ action: expired ? "restore" : "expire" }),
           });
           if (res.ok) setDone(true);
-          else alert("처리 실패");
+          else showToast("처리 실패", "error");
         } catch {
-          alert("처리 실패");
+          showToast("처리 실패", "error");
         } finally {
           setLoading(false);
         }

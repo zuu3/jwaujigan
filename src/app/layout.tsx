@@ -10,6 +10,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AppProvider } from "@/components/providers/app-provider";
 import { PointsToaster } from "@/components/PointsToaster";
+import { Toaster } from "@/components/Toaster";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -65,6 +66,7 @@ export default function RootLayout({
         <AppProvider>
           {children}
           <PointsToaster />
+          <Toaster />
         </AppProvider>
         <Analytics />
         <SpeedInsights />

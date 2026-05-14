@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { showToast } from "@/lib/toast";
 
 type Props = {
   target: "poll" | "comment";
@@ -37,10 +38,10 @@ export function DeleteAction({ target, id, redirectTo }: Props) {
               setDeleted(true);
             }
           } else {
-            alert("삭제 실패");
+            showToast("삭제 실패", "error");
           }
         } catch {
-          alert("삭제 실패");
+          showToast("삭제 실패", "error");
         } finally {
           setLoading(false);
         }

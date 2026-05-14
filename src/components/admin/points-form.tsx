@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { showToast } from "@/lib/toast";
 
 type UserResult = { id: string; email: string; name: string | null; points: number };
 
@@ -25,7 +26,7 @@ export function PointsForm() {
       const data = await res.json() as { users: UserResult[] };
       setResults(data.users ?? []);
     } catch {
-      alert("검색 실패");
+      showToast("검색 실패", "error");
     } finally {
       setSearching(false);
     }

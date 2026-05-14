@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { showToast } from "@/lib/toast";
 
 const REASONS = ["욕설/혐오", "스팸/광고", "허위정보", "기타"] as const;
 type Reason = (typeof REASONS)[number];
@@ -31,11 +32,12 @@ export function ReportButton({ commentId }: Props) {
       if (res.ok) {
         setDone(true);
         setOpen(false);
+        showToast("신고가 접수됐어요.");
       } else {
-        alert(data.message ?? "신고에 실패했습니다.");
+        showToast(data.message ?? "신고에 실패했습니다.", "error");
       }
     } catch {
-      alert("신고에 실패했습니다.");
+      showToast("신고에 실패했습니다.", "error");
     } finally {
       setLoading(false);
     }

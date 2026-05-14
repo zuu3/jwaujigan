@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signOut } from "next-auth/react";
 import styled from "@emotion/styled";
+import { showToast } from "@/lib/toast";
 
 export function DeleteAccountButton() {
   const [step, setStep] = useState<"idle" | "confirm" | "loading">("idle");
@@ -15,11 +16,11 @@ export function DeleteAccountButton() {
         await signOut({ callbackUrl: "/" });
       } else {
         const data = await res.json() as { message?: string };
-        alert(data.message ?? "탈퇴에 실패했습니다.");
+        showToast(data.message ?? "탈퇴에 실패했습니다.", "error");
         setStep("idle");
       }
     } catch {
-      alert("탈퇴에 실패했습니다.");
+      showToast("탈퇴에 실패했습니다.", "error");
       setStep("idle");
     }
   };

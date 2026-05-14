@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { CommentItem } from "@/app/api/polls/[id]/comments/route";
 import { ReportButton } from "@/components/community/report-button";
+import { showToast } from "@/lib/toast";
 
 export type { CommentItem };
 
@@ -300,6 +301,7 @@ export function CommentSection({ endpoint }: Props) {
     if (!confirm("댓글을 삭제할까요?")) return;
     const r = await fetch(`${endpoint}/${id}`, { method: "DELETE" });
     if (r.ok || r.status === 204) {
+      showToast("댓글을 삭제했어요.");
       if (parentId) {
         setComments((prev) =>
           prev.map((c) =>

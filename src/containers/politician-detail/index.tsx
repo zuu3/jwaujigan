@@ -11,6 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { ReportData, ReportResponse } from "@/app/api/politicians/[id]/report/route";
 import { POINTS } from "@/services/points/points";
 import { useUserProfile } from "@/services/user/user.queries";
+import { showToast } from "@/lib/toast";
 
 type PoliticianDetailContainerProps = {
   politician: PoliticianDetail;
@@ -88,11 +89,11 @@ export function PoliticianDetailContainer({
     try {
       const res = await fetch(`/api/politicians/${politician.id}/report`, { method: "POST" });
       if (res.status === 402) {
-        alert(`포인트가 부족해요. 심층 분석에는 ${POINTS.REPORT}pt가 필요해요.`);
+        showToast(`포인트가 부족해요. 심층 분석에는 ${POINTS.REPORT}pt가 필요해요.`, "error");
         return;
       }
       if (!res.ok) {
-        alert("분석 생성에 실패했어요. 잠시 후 다시 시도해주세요.");
+        showToast("분석 생성에 실패했어요. 잠시 후 다시 시도해주세요.", "error");
         return;
       }
       const data = await res.json() as ReportResponse;
@@ -121,6 +122,7 @@ export function PoliticianDetailContainer({
       }
       const data = (await res.json()) as { following: boolean };
       setFollowing(data.following);
+      showToast(data.following ? `${politician.name} 팔로우했어요.` : `팔로우를 취소했어요.`);
     } finally {
       setFollowLoading(false);
     }

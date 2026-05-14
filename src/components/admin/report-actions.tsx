@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { showToast } from "@/lib/toast";
 
 type Props = {
   reportId: string;
@@ -34,7 +35,7 @@ export function ReportActions({ reportId, commentId }: Props) {
           const data = await res.json() as { message?: string };
           message = data.message ?? message;
         } catch {}
-        alert(message);
+        showToast(message, "error");
       }
     } finally {
       setLoading(null);
