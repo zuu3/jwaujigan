@@ -31,8 +31,8 @@ export async function POST(req: Request) {
   const { data: existing } = await supabase
     .from("reports" as "users")
     .select("id")
-    .eq("reporter_id", user.id)
-    .eq("target_id", body.targetId)
+    .eq("reporter_id" as "id", user.id)
+    .eq("target_id" as "id", body.targetId)
     .maybeSingle();
 
   if (existing) {

@@ -7,12 +7,12 @@ type Tab = "pending" | "dismissed";
 
 async function getReports(status: Tab) {
   const supabase = createServiceRoleSupabaseClient();
-  const { data } = await supabase
+  const { data } = (await supabase
     .from("reports" as "users")
     .select("*")
-    .eq("status", status)
+    .eq("status" as "id", status)
     .order("created_at", { ascending: false })
-    .limit(100) as unknown as { data: Report[] | null };
+    .limit(100)) as unknown as { data: Report[] | null };
   return data ?? [];
 }
 
