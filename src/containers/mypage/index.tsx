@@ -19,6 +19,7 @@ import { FollowingSection } from "@/components/mypage/FollowingSection";
 import { ActivitySection } from "@/components/mypage/ActivitySection";
 import { BadgesSection } from "@/components/mypage/BadgesSection";
 import { StreakCalendar } from "@/components/mypage/StreakCalendar";
+import { DeleteAccountButton } from "@/components/mypage/DeleteAccountButton";
 import { getLevel } from "@/services/points/points";
 import { useUserProfile } from "@/services/user/user.queries";
 import { useQueryClient } from "@tanstack/react-query";
@@ -141,6 +142,9 @@ export function MyPageContainer({
           </>
         )}
         <FollowingSection followedPoliticians={followedPoliticians} />
+        <Footer>
+          <DeleteAccountButton />
+        </Footer>
       </Shell>
     </Page>
   );
@@ -419,4 +423,11 @@ const ProgressLabel = styled.span`
   color: #8b95a1;
   font-size: 12px;
   font-weight: 400;
+`;
+
+const Footer = styled.div`
+  padding: 24px 0 8px;
+  border-top: 1px solid #f2f4f6;
+  display: flex;
+  justify-content: center;
 `;
