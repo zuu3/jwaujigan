@@ -29,7 +29,7 @@ export function AnalysisSection() {
             <SectionEyebrow>이슈 분석</SectionEyebrow>
             <SectionTitle>복잡한 정책도 짧고 분명하게 정리합니다</SectionTitle>
             <SectionText>
-              핵심을 짧게 파악하고, 관점 차이와 사실관계를 확인합니다.
+              한 문장 요약으로 먼저 파악하고, 진보·보수 관점 차이를 나란히 확인합니다.
             </SectionText>
 
             <StepGrid>
@@ -54,11 +54,9 @@ export function AnalysisSection() {
             </PreviewHeader>
 
             <SummaryBox>
-              <SummaryTitle>3줄 요약</SummaryTitle>
+              <SummaryTitle>한 줄 요약</SummaryTitle>
               <SummaryText>
-                청년층의 주거 부담을 줄이기 위한 지원 확대 정책입니다. 재정
-                부담과 대상 기준이 핵심 쟁점입니다. 체감 효과와 지속 가능성을
-                함께 봅니다.
+                청년층의 주거 부담을 줄이기 위해 공공 지원을 확대하는 법안입니다.
               </SummaryText>
             </SummaryBox>
 
@@ -76,9 +74,9 @@ export function AnalysisSection() {
                 </CompareText>
               </CompareRow>
               <CompareRow>
-                <CompareLabel>팩트</CompareLabel>
+                <CompareLabel>상세</CompareLabel>
                 <CompareText>
-                  예산 규모, 수혜 대상, 법적 근거를 함께 확인한다
+                  배경·조항·영향·쟁점을 4문단으로 정리한 법안 상세 내용을 확인한다
                 </CompareText>
               </CompareRow>
             </CompareRows>

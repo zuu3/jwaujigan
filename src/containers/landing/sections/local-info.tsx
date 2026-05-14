@@ -57,18 +57,18 @@ export function LocalInfoSection() {
                 <PreviewRowValue>사진, 정당, 약력, 위원회 정보</PreviewRowValue>
               </PreviewRow>
               <PreviewRow>
-                <PreviewRowLabel>최근 활동</PreviewRowLabel>
-                <PreviewRowValue>발의 법안, 뉴스 언급, 공약 이행</PreviewRowValue>
+                <PreviewRowLabel>발의 법안</PreviewRowLabel>
+                <PreviewRowValue>최근 발의 법안과 처리 결과를 국회 원문 링크와 함께 확인</PreviewRowValue>
               </PreviewRow>
               <PreviewRow>
-                <PreviewRowLabel>한눈에 보기</PreviewRowLabel>
-                <PreviewRowValue>강점 분야와 활동 빈도를 정리</PreviewRowValue>
+                <PreviewRowLabel>팔로우</PreviewRowLabel>
+                <PreviewRowValue>팔로우하면 새 법안이 홈 피드에 바로 표시</PreviewRowValue>
               </PreviewRow>
             </PreviewRows>
 
             <PreviewFooter>
               <Bookmark size={14} />
-              관심 정치인은 저장해두고 다시 볼 수 있습니다.
+              팔로우한 의원의 법안은 홈 피드에서 바로 확인됩니다.
             </PreviewFooter>
           </PreviewPanel>
         </FeatureLayout>
