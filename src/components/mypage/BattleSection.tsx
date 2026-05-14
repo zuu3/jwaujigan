@@ -43,17 +43,17 @@ export function BattleSection({ battleLogs }: BattleSectionProps) {
           <StatsRow>
             <StatItem>
               <StatItemLabel>승리</StatItemLabel>
-              <StatItemValue $tone="#3182F6">{stats.win}</StatItemValue>
+              <StatItemValue $tone="#03b26c">{stats.win}</StatItemValue>
             </StatItem>
             <StatSep aria-hidden="true">·</StatSep>
             <StatItem>
               <StatItemLabel>패배</StatItemLabel>
-              <StatItemValue $tone="#E5484D">{stats.lose}</StatItemValue>
+              <StatItemValue $tone="#8b95a1">{stats.lose}</StatItemValue>
             </StatItem>
             <StatSep aria-hidden="true">·</StatSep>
             <StatItem>
               <StatItemLabel>무승부</StatItemLabel>
-              <StatItemValue $tone="#8B95A1">{stats.draw}</StatItemValue>
+              <StatItemValue $tone="#8b95a1">{stats.draw}</StatItemValue>
             </StatItem>
           </StatsRow>
           <BattleList>
@@ -93,8 +93,8 @@ const StatsRow = styled.div`
   align-items: center;
   gap: 16px;
   padding: 20px 0;
-  border-top: 1px solid #E5E7EB;
-  border-bottom: 1px solid #E5E7EB;
+  border-top: 1px solid #e5e8eb;
+  border-bottom: 1px solid #e5e8eb;
 
   @media (max-width: 480px) {
     gap: 12px;
@@ -108,7 +108,7 @@ const StatItem = styled.div`
 `;
 
 const StatItemLabel = styled.span`
-  color: #8B95A1;
+  color: #8b95a1;
   font-size: 14px;
   font-weight: 500;
 `;
@@ -124,7 +124,7 @@ const StatItemValue = styled("span", {
 `;
 
 const StatSep = styled.span`
-  color: #E5E7EB;
+  color: #e5e8eb;
   font-size: 16px;
   font-weight: 400;
   user-select: none;
@@ -141,7 +141,7 @@ const BattleItem = styled.div`
   justify-content: space-between;
   gap: 12px;
   padding: 16px 0;
-  border-bottom: 1px solid #F2F4F6;
+  border-bottom: 1px solid #f2f4f6;
 
   &:last-of-type {
     border-bottom: 0;
@@ -154,7 +154,7 @@ const BattleItem = styled.div`
 `;
 
 const BattleTopic = styled.div`
-  color: #191F28;
+  color: #191f28;
   font-size: 16px;
   font-weight: 500;
   line-height: 1.5;
@@ -166,7 +166,7 @@ const BattleMeta = styled.div`
   flex-shrink: 0;
   align-items: center;
   gap: 12px;
-  color: #8B95A1;
+  color: #8b95a1;
   font-size: 14px;
   font-weight: 500;
 `;

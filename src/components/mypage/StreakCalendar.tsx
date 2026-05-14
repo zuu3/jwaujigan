@@ -1,6 +1,7 @@
 "use client";
 
 import styled from "@emotion/styled";
+import { Section, SectionHeader, SectionKicker } from "./shared-styles";
 
 type Props = {
   activeDates: string[];
@@ -60,9 +61,12 @@ export function StreakCalendar({ activeDates, streak, todayActive }: Props) {
   const totalWidth = weeks.length * (CELL + GAP) - GAP;
 
   return (
-    <Wrap>
-      <Header>
-        <Title>참여 기록</Title>
+    <Section>
+      <SectionHeader>
+        <SectionKicker>
+          참여 기록
+          <span style={{ color: '#8b95a1', fontSize: '13px', fontWeight: 400 }}>최근 14주</span>
+        </SectionKicker>
         <StreakPill $active={streak > 0}>
           {streak > 0
             ? todayActive
@@ -70,7 +74,7 @@ export function StreakCalendar({ activeDates, streak, todayActive }: Props) {
               : `${streak}일 — 오늘 참여하면 ${streak + 1}일`
             : "아직 연속 기록이 없어요"}
         </StreakPill>
-      </Header>
+      </SectionHeader>
 
       <CalendarOuter>
         <DayAxis>
@@ -83,6 +87,8 @@ export function StreakCalendar({ activeDates, streak, todayActive }: Props) {
 
         <CalendarScroll>
           <CalendarSvg
+            role="img"
+            aria-label={`최근 14주 중 활동 기록`}
             width={totalWidth}
             height={7 * (CELL + GAP) - GAP + 18}
           >
@@ -135,30 +141,11 @@ export function StreakCalendar({ activeDates, streak, todayActive }: Props) {
           </CalendarSvg>
         </CalendarScroll>
       </CalendarOuter>
-    </Wrap>
+    </Section>
   );
 }
 
 /* ── Styled ─────────────────────────────────────────────── */
-
-const Wrap = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-`;
-
-const Header = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-`;
-
-const Title = styled.div`
-  color: #191f28;
-  font-size: 15px;
-  font-weight: 600;
-`;
 
 const StreakPill = styled.div<{ $active: boolean }>`
   padding: 3px 10px;

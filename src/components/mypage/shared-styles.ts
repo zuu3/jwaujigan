@@ -13,20 +13,20 @@ export const SectionHeader = styled.div`
   justify-content: space-between;
   gap: 12px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #E5E7EB;
+  border-bottom: 1px solid #e5e8eb;
 `;
 
 export const SectionKicker = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #191F28;
+  color: #191f28;
   font-size: 18px;
   font-weight: 700;
 `;
 
 export const SectionDate = styled.div`
-  color: #8B95A1;
+  color: #8b95a1;
   font-size: 14px;
   font-weight: 500;
 `;
@@ -36,12 +36,12 @@ export const EmptyState = styled.div`
   flex-direction: column;
   gap: 12px;
   padding: 32px 0;
-  border-top: 1px solid #E5E7EB;
+  border-top: 1px solid #e5e8eb;
 `;
 
 export const EmptyTitle = styled.h3`
   margin: 0;
-  color: #191F28;
+  color: #191f28;
   font-size: 18px;
   font-weight: 700;
 `;
@@ -63,14 +63,14 @@ export const PrimaryLink = styled(Link)`
   gap: 6px;
   border-radius: 8px;
   padding: 0 16px;
-  color: #FFFFFF;
-  background: #191F28;
+  color: #ffffff;
+  background: #3182f6;
   font-size: 14px;
   font-weight: 600;
-  transition: opacity 140ms ease-out;
+  transition: background 150ms ease-out;
 
   &:hover {
-    opacity: 0.88;
+    background: #2272eb;
   }
 `;
 

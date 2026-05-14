@@ -62,7 +62,7 @@ export function PoliticalProfileSection({
         </>
       ) : (
         <EmptyState>
-          <EmptyTitle>나의 정치 성향이 궁금하지 않으세요?</EmptyTitle>
+          <EmptyTitle>아직 정치 성향 분석을 하지 않았습니다.</EmptyTitle>
           <EmptyText>
             12문항에 답하면 경제·사회·안보 3축으로 분석한 나만의 성향 타입이
             나옵니다.
@@ -134,7 +134,7 @@ function PoliticalMap({ profile }: { profile: PoliticalProfile }) {
             y1={CHART_CENTER}
             x2={CHART_SIZE - CHART_PADDING}
             y2={CHART_CENTER}
-            stroke="#E5E7EB"
+            stroke="#e5e8eb"
             strokeWidth={1}
           />
           <line
@@ -142,33 +142,33 @@ function PoliticalMap({ profile }: { profile: PoliticalProfile }) {
             y1={CHART_PADDING}
             x2={CHART_CENTER}
             y2={CHART_SIZE - CHART_PADDING}
-            stroke="#E5E7EB"
+            stroke="#e5e8eb"
             strokeWidth={1}
           />
-          <text x={CHART_PADDING + 4} y={CHART_CENTER - 6} fontSize={11} fill="#8B95A1">
+          <text x={CHART_PADDING + 4} y={CHART_CENTER - 6} fontSize={11} fill="#8b95a1">
             진보
           </text>
           <text
             x={CHART_SIZE - CHART_PADDING - 4}
             y={CHART_CENTER - 6}
             fontSize={11}
-            fill="#8B95A1"
+            fill="#8b95a1"
             textAnchor="end"
           >
             보수
           </text>
-          <text x={CHART_CENTER + 4} y={CHART_PADDING + 12} fontSize={11} fill="#8B95A1">
+          <text x={CHART_CENTER + 4} y={CHART_PADDING + 12} fontSize={11} fill="#8b95a1">
             개방
           </text>
           <text
             x={CHART_CENTER + 4}
             y={CHART_SIZE - CHART_PADDING - 4}
             fontSize={11}
-            fill="#8B95A1"
+            fill="#8b95a1"
           >
             전통
           </text>
-          <circle cx={x} cy={y} r={10} fill="#3182F6" />
+          <circle cx={x} cy={y} r={10} fill="#3182f6" />
           <text
             x={x}
             y={y + 4}
@@ -191,7 +191,7 @@ function SecurityBar({ score }: { score: number }) {
   const fillRatio = Math.abs(clampedScore) / 100;
   const fillWidth = `${fillRatio * 50}%`;
   const fillLeft = isPositive ? `${50 - fillRatio * 50}%` : "50%";
-  const fillColor = isPositive ? "#3182F6" : "#E5484D";
+  const fillColor = isPositive ? "#3182f6" : "#e5484d";
 
   return (
     <AxisItem>
@@ -224,8 +224,6 @@ const PoliticalTypeBadge = styled.div`
   font-size: 12px;
   font-weight: 600;
   color: #8b95a1;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
 `;
 
 const PoliticalDetail = styled.div`
@@ -257,7 +255,7 @@ const PoliticalDetailToggle = styled.button`
 `;
 
 const PoliticalType = styled.div`
-  color: #191F28;
+  color: #191f28;
   font-size: 24px;
   font-weight: 700;
   line-height: 1.3;
@@ -283,7 +281,7 @@ const MapHeader = styled.div`
 `;
 
 const MapTitle = styled.div`
-  color: #191F28;
+  color: #191f28;
   font-size: 16px;
   font-weight: 600;
 `;
@@ -318,7 +316,7 @@ const AxisHeader = styled.div`
 `;
 
 const AxisTitle = styled.div`
-  color: #191F28;
+  color: #191f28;
   font-size: 16px;
   font-weight: 600;
 `;
@@ -334,7 +332,7 @@ const AxisTrack = styled.div`
   height: 8px;
   overflow: hidden;
   border-radius: 999px;
-  background: #F2F4F6;
+  background: #f2f4f6;
 `;
 
 const AxisCenter = styled.div`
@@ -343,7 +341,7 @@ const AxisCenter = styled.div`
   bottom: 0;
   left: 50%;
   width: 1px;
-  background: #E5E7EB;
+  background: #e5e8eb;
 `;
 
 const AxisFill = styled("div", {
@@ -363,7 +361,7 @@ const AxisLabels = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #8B95A1;
+  color: #8b95a1;
   font-size: 14px;
   font-weight: 500;
 `;

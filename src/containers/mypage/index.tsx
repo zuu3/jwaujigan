@@ -84,14 +84,6 @@ export function MyPageContainer({
     <Page>
       <AppHeader userName={profile.name} userImage={profile.image} />
       <Shell>
-        <Hero>
-          <HeroEyebrow>마이페이지</HeroEyebrow>
-          <HeroTitle>내 정치 성향과 토론 기록</HeroTitle>
-          <HeroDescription>
-            지역구, 성향 분석, AI 배틀 기록을 한 곳에서 관리하세요.
-          </HeroDescription>
-        </Hero>
-
         <ProfileSection>
           <Avatar aria-hidden="true">
             {profile.image ? (
@@ -138,6 +130,8 @@ export function MyPageContainer({
         </ProfileSection>
 
         <PoliticalProfileSection politicalProfile={politicalProfile} />
+        <ActivitySection activityData={activityData} />
+        <BattleSection battleLogs={battleLogs} />
         {activityData && (
           <>
             <StreakCalendar
@@ -148,9 +142,7 @@ export function MyPageContainer({
             <BadgesSection badges={activityData.badges} />
           </>
         )}
-        <BattleSection battleLogs={battleLogs} />
         <FollowingSection followedPoliticians={followedPoliticians} />
-        <ActivitySection activityData={activityData} />
       </Shell>
     </Page>
   );
@@ -163,7 +155,7 @@ const Page = styled.main`
   padding-bottom: 80px;
   color: #191f28;
   background: #ffffff;
-  animation: fadeIn 200ms ease-out;
+  animation: fadeIn 350ms cubic-bezier(0.0, 0.0, 0.2, 1);
 
   @keyframes fadeIn {
     from {
@@ -196,43 +188,14 @@ const Shell = styled.div`
   }
 `;
 
-const Hero = styled.section`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`;
-
-const HeroEyebrow = styled.div`
-  color: #4E5968;
-  font-size: 14px;
-  font-weight: 600;
-`;
-
-const HeroTitle = styled.h1`
-  margin: 0;
-  color: #191f28;
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 1.25;
-  word-break: keep-all;
-`;
-
-const HeroDescription = styled.p`
-  margin: 0;
-  color: #4E5968;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 1.6;
-`;
-
 const ProfileSection = styled.section`
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 16px;
   padding: 24px 0;
-  border-top: 1px solid #E5E7EB;
-  border-bottom: 1px solid #E5E7EB;
+  border-top: 1px solid #e5e8eb;
+  border-bottom: 1px solid #e5e8eb;
 
   @media (max-width: 720px) {
     grid-template-columns: auto minmax(0, 1fr);
@@ -343,8 +306,8 @@ const VisibilityLabel = styled.span`
 
 const Toggle = styled.button<{ $on: boolean }>`
   position: relative;
-  width: 36px;
-  height: 20px;
+  width: 44px;
+  height: 24px;
   border-radius: 9999px;
   border: none;
   cursor: pointer;
@@ -355,10 +318,10 @@ const Toggle = styled.button<{ $on: boolean }>`
 
 const ToggleThumb = styled.span<{ $on: boolean }>`
   position: absolute;
-  top: 2px;
-  left: ${({ $on }) => ($on ? "18px" : "2px")};
-  width: 16px;
-  height: 16px;
+  top: 3px;
+  left: ${({ $on }) => ($on ? "23px" : "3px")};
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: #ffffff;
   transition: left 150ms;
