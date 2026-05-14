@@ -4,7 +4,6 @@ import styled from "@emotion/styled";
 import { CheckCircle2, Clock, Landmark, User, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { AppHeader } from "@/components/app-header";
 
 type IssueItem = {
   id: string;
@@ -58,7 +57,6 @@ export function IssuesListContainer({ initialIssues, initialNextCursor }: Issues
 
   return (
     <Page>
-      <AppHeader />
       <Shell>
         <PageHeader>
           <PageTitle>이슈</PageTitle>

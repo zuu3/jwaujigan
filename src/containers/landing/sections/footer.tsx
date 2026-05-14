@@ -27,6 +27,9 @@ export function LandingFooter({ isAuthenticated }: LandingFooterProps) {
         <FooterDisclaimer>
           AI 결과는 참고용 정보이며 최종 판단을 대신하지 않습니다.
         </FooterDisclaimer>
+        <FooterLinks>
+          <FooterLink href="/privacy">개인정보처리방침</FooterLink>
+        </FooterLinks>
       </FooterInner>
     </Footer>
   );
@@ -106,6 +109,24 @@ const FooterText = styled.p`
   line-height: 1.55;
   letter-spacing: -0.01em;
   word-break: keep-all;
+`;
+
+const FooterLinks = styled.div`
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+`;
+
+const FooterLink = styled(Link)`
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:hover {
+    color: var(--sub);
+  }
 `;
 
 const FooterDisclaimer = styled.p`

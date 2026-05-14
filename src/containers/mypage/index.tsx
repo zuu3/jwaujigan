@@ -5,7 +5,6 @@ import { Globe, Link2, Lock, MapPin, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { AppHeader } from "@/components/app-header";
 import type {
   MyPageProfile,
   PoliticalProfile,
@@ -82,7 +81,6 @@ export function MyPageContainer({
 
   return (
     <Page>
-      <AppHeader userName={profile.name} userImage={profile.image} />
       <Shell>
         <ProfileSection>
           <Avatar aria-hidden="true">

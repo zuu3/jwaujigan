@@ -4,7 +4,6 @@ import styled from "@emotion/styled";
 import { ArrowLeft, CheckCircle2, Clock, ExternalLink, HelpCircle, Landmark, Swords, User, X, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { AppHeader } from "@/components/app-header";
 import type { HotIssue, IssueVoteCounts, IssueVoteStance } from "@/types/issue";
 
 type IssueDetailContainerProps = {
@@ -90,7 +89,6 @@ export function IssueDetailContainer({ issue: initialIssue, initialBodyText }: I
 
   return (
     <Page>
-      <AppHeader />
       <Shell>
         <BackLink href="/arena">
           <ArrowLeft size={16} />

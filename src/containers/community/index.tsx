@@ -4,7 +4,6 @@ import { useState, useId } from "react";
 import styled from "@emotion/styled";
 import Link from "next/link";
 import { Plus, Trash2, X } from "lucide-react";
-import { AppHeader } from "@/components/app-header";
 import {
   usePollsQuery,
   useCreatePollMutation,
@@ -94,7 +93,6 @@ export function CommunityContainer() {
 
   return (
     <Page>
-      <AppHeader />
       <Shell>
         <PageHeader>
           <PageTitle>민심투표</PageTitle>

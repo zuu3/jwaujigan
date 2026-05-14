@@ -5,7 +5,6 @@ import { ArrowRight, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { Session } from "next-auth";
-import { AppHeader } from "@/components/app-header";
 import { useIssues } from "@/services/issues/issues.queries";
 import { useVoteIssue } from "@/services/issues/issues.mutations";
 import { useUserProfile } from "@/services/user/user.queries";
@@ -86,7 +85,6 @@ export function HomeContainer({ session }: HomeContainerProps) {
   const issuesQuery = useIssues();
 
   const displayName = profileQuery.data?.name ?? session.user.name ?? null;
-  const displayImage = profileQuery.data?.image ?? session.user.image ?? null;
   const district = profileQuery.data?.district ?? session.user.district ?? null;
   const hasPoliticalProfile =
     profileQuery.data?.hasPoliticalProfile ?? session.user.hasPoliticalProfile;
@@ -128,7 +126,6 @@ export function HomeContainer({ session }: HomeContainerProps) {
 
   return (
     <Page>
-      <AppHeader userName={displayName} userImage={displayImage} />
 
       <Main>
         <MotionIntro>

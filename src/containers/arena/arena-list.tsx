@@ -3,7 +3,6 @@
 import styled from "@emotion/styled";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { AppHeader } from "@/components/app-header";
 import type { HotIssue } from "@/types/issue";
 
 type ArenaIndexProps = {
@@ -14,12 +13,6 @@ type ArenaIndexProps = {
 export function ArenaIndex({ issues, isAuthenticated }: ArenaIndexProps) {
   return (
     <Page>
-      {isAuthenticated ? <AppHeader /> : (
-        <GuestNav>
-          <Brand href="/home">좌우지간</Brand>
-          <GuestNavLink href="/">로그인</GuestNavLink>
-        </GuestNav>
-      )}
       <Shell>
         {!isAuthenticated ? (
           <LoginBanner>
@@ -136,47 +129,6 @@ const Shell = styled.div`
   }
 `;
 
-const GuestNav = styled.nav`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  width: min(100%, 1160px);
-  min-height: 56px;
-  margin: 0 auto;
-  padding: 0 24px;
-  border-bottom: 1px solid #f2f4f6;
-
-  @media (max-width: 640px) {
-    padding: 0 20px;
-  }
-`;
-
-const Brand = styled(Link)`
-  color: #191f28;
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-`;
-
-const GuestNavLink = styled(Link)`
-  display: inline-flex;
-  min-height: 36px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 14px;
-  border: 1px solid #e5e8eb;
-  border-radius: 6px;
-  color: #4e5968;
-  font-size: 13px;
-  font-weight: 500;
-  transition: border-color 120ms, color 120ms;
-
-  &:hover {
-    border-color: #b0b8c1;
-    color: #191f28;
-  }
-`;
 
 const LoginBanner = styled.div`
   display: flex;

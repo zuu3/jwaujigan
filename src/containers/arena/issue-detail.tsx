@@ -3,7 +3,6 @@
 import styled from "@emotion/styled";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { AppHeader } from "@/components/app-header";
 import { memo, useEffect, useState } from "react";
 import type { HotIssue } from "@/types/issue";
 
@@ -78,7 +77,6 @@ export function ArenaIssueDetail({ issue }: IssueDetailProps) {
 
   return (
     <Page>
-      <AppHeader />
       <Shell>
         <BackLink href="/arena">
           <ArrowLeft size={16} />

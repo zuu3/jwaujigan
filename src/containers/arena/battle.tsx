@@ -3,7 +3,6 @@
 import styled from "@emotion/styled";
 import { ArrowLeft, RotateCcw, Share2, Swords } from "lucide-react";
 import Link from "next/link";
-import { AppHeader } from "@/components/app-header";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { CachedArenaBattle } from "@/lib/arena";
