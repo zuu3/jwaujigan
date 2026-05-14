@@ -40,11 +40,20 @@ export async function GET() {
     }
   }
 
-  // 초대 수 조회
-  const { count } = await supabase
-    .from("referrals" as "users")
-    .select("id", { count: "exact", head: true })
-    .eq("referrer_id" as "id", userId);
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const [{ count }, { count: todayCount }] = await Promise.all([
+    supabase
+      .from("referrals" as "users")
+      .select("id", { count: "exact", head: true })
+      .eq("referrer_id" as "id", userId),
+    supabase
+      .from("referrals" as "users")
+      .select("id", { count: "exact", head: true })
+      .eq("referrer_id" as "id", userId)
+      .gte("completed_at" as "id", todayStart.toISOString()),
+  ]);
 
   const referralUrl = `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/?ref=${code}`;
 
@@ -52,5 +61,6 @@ export async function GET() {
     code,
     referralUrl,
     count: count ?? 0,
+    todayCount: todayCount ?? 0,
   });
 }

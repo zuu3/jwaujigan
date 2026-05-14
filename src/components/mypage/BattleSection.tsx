@@ -93,7 +93,6 @@ const StatsRow = styled.div`
   align-items: center;
   gap: 16px;
   padding: 20px 0;
-  border-top: 1px solid #e5e8eb;
   border-bottom: 1px solid #e5e8eb;
 
   @media (max-width: 480px) {

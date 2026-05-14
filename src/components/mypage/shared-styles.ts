@@ -36,7 +36,6 @@ export const EmptyState = styled.div`
   flex-direction: column;
   gap: 12px;
   padding: 32px 0;
-  border-top: 1px solid #e5e8eb;
 `;
 
 export const EmptyTitle = styled.h3`

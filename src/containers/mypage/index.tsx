@@ -42,6 +42,7 @@ export function MyPageContainer({
   const [followedPoliticians, setFollowedPoliticians] = useState<FollowedPolitician[] | null>(null);
   const [copied, setCopied] = useState(false);
   const [referralCount, setReferralCount] = useState<number | null>(null);
+  const [referralTodayCount, setReferralTodayCount] = useState<number | null>(null);
   const profileQuery = useUserProfile();
   const queryClient = useQueryClient();
   const isPublic = profileQuery.data?.is_public ?? true;
@@ -64,14 +65,25 @@ export function MyPageContainer({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleInvite = async () => {
+  const fetchReferralInfo = async () => {
     const res = await fetch("/api/me/referral");
-    if (!res.ok) {
+    if (!res.ok) return;
+    const data = await res.json() as { code: string; referralUrl: string; count: number; todayCount: number };
+    setReferralCount(data.count);
+    setReferralTodayCount(data.todayCount);
+    return data;
+  };
+
+  const handleInvite = async () => {
+    if (referralTodayCount !== null && referralTodayCount >= 3) {
+      showToast("오늘 초대 한도(3명)에 도달했어요. 내일 다시 시도하세요.", "error");
+      return;
+    }
+    const data = await fetchReferralInfo();
+    if (!data) {
       showToast("초대 링크를 불러오지 못했어요.", "error");
       return;
     }
-    const data = await res.json() as { code: string; referralUrl: string; count: number };
-    setReferralCount(data.count);
     const shareData = { title: "좌우지간 — 선동 없는 정치 정보", url: data.referralUrl };
     if (navigator.share && navigator.canShare?.(shareData)) {
       await navigator.share(shareData);
@@ -81,7 +93,12 @@ export function MyPageContainer({
     }
   };
 
-useEffect(() => {
+  useEffect(() => {
+    void fetchReferralInfo();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     const controller = new AbortController();
     fetch("/api/politicians/follows", { signal: controller.signal })
       .then((r) => r.json() as Promise<{ follows: FollowedPolitician[] }>)
@@ -103,26 +120,29 @@ useEffect(() => {
     <Page>
       <Shell>
         <ProfileSection>
-          <Avatar aria-hidden="true">
-            {profile.image ? (
-              <AvatarImage src={profile.image} alt="" width={56} height={56} />
-            ) : (
-              getInitial(profile.name, profile.email)
-            )}
-          </Avatar>
-          <ProfileContent>
-            <ProfileName>{profile.name ?? "사용자"}</ProfileName>
-            <ProfileEmail>{profile.email}</ProfileEmail>
-            <DistrictLine>
-              <MapPin size={14} />
-              <span>{profile.district ?? "지역구 미설정"}</span>
-            </DistrictLine>
-            <PointsBadge points={profileQuery.data?.points ?? profile.points} />
-          </ProfileContent>
-          <ProfileActions>
+          <ProfileTop>
+            <Avatar aria-hidden="true">
+              {profile.image ? (
+                <AvatarImage src={profile.image} alt="" width={56} height={56} />
+              ) : (
+                getInitial(profile.name, profile.email)
+              )}
+            </Avatar>
+            <ProfileContent>
+              <ProfileName>{profile.name ?? "사용자"}</ProfileName>
+              <ProfileEmail>{profile.email}</ProfileEmail>
+              <DistrictLine>
+                <MapPin size={13} />
+                <span>{profile.district ?? "지역구 미설정"}</span>
+              </DistrictLine>
+              <PointsBadge points={profileQuery.data?.points ?? profile.points} />
+            </ProfileContent>
+          </ProfileTop>
+
+          <ProfileActionBar>
             <VisibilityRow>
               <VisibilityLabel>
-                {isPublic ? <Globe size={14} /> : <Lock size={14} />}
+                {isPublic ? <Globe size={13} /> : <Lock size={13} />}
                 <span>{isPublic ? "공개" : "비공개"}</span>
               </VisibilityLabel>
               <Toggle
@@ -134,21 +154,36 @@ useEffect(() => {
                 <ToggleThumb $on={isPublic} />
               </Toggle>
             </VisibilityRow>
+
+            <ActionDivider aria-hidden="true" />
+
             {isPublic && userId && (
-              <CopyButton type="button" onClick={() => void handleCopyLink()}>
+              <ChipButton type="button" onClick={() => void handleCopyLink()}>
                 <Link2 size={14} />
                 <span>{copied ? "복사됨" : "링크 복사"}</span>
-              </CopyButton>
+              </ChipButton>
             )}
-            <CopyButton type="button" onClick={() => void handleInvite()}>
+            <ChipButton
+              type="button"
+              onClick={() => void handleInvite()}
+              disabled={referralTodayCount !== null && referralTodayCount >= 3}
+            >
               <Gift size={14} />
-              <span>친구 초대{referralCount !== null && referralCount > 0 ? ` · ${referralCount}명` : ""}</span>
-            </CopyButton>
-            <ProfileAction href="/onboarding">
-              <RotateCcw size={14} />
-              <span>온보딩 다시 하기</span>
-            </ProfileAction>
-          </ProfileActions>
+              <span>
+                친구 초대
+                {referralTodayCount !== null
+                  ? ` · 오늘 ${referralTodayCount}/3명`
+                  : referralCount !== null && referralCount > 0
+                    ? ` · ${referralCount}명`
+                    : ""}
+              </span>
+            </ChipButton>
+
+            <ResetLink href="/onboarding">
+              <RotateCcw size={13} />
+              <span>성향 재검사</span>
+            </ResetLink>
+          </ProfileActionBar>
         </ProfileSection>
 
         <PoliticalProfileSection politicalProfile={politicalProfile} />
@@ -214,17 +249,18 @@ const Shell = styled.div`
 `;
 
 const ProfileSection = styled.section`
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   padding: 24px 0;
   border-top: 1px solid #e5e8eb;
   border-bottom: 1px solid #e5e8eb;
+`;
 
-  @media (max-width: 720px) {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
+const ProfileTop = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
 `;
 
 const Avatar = styled.div`
@@ -277,40 +313,37 @@ const DistrictLine = styled.div`
   font-weight: 500;
 `;
 
-const ProfileAction = styled(Link)`
-  display: inline-flex;
-  min-height: 44px;
+const ProfileActionBar = styled.div`
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  border-radius: 8px;
-  padding: 0 16px;
-  color: #ffffff;
-  background: #191f28;
-  font-size: 14px;
-  font-weight: 600;
-  transition: opacity 140ms ease-out;
-
-  &:hover {
-    opacity: 0.88;
-  }
-
-  @media (max-width: 720px) {
-    grid-column: 1 / -1;
-  }
+  gap: 8px;
+  flex-wrap: wrap;
 `;
 
-const ProfileActions = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
+const ActionDivider = styled.div`
+  width: 1px;
+  height: 16px;
+  background: #e5e8eb;
+  flex-shrink: 0;
+`;
 
-  @media (max-width: 720px) {
-    grid-column: 1 / -1;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
+const ResetLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  color: #8b95a1;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 150ms;
+
+  &:hover {
+    color: #4e5968;
+  }
+
+  @media (max-width: 480px) {
+    margin-left: 0;
   }
 `;
 
@@ -352,12 +385,12 @@ const ToggleThumb = styled.span<{ $on: boolean }>`
   transition: left 150ms;
 `;
 
-const CopyButton = styled.button`
+const ChipButton = styled.button`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 32px;
-  padding: 0 12px;
+  height: 36px;
+  padding: 0 14px;
   border-radius: 8px;
   border: 1px solid #e5e8eb;
   background: #ffffff;
@@ -366,11 +399,16 @@ const CopyButton = styled.button`
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: all 150ms;
+  transition: border-color 150ms, color 150ms;
 
-  &:hover {
+  &:hover:not(:disabled) {
     border-color: #3182f6;
     color: #3182f6;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
 `;
 
