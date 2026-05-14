@@ -66,7 +66,6 @@ function normalizeGeneratedIssue(raw: Partial<GeneratedIssueCard>): GeneratedIss
     conservative: compact(raw.conservative),
   };
 
-  // 필수 필드 누락 시 명시적 에러
   if (!normalized.title || !normalized.summary || !normalized.body) {
     throw new Error(
       `Gemini 응답에 필수 필드 누락: title=${!!normalized.title}, summary=${!!normalized.summary}, body=${!!normalized.body}`,
@@ -123,7 +122,7 @@ export async function buildIssueFromBill(bill: AssemblyIssueBill): Promise<Issue
   const text = result.response.text();
   const parsed = JSON.parse(text) as Partial<GeneratedIssueCard>;
   const normalized = normalizeGeneratedIssue(parsed);
-  const expiresAt = new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString();
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
   return {
     title: normalized.title,

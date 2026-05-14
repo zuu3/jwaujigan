@@ -1,7 +1,7 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { ArrowLeft, ExternalLink, HelpCircle, Swords, X } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, ExternalLink, HelpCircle, Landmark, Swords, User, X, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { AppHeader } from "@/components/app-header";
@@ -180,27 +180,29 @@ export function IssueDetailContainer({ issue: initialIssue, initialBodyText }: I
             <MetaRow>
               {issue.proposer && (
                 <MetaItem>
-                  <MetaLabel>제안자</MetaLabel>
+                  <MetaIcon><User size={12} /></MetaIcon>
                   <MetaValue>{issue.proposer}</MetaValue>
                 </MetaItem>
               )}
               {issue.committee && (
                 <MetaItem>
-                  <MetaLabel>소관위원회</MetaLabel>
+                  <MetaIcon><Landmark size={12} /></MetaIcon>
                   <MetaValue>{issue.committee}</MetaValue>
                 </MetaItem>
               )}
               {issue.published_at && (
                 <MetaItem>
-                  <MetaLabel>제안일</MetaLabel>
+                  <MetaIcon><Clock size={12} /></MetaIcon>
                   <MetaValue>{formatDate(issue.published_at)}</MetaValue>
                 </MetaItem>
               )}
               {issue.bill_status && (
-                <MetaItem>
-                  <MetaLabel>법안 상태</MetaLabel>
-                  <StatusChip $status={issue.bill_status}>{issue.bill_status}</StatusChip>
-                </MetaItem>
+                <StatusChip $status={issue.bill_status}>
+                  {issue.bill_status === "통과" && <CheckCircle2 size={12} />}
+                  {issue.bill_status === "폐기" && <XCircle size={12} />}
+                  {issue.bill_status === "계류 중" && <Clock size={12} />}
+                  {issue.bill_status}
+                </StatusChip>
               )}
               {issue.source_url && (
                 <MetaSourceLink href={issue.source_url} target="_blank" rel="noopener noreferrer">
@@ -508,10 +510,11 @@ const MetaItem = styled.div`
   gap: 6px;
 `;
 
-const MetaLabel = styled.span`
+const MetaIcon = styled.span`
+  display: inline-flex;
+  align-items: center;
   color: #8b95a1;
-  font-size: 12px;
-  font-weight: 600;
+  flex-shrink: 0;
 `;
 
 const MetaValue = styled.span`
@@ -523,17 +526,18 @@ const MetaValue = styled.span`
 const StatusChip = styled.span<{ $status: string }>`
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
+  gap: 4px;
+  padding: 3px 8px;
   border-radius: 4px;
   font-size: 12px;
   font-weight: 600;
   background: ${({ $status }) =>
-    $status === "통과" ? "#03b26c18" :
-    $status === "폐기" ? "#8b95a118" :
-    "#fe980018"};
+    $status === "통과" ? "#e8f3ff" :
+    $status === "폐기" ? "#fef2f2" :
+    "#fff7e6"};
   color: ${({ $status }) =>
-    $status === "통과" ? "#03b26c" :
-    $status === "폐기" ? "#8b95a1" :
+    $status === "통과" ? "#3182f6" :
+    $status === "폐기" ? "#e5484d" :
     "#fe9800"};
 `;
 

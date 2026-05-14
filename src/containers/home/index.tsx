@@ -254,6 +254,10 @@ export function HomeContainer({ session }: HomeContainerProps) {
                   <SectionCount>{issues.length}건</SectionCount>
                 ) : null}
               </SectionTitleRow>
+              <AllIssuesLink href="/issues">
+                전체 보기
+                <ArrowRight size={13} />
+              </AllIssuesLink>
             </SectionMeta>
             {issues.length > 0 ? (
               <BalanceToggle
@@ -600,6 +604,20 @@ const SectionCount = styled.span`
   color: #4e5968;
   font-size: 14px;
   font-weight: 600;
+`;
+
+const AllIssuesLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #8b95a1;
+  transition: color 120ms;
+
+  &:hover {
+    color: #3182f6;
+  }
 `;
 
 const PoliticianList = styled.div`

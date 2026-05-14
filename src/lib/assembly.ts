@@ -94,7 +94,7 @@ export type AssemblyIssueBill = {
 };
 
 function mapBillStatus(procResult: string | undefined): string | null {
-  if (!procResult?.trim()) return null;
+  if (!procResult?.trim()) return "계류 중";
   const v = procResult.trim();
   if (v.includes("가결")) return "통과";
   if (v.includes("부결") || v.includes("폐기") || v.includes("철회")) return "폐기";

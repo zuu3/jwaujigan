@@ -1,7 +1,7 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronDown, Clock, Landmark, User, XCircle } from "lucide-react";
 import Link from "next/link";
 import type { HotIssue, IssueVoteStance } from "@/types/issue";
 import { TendencySection } from "@/containers/community/tendency-section";
@@ -74,17 +74,24 @@ export function IssueCard({
             <IssueBodyMeta>
               {issue.bill_status ? (
                 <BillStatusBadge $status={issue.bill_status}>
+                  {issue.bill_status === "통과" && <CheckCircle2 size={11} />}
+                  {issue.bill_status === "폐기" && <XCircle size={11} />}
+                  {issue.bill_status === "계류 중" && <Clock size={11} />}
                   {issue.bill_status}
                 </BillStatusBadge>
               ) : null}
               {issue.committee ? (
-                <IssueMetaChip>{issue.committee}</IssueMetaChip>
+                <IssueMetaChip>
+                  <Landmark size={11} />
+                  {issue.committee}
+                </IssueMetaChip>
               ) : null}
               {issue.proposer ? (
                 <IssueMetaChip
                   $dim={!followedNames.has(issue.proposer)}
                   $followed={followedNames.has(issue.proposer)}
                 >
+                  <User size={11} />
                   {followedNames.has(issue.proposer) ? "★ " : ""}{issue.proposer}
                 </IssueMetaChip>
               ) : null}
@@ -262,27 +269,31 @@ const IssueBodyMeta = styled.div`
 `;
 
 const BillStatusBadge = styled.span<{ $status: string }>`
-  display: inline-block;
-  padding: 2px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
   border-radius: 4px;
   font-size: 12px;
   font-weight: 600;
-  line-height: 18px;
+  line-height: 1;
   background: ${({ $status }) =>
-    $status === "통과" ? "#e8f3ff" : $status === "폐기" ? "#fef2f2" : "#f2f4f6"};
+    $status === "통과" ? "#e8f3ff" : $status === "폐기" ? "#fef2f2" : "#fff7e6"};
   color: ${({ $status }) =>
-    $status === "통과" ? "#3182f6" : $status === "폐기" ? "#e5484d" : "#6b7684"};
+    $status === "통과" ? "#3182f6" : $status === "폐기" ? "#e5484d" : "#fe9800"};
 `;
 
 const IssueMetaChip = styled.span<{ $dim?: boolean; $followed?: boolean }>`
-  display: inline-block;
-  padding: 2px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
   border-radius: 4px;
   background: ${({ $followed }) => ($followed ? "#e8f3ff" : "#f2f4f6")};
   color: ${({ $followed, $dim }) => ($followed ? "#3182f6" : $dim ? "#8b95a1" : "#6b7684")};
   font-size: 12px;
   font-weight: ${({ $followed }) => ($followed ? 600 : 500)};
-  line-height: 18px;
+  line-height: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

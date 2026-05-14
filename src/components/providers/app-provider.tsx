@@ -2,6 +2,7 @@
 
 import { type ReactNode, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { SessionProvider } from "next-auth/react";
 import { Global } from "@emotion/react";
 import NextTopLoader from "nextjs-toploader";
 import { EmotionRegistry } from "./emotion-registry";
@@ -36,7 +37,9 @@ export function AppProvider({ children }: AppProviderProps) {
         speed={200}
         shadow={false}
       />
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <SessionProvider>
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      </SessionProvider>
     </EmotionRegistry>
   );
 }

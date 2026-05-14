@@ -4,7 +4,8 @@ import styled from "@emotion/styled";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, MessagesSquare, Swords, User } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { FileText, Home, MessagesSquare, Swords, User } from "lucide-react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 
 type AppHeaderProps = {
@@ -18,6 +19,10 @@ function getInitial(name: string | null | undefined, fallback = "U") {
 
 export function AppHeader({ userName, userImage }: AppHeaderProps) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+
+  const resolvedName = userName ?? session?.user?.name;
+  const resolvedImage = userImage ?? session?.user?.image;
 
   return (
     <>
@@ -29,6 +34,7 @@ export function AppHeader({ userName, userImage }: AppHeaderProps) {
 
           <Nav aria-label="주요 메뉴">
             <NavLink href="/home" $active={pathname === "/home"}>홈</NavLink>
+            <NavLink href="/issues" $active={pathname.startsWith("/issues")}>이슈</NavLink>
             <NavLink href="/arena" $active={pathname.startsWith("/arena")}>아레나</NavLink>
             <NavLink href="/community" $active={pathname.startsWith("/community")}>커뮤니티</NavLink>
             <NavLink href="/mypage" $active={pathname === "/mypage"}>마이페이지</NavLink>
@@ -37,13 +43,13 @@ export function AppHeader({ userName, userImage }: AppHeaderProps) {
           <Actions>
             <ProfileChip href="/mypage" aria-label="마이페이지로 이동">
               <AvatarWrap aria-hidden="true">
-                {userImage ? (
-                  <AvatarImg src={userImage} alt="" width={28} height={28} />
+                {resolvedImage ? (
+                  <AvatarImg src={resolvedImage} alt="" width={28} height={28} />
                 ) : (
-                  getInitial(userName)
+                  getInitial(resolvedName)
                 )}
               </AvatarWrap>
-              <ProfileName>{userName ?? "사용자"}</ProfileName>
+              <ProfileName>{resolvedName ?? "사용자"}</ProfileName>
             </ProfileChip>
             <SignOutBtn callbackUrl="/" />
           </Actions>
@@ -54,6 +60,10 @@ export function AppHeader({ userName, userImage }: AppHeaderProps) {
         <BottomNavItem href="/home" $active={pathname === "/home"}>
           <Home size={22} aria-hidden="true" />
           <BottomNavLabel>홈</BottomNavLabel>
+        </BottomNavItem>
+        <BottomNavItem href="/issues" $active={pathname.startsWith("/issues")}>
+          <FileText size={22} aria-hidden="true" />
+          <BottomNavLabel>이슈</BottomNavLabel>
         </BottomNavItem>
         <BottomNavItem href="/arena" $active={pathname.startsWith("/arena")}>
           <Swords size={22} aria-hidden="true" />
