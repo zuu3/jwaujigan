@@ -8,6 +8,8 @@ import type { HotIssue, IssueVoteCounts } from "@/types/issue";
 
 export const dynamic = "force-dynamic";
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://jwj.zuu3.kr";
+
 type Props = { params: Promise<{ id: string }> };
 
 const ISSUE_SELECT =
@@ -80,9 +82,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const issue = await getIssue(id);
   if (!issue) return {};
+  const ogImage = `${BASE_URL}/api/og/issue?id=${id}`;
   return {
     title: `${issue.title} | 좌우지간`,
     description: issue.summary,
+    openGraph: {
+      images: [ogImage],
+    },
+    twitter: {
+      card: "summary_large_image",
+      images: [ogImage],
+    },
   };
 }
 

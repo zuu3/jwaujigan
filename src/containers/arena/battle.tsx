@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { CachedArenaBattle } from "@/lib/arena";
 import type { HotIssue } from "@/types/issue";
 import { showPointsToast } from "@/lib/points-toast";
+import { showToast } from "@/lib/toast";
 import { DAILY_BONUS, POINTS } from "@/services/points/points";
 
 export type DebateMessage = {
@@ -647,6 +648,7 @@ export function ArenaBattle({
                     } else {
                       await navigator.clipboard.writeText(url);
                       setShareCopied(true);
+                      showToast("링크가 복사됐어요.");
                       setTimeout(() => setShareCopied(false), 2000);
                     }
                   }}

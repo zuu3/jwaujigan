@@ -1,10 +1,11 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { ArrowLeft, CheckCircle2, Clock, ExternalLink, HelpCircle, Landmark, Swords, User, X, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, ExternalLink, HelpCircle, Landmark, Link2, Swords, User, X, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import type { HotIssue, IssueVoteCounts, IssueVoteStance } from "@/types/issue";
+import { showToast } from "@/lib/toast";
 
 type IssueDetailContainerProps = {
   issue: HotIssue;
@@ -49,6 +50,25 @@ export function IssueDetailContainer({ issue: initialIssue, initialBodyText }: I
 
   const { vote_counts: counts, user_vote } = issue;
   const hasMeta = issue.proposer || issue.committee || issue.bill_status || issue.published_at;
+
+  async function handleShare() {
+    const url = `${typeof window !== "undefined" ? window.location.origin : ""}/issues/${issue.id}`;
+    const title = issue.title;
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title, url });
+      } catch {
+        // user cancelled — no-op
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast("링크가 복사됐어요.");
+      } catch {
+        showToast("링크 복사에 실패했어요.", "error");
+      }
+    }
+  }
 
   async function handleVote(stance: IssueVoteStance) {
     if (isVoting) return;
@@ -99,14 +119,24 @@ export function IssueDetailContainer({ issue: initialIssue, initialBodyText }: I
           <Header>
             <TitleRow>
               <IssueTitle>{issue.title}</IssueTitle>
-              <MethodologyButton
-                type="button"
-                onClick={() => setIsMethodologyOpen((v) => !v)}
-                aria-expanded={isMethodologyOpen}
-                aria-label="이 콘텐츠가 어떻게 만들어졌는지 보기"
-              >
-                <HelpCircle size={18} />
-              </MethodologyButton>
+              <TitleActions>
+                <ShareButton
+                  type="button"
+                  onClick={() => void handleShare()}
+                  aria-label="이슈 공유하기"
+                >
+                  <Link2 size={15} />
+                  <span>공유</span>
+                </ShareButton>
+                <MethodologyButton
+                  type="button"
+                  onClick={() => setIsMethodologyOpen((v) => !v)}
+                  aria-expanded={isMethodologyOpen}
+                  aria-label="이 콘텐츠가 어떻게 만들어졌는지 보기"
+                >
+                  <HelpCircle size={18} />
+                </MethodologyButton>
+              </TitleActions>
             </TitleRow>
             <IssueSummary>{issue.summary}</IssueSummary>
           </Header>
@@ -355,6 +385,37 @@ const TitleRow = styled.div`
   display: flex;
   align-items: flex-start;
   gap: 8px;
+`;
+
+const TitleActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  flex-shrink: 0;
+`;
+
+const ShareButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #6b7684;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 140ms, border-color 140ms, color 140ms;
+
+  &:hover {
+    background: #f2f4f6;
+    border-color: #d1d6db;
+    color: #191f28;
+  }
 `;
 
 const MethodologyButton = styled.button`

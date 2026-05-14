@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { LandingFooter } from "./sections/footer";
 import { LandingHeader } from "./sections/header";
 import { HeroSection } from "./sections/hero";
@@ -15,6 +17,15 @@ type LandingContainerProps = {
 };
 
 export function LandingContainer({ isAuthenticated }: LandingContainerProps) {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) {
+      localStorage.setItem("referral_code", ref.trim().toUpperCase());
+    }
+  }, [searchParams]);
+
   return (
     <Page>
       <LandingHeader isAuthenticated={isAuthenticated} />

@@ -315,6 +315,20 @@ export function OnboardingContainer({
         throw new Error("Failed to save political profile.");
       }
 
+      // 초대 코드가 localStorage에 있으면 referral complete 처리 (fire-and-forget)
+      const storedRefCode = typeof window !== "undefined"
+        ? localStorage.getItem("referral_code")
+        : null;
+      if (storedRefCode) {
+        void fetch("/api/me/referral/complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ referralCode: storedRefCode }),
+        }).then(() => {
+          localStorage.removeItem("referral_code");
+        }).catch(() => null);
+      }
+
       document.cookie = `${ONBOARDING_SKIP_COOKIE}=; path=/; max-age=0`;
       reset();
       router.push("/home");

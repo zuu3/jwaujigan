@@ -1,10 +1,11 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { Globe, Link2, Lock, MapPin, RotateCcw } from "lucide-react";
+import { Gift, Globe, Link2, Lock, MapPin, RotateCcw, Share2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { showToast } from "@/lib/toast";
 import type {
   MyPageProfile,
   PoliticalProfile,
@@ -40,6 +41,7 @@ export function MyPageContainer({
   const [activityData, setActivityData] = useState<ActivityResponse | null>(null);
   const [followedPoliticians, setFollowedPoliticians] = useState<FollowedPolitician[] | null>(null);
   const [copied, setCopied] = useState(false);
+  const [referralCount, setReferralCount] = useState<number | null>(null);
   const profileQuery = useUserProfile();
   const queryClient = useQueryClient();
   const isPublic = profileQuery.data?.is_public ?? true;
@@ -60,6 +62,35 @@ export function MyPageContainer({
     await navigator.clipboard.writeText(`${window.location.origin}/u/${userId}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleInvite = async () => {
+    const res = await fetch("/api/me/referral");
+    if (!res.ok) {
+      showToast("초대 링크를 불러오지 못했어요.", "error");
+      return;
+    }
+    const data = await res.json() as { code: string; referralUrl: string; count: number };
+    setReferralCount(data.count);
+    const shareData = { title: "좌우지간 — 선동 없는 정치 정보", url: data.referralUrl };
+    if (navigator.share && navigator.canShare?.(shareData)) {
+      await navigator.share(shareData);
+    } else {
+      await navigator.clipboard.writeText(data.referralUrl);
+      showToast("초대 링크가 복사됐어요.");
+    }
+  };
+
+  const handleShareProfile = async () => {
+    if (!userId) return;
+    const url = `${window.location.origin}/u/${userId}`;
+    const shareData = { title: "좌우지간 정치 성향 프로필", url };
+    if (navigator.share && navigator.canShare?.(shareData)) {
+      await navigator.share(shareData);
+    } else {
+      await navigator.clipboard.writeText(url);
+      showToast("프로필 링크가 복사됐어요.");
+    }
   };
 
   useEffect(() => {
@@ -116,11 +147,21 @@ export function MyPageContainer({
               </Toggle>
             </VisibilityRow>
             {isPublic && userId && (
-              <CopyButton type="button" onClick={() => void handleCopyLink()}>
-                <Link2 size={14} />
-                <span>{copied ? "복사됨" : "링크 복사"}</span>
-              </CopyButton>
+              <>
+                <CopyButton type="button" onClick={() => void handleCopyLink()}>
+                  <Link2 size={14} />
+                  <span>{copied ? "복사됨" : "링크 복사"}</span>
+                </CopyButton>
+                <CopyButton type="button" onClick={() => void handleShareProfile()}>
+                  <Share2 size={14} />
+                  <span>성향 공유</span>
+                </CopyButton>
+              </>
             )}
+            <CopyButton type="button" onClick={() => void handleInvite()}>
+              <Gift size={14} />
+              <span>친구 초대{referralCount !== null && referralCount > 0 ? ` · ${referralCount}명` : ""}</span>
+            </CopyButton>
             <ProfileAction href="/onboarding">
               <RotateCcw size={14} />
               <span>온보딩 다시 하기</span>
