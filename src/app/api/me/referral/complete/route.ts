@@ -63,11 +63,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "서버 오류가 발생했어요." }, { status: 500 });
   }
 
-  // 추천인에게 포인트 지급
-  await supabase.rpc("increment_user_points", {
-    p_user_id: referrer.id,
-    p_amount: REFERRAL_REWARD_POINTS,
-  });
+  // 추천인 + 피추천인 동시 포인트 지급
+  await Promise.all([
+    supabase.rpc("increment_user_points", {
+      p_user_id: referrer.id,
+      p_amount: REFERRAL_REWARD_POINTS,
+    }),
+    supabase.rpc("increment_user_points", {
+      p_user_id: referredId,
+      p_amount: REFERRAL_REWARD_POINTS,
+    }),
+  ]);
 
   return NextResponse.json({ ok: true });
 }

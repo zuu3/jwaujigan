@@ -1,14 +1,14 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { ArrowRight, Crosshair, Search } from "lucide-react";
+import { ArrowRight, CheckCircle2, Crosshair, Search } from "lucide-react";
+import React from "react";
 import {
   DISTRICT_AREA_OPTIONS,
   DISTRICT_PROVINCES,
   normalizeKoreanText,
   type DistrictAreaOption,
 } from "@/lib/districts/catalog";
-import { StatusLabel, StatusValue, StatusHint } from "./index";
 
 type GeolocationFailure = {
   code?: number;
@@ -69,18 +69,9 @@ export function getManualResultScore(
   const normalizedArea = normalizeKoreanText(option.areaLabel);
   const normalizedDistrict = normalizeKoreanText(option.districtLabel);
 
-  if (normalizedArea === normalizedQuery) {
-    return 4;
-  }
-
-  if (normalizedArea.startsWith(normalizedQuery)) {
-    return 3;
-  }
-
-  if (normalizedDistrict.startsWith(normalizedQuery)) {
-    return 2;
-  }
-
+  if (normalizedArea === normalizedQuery) return 4;
+  if (normalizedArea.startsWith(normalizedQuery)) return 3;
+  if (normalizedDistrict.startsWith(normalizedQuery)) return 2;
   return 1;
 }
 
@@ -99,7 +90,6 @@ async function resolveCurrentPosition() {
         maximumAge: 300_000,
       });
     }
-
     throw error;
   }
 }
@@ -117,6 +107,9 @@ export type DistrictStepProps = {
   manualMatches: DistrictAreaOption[];
   districtError: string | null;
   districtNotice: string | null;
+  referralCode: string;
+  referralAutoFilled: boolean;
+  onReferralCodeChange: (code: string) => void;
   onResolveLocation: () => Promise<void>;
   onManualDistrictSelect: (option: DistrictAreaOption) => Promise<void>;
   onProvinceChange: (province: string) => void;
@@ -137,6 +130,9 @@ export function DistrictStep({
   manualMatches,
   districtError,
   districtNotice,
+  referralCode,
+  referralAutoFilled,
+  onReferralCodeChange,
   onResolveLocation,
   onManualDistrictSelect,
   onProvinceChange,
@@ -146,341 +142,313 @@ export function DistrictStep({
   const isResolvingDistrict = isResolvingLocation || isSavingManualDistrict;
 
   return (
-    <>
-      <DistrictSection>
-        <DistrictMeta>
-          <DistrictTitle>현재 위치 또는 직접 검색</DistrictTitle>
-          <DistrictDescription>
-            위치가 잡히지 않으면 시/도와 행정동 이름으로 찾으세요.
-          </DistrictDescription>
-        </DistrictMeta>
+    <DistrictPanel>
+      {/* 1. GPS — primary path */}
+      <GpsButton
+        type="button"
+        onClick={() => void onResolveLocation()}
+        disabled={isResolvingDistrict}
+        $loading={isResolvingLocation}
+      >
+        <Crosshair size={18} />
+        {isResolvingLocation ? "위치 확인 중…" : "현재 위치로 찾기"}
+      </GpsButton>
 
-        <DistrictPanel>
-          <DistrictStatus>
-            <StatusLabel>현재 지역구</StatusLabel>
-            <StatusValue>{district ?? "설정되지 않음"}</StatusValue>
-            {resolvedAddress ? (
-              <StatusHint>{resolvedAddress}</StatusHint>
-            ) : initialDistrict ? (
-              <StatusHint>저장된 지역구를 그대로 사용할 수 있습니다.</StatusHint>
-            ) : (
-              <StatusHint>지역구를 정하면 다음 단계로 이동합니다.</StatusHint>
-            )}
-          </DistrictStatus>
+      {/* 2. Divider */}
+      <OrDivider>
+        <OrLine />
+        <OrText>또는</OrText>
+        <OrLine />
+      </OrDivider>
 
-          <SectionRow>
-            <SectionRowText>
-              <SectionRowTitle>현재 위치로 찾기</SectionRowTitle>
-              <SectionRowDescription>
-                브라우저 위치 권한을 허용하면 자동으로 선거구를 찾습니다.
-              </SectionRowDescription>
-            </SectionRowText>
-            <LocationButton
-              type="button"
-              onClick={() => void onResolveLocation()}
+      {/* 3. Manual search — secondary path */}
+      <ManualFinder>
+        <ManualFinderControls>
+          <ProvinceSelect
+            value={selectedProvince}
+            onChange={(e) => onProvinceChange(e.target.value)}
+            disabled={isResolvingDistrict}
+          >
+            <option value="all">전체 시/도</option>
+            {DISTRICT_PROVINCES.map((province) => (
+              <option key={province} value={province}>
+                {province}
+              </option>
+            ))}
+          </ProvinceSelect>
+
+          <SearchField>
+            <Search size={16} aria-hidden="true" />
+            <SearchInput
+              value={manualQuery}
+              onChange={(e) => onManualQueryChange(e.target.value)}
+              placeholder="행정동 검색 (예: 서교동, 해운대구)"
               disabled={isResolvingDistrict}
-            >
-              <Crosshair size={16} />
-              <span>
-                {isResolvingLocation ? "확인 중" : "위치 찾기"}
-              </span>
-            </LocationButton>
-          </SectionRow>
+            />
+          </SearchField>
+        </ManualFinderControls>
 
-          <ManualFinder>
-            <ManualFinderHeader>
-              <ManualFinderTitle>직접 찾기</ManualFinderTitle>
-              <ManualFinderDescription>
-                시/도와 동 이름을 입력하고 결과를 선택하세요.
-              </ManualFinderDescription>
-            </ManualFinderHeader>
-
-            <ManualFinderControls>
-              <ProvinceSelect
-                value={selectedProvince}
-                onChange={(event) => onProvinceChange(event.target.value)}
-                disabled={isResolvingDistrict}
-              >
-                <option value="all">전체 시/도</option>
-                {DISTRICT_PROVINCES.map((province) => (
-                  <option key={province} value={province}>
-                    {province}
-                  </option>
-                ))}
-              </ProvinceSelect>
-
-              <ManualSearchField>
-                <Search size={16} />
-                <ManualSearchInput
-                  value={manualQuery}
-                  onChange={(event) => onManualQueryChange(event.target.value)}
-                  placeholder="예: 서교동, 분당동, 해운대구"
+        {normalizedManualQuery && (
+          manualMatches.length > 0 ? (
+            <ResultList>
+              {manualMatches.map((option) => (
+                <ResultButton
+                  key={option.id}
+                  type="button"
+                  onClick={() => void onManualDistrictSelect(option)}
                   disabled={isResolvingDistrict}
-                />
-              </ManualSearchField>
-            </ManualFinderControls>
+                  $selected={district === option.district}
+                >
+                  <ResultText>
+                    <ResultArea>{option.areaLabel}</ResultArea>
+                    <ResultMeta>
+                      {[option.province, option.districtLabel].filter(Boolean).join(" · ")}
+                    </ResultMeta>
+                  </ResultText>
+                  <ResultBadge $selected={district === option.district}>
+                    {savingManualOptionId === option.id
+                      ? "저장 중"
+                      : district === option.district
+                        ? "선택됨"
+                        : "선택"}
+                  </ResultBadge>
+                </ResultButton>
+              ))}
+            </ResultList>
+          ) : (
+            <EmptyState>
+              일치하는 행정동이 없습니다. 시/도를 바꾸거나 동 이름을 더 입력하세요.
+            </EmptyState>
+          )
+        )}
+      </ManualFinder>
 
-            {normalizedManualQuery ? (
-              manualMatches.length > 0 ? (
-                <ManualResultList>
-                  {manualMatches.map((option) => (
-                    <ManualResultButton
-                      key={option.id}
-                      type="button"
-                      onClick={() => void onManualDistrictSelect(option)}
-                      disabled={isResolvingDistrict}
-                    >
-                      <ManualResultText>
-                        <ManualResultArea>{option.areaLabel}</ManualResultArea>
-                        <ManualResultMeta>
-                          {[option.province, option.districtLabel]
-                            .filter(Boolean)
-                            .join(" · ")}
-                        </ManualResultMeta>
-                      </ManualResultText>
-                      <ManualResultAction
-                        $selected={district === option.district}
-                      >
-                        {savingManualOptionId === option.id
-                          ? "저장 중"
-                          : district === option.district
-                            ? "선택됨"
-                            : "선택"}
-                      </ManualResultAction>
-                    </ManualResultButton>
-                  ))}
-                </ManualResultList>
-              ) : (
-                <ManualEmptyState>
-                  일치하는 행정동이 없습니다. 시/도를 고르거나 동 이름을 더 입력하세요.
-                </ManualEmptyState>
-              )
-            ) : (
-              <ManualHint>
-                시/도와 동 이름을 함께 입력하면 더 빨리 찾을 수 있습니다.
-              </ManualHint>
-            )}
-          </ManualFinder>
+      {/* 4. Feedback */}
+      {districtError && <FeedbackText $type="error">{districtError}</FeedbackText>}
+      {districtNotice && !districtError && (
+        <FeedbackText $type="notice">{districtNotice}</FeedbackText>
+      )}
 
-          {districtNotice ? <HelperText>{districtNotice}</HelperText> : null}
-          {districtError ? <ErrorText>{districtError}</ErrorText> : null}
+      {/* 5. District confirmation chip */}
+      {district && (
+        <DistrictConfirm>
+          <CheckCircle2 size={16} />
+          <span>{district}</span>
+          {resolvedAddress && <DistrictAddress>{resolvedAddress}</DistrictAddress>}
+        </DistrictConfirm>
+      )}
 
-          <StepActionRow>
-            <NextStepHint>
-              {district
-                ? "선택한 지역구로 다음 단계로 이동합니다."
-                : "위치 찾기 또는 검색 결과를 먼저 선택하세요."}
-            </NextStepHint>
-            <PrimaryActionButton
-              type="button"
-              onClick={onContinueToQuestions}
-              disabled={!district || isResolvingDistrict}
-            >
-              다음
-              <ArrowRight size={16} />
-            </PrimaryActionButton>
-          </StepActionRow>
-        </DistrictPanel>
-      </DistrictSection>
-    </>
+      {/* 6. Referral */}
+      <ReferralSection>
+        <ReferralLabel htmlFor="district-referral-code">
+          추천인 코드 <ReferralOptional>(선택)</ReferralOptional>
+        </ReferralLabel>
+        {referralAutoFilled && (
+          <ReferralNotice>추천인 코드가 자동으로 채워졌어요.</ReferralNotice>
+        )}
+        <ReferralInput
+          id="district-referral-code"
+          type="text"
+          value={referralCode}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            onReferralCodeChange(e.target.value.toUpperCase())
+          }
+          placeholder="예: A1B2C3D4"
+          maxLength={8}
+          autoComplete="off"
+          spellCheck={false}
+        />
+      </ReferralSection>
+
+      {/* 7. CTA */}
+      <ContinueButton
+        type="button"
+        onClick={onContinueToQuestions}
+        disabled={!district || isResolvingDistrict}
+      >
+        다음
+        <ArrowRight size={18} />
+      </ContinueButton>
+    </DistrictPanel>
   );
 }
 
 export { getLocationErrorMessage, resolveCurrentPosition, MANUAL_MATCH_LIMIT };
 
-const DistrictSection = styled.section`
-  display: grid;
-  gap: 40px;
-  margin-bottom: 40px;
+// ─── Shared exports (used by QuestionsStep) ──────────────────────────────────
+
+export const StatusLabel = styled.div`
+  color: #8b95a1;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
-const DistrictMeta = styled.div`
-  display: grid;
-  gap: 8px;
-`;
-
-const DistrictTitle = styled.h2`
-  margin: 0;
+export const StatusValue = styled.div`
   color: #191f28;
   font-size: 18px;
   font-weight: 700;
-  line-height: 1.4;
-  word-break: keep-all;
 `;
 
-const DistrictDescription = styled.p`
-  margin: 0;
-  color: #4e5968;
-  font-size: 14px;
-  line-height: 1.55;
-  word-break: keep-all;
-`;
-
-const DistrictPanel = styled.div`
-  display: grid;
-  gap: 32px;
-`;
-
-const DistrictStatus = styled.div`
-  display: grid;
-  gap: 6px;
-  padding: 16px 0;
-  border-top: 1px solid #f2f4f6;
-  border-bottom: 1px solid #f2f4f6;
-`;
-
-const SectionRow = styled.section`
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 0;
-  border-bottom: 1px solid #f2f4f6;
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const SectionRowText = styled.div`
-  display: grid;
-  gap: 4px;
-`;
-
-const SectionRowTitle = styled.h3`
-  margin: 0;
-  color: #191f28;
-  font-size: 16px;
-  font-weight: 600;
-`;
-
-const SectionRowDescription = styled.p`
-  margin: 0;
+export const StatusHint = styled.div`
   color: #4e5968;
   font-size: 14px;
   line-height: 1.5;
-  word-break: keep-all;
 `;
 
-const LocationButton = styled.button`
-  display: inline-flex;
-  min-height: 44px;
+// ─── Styled components ────────────────────────────────────────────────────────
+
+const DistrictPanel = styled.div`
+  display: grid;
+  gap: 24px;
+  margin-bottom: 40px;
+`;
+
+const GpsButton = styled.button<{ $loading: boolean }>`
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 0 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  color: #191f28;
-  background: #ffffff;
-  font-size: 14px;
+  gap: 8px;
+  width: 100%;
+  height: 52px;
+  border: 0;
+  border-radius: 12px;
+  background: ${({ $loading }) => ($loading ? "#2272eb" : "#3182f6")};
+  color: #ffffff;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
+  transition: background 150ms;
 
   &:hover:enabled {
-    background: #f9fafb;
+    background: #2272eb;
   }
 
   &:disabled {
     cursor: not-allowed;
-    opacity: 0.6;
-  }
-
-  @media (max-width: 640px) {
-    width: 100%;
+    opacity: 0.7;
   }
 `;
 
-const ManualFinder = styled.section`
+const OrDivider = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const OrLine = styled.div`
+  flex: 1;
+  height: 1px;
+  background: #e5e8eb;
+`;
+
+const OrText = styled.span`
+  color: #b0b8c1;
+  font-size: 13px;
+  font-weight: 500;
+  flex-shrink: 0;
+`;
+
+const ManualFinder = styled.div`
   display: grid;
-  gap: 16px;
-`;
-
-const ManualFinderHeader = styled.div`
-  display: grid;
-  gap: 4px;
-`;
-
-const ManualFinderTitle = styled.h3`
-  margin: 0;
-  color: #191f28;
-  font-size: 16px;
-  font-weight: 600;
-`;
-
-const ManualFinderDescription = styled.p`
-  margin: 0;
-  color: #4e5968;
-  font-size: 14px;
-  line-height: 1.5;
-  word-break: keep-all;
+  gap: 8px;
 `;
 
 const ManualFinderControls = styled.div`
   display: grid;
-  grid-template-columns: minmax(140px, 200px) minmax(0, 1fr);
+  grid-template-columns: minmax(120px, 160px) minmax(0, 1fr);
   gap: 8px;
 
-  @media (max-width: 640px) {
+  @media (max-width: 480px) {
     grid-template-columns: 1fr;
   }
 `;
 
 const ProvinceSelect = styled.select`
-  min-height: 44px;
+  height: 44px;
   padding: 0 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e5e8eb;
   border-radius: 8px;
   color: #191f28;
-  background: #ffffff;
+  background: #f2f4f6;
   font-size: 14px;
+  font-family: inherit;
+  outline: none;
   appearance: none;
+
+  &:focus {
+    border-color: #3182f6;
+    background: #ffffff;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `;
 
-const ManualSearchField = styled.label`
+const SearchField = styled.label`
   display: flex;
-  min-height: 44px;
   align-items: center;
   gap: 8px;
+  height: 44px;
   padding: 0 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e5e8eb;
   border-radius: 8px;
-  color: #8b95a1;
-  background: #ffffff;
-`;
+  background: #f2f4f6;
+  color: #b0b8c1;
+  cursor: text;
 
-const ManualSearchInput = styled.input`
-  width: 100%;
-  border: 0;
-  color: #191f28;
-  background: transparent;
-  font-size: 14px;
-  outline: none;
-
-  &::placeholder {
+  &:focus-within {
+    border-color: #3182f6;
+    background: #ffffff;
     color: #8b95a1;
   }
 `;
 
-const ManualResultList = styled.div`
-  display: grid;
+const SearchInput = styled.input`
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: #191f28;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+
+  &::placeholder {
+    color: #b0b8c1;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
 `;
 
-const ManualResultButton = styled.button`
+const ResultList = styled.div`
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  overflow: hidden;
+`;
+
+const ResultButton = styled.button<{ $selected: boolean }>`
   display: flex;
   width: 100%;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 0;
+  padding: 14px 16px;
   border: 0;
   border-bottom: 1px solid #f2f4f6;
-  background: transparent;
+  background: ${({ $selected }) => ($selected ? "#e8f3ff" : "#ffffff")};
   text-align: left;
   cursor: pointer;
+  transition: background 100ms;
+
+  &:last-child {
+    border-bottom: 0;
+  }
 
   &:hover:enabled {
-    background: #f9fafb;
+    background: ${({ $selected }) => ($selected ? "#e8f3ff" : "#f9fafb")};
   }
 
   &:disabled {
@@ -489,103 +457,141 @@ const ManualResultButton = styled.button`
   }
 `;
 
-const ManualResultText = styled.div`
+const ResultText = styled.div`
   display: grid;
   gap: 2px;
 `;
 
-const ManualResultArea = styled.div`
+const ResultArea = styled.div`
   color: #191f28;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
 `;
 
-const ManualResultMeta = styled.div`
+const ResultMeta = styled.div`
   color: #8b95a1;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.4;
 `;
 
-const ManualResultAction = styled.div<{ $selected: boolean }>`
-  color: ${({ $selected }) => ($selected ? "#191f28" : "#4e5968")};
-  font-size: 14px;
-  font-weight: ${({ $selected }) => ($selected ? 700 : 500)};
-  white-space: nowrap;
+const ResultBadge = styled.div<{ $selected: boolean }>`
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  background: ${({ $selected }) => ($selected ? "#3182f6" : "#f2f4f6")};
+  color: ${({ $selected }) => ($selected ? "#ffffff" : "#6b7684")};
 `;
 
-const ManualHint = styled.div`
+const EmptyState = styled.div`
+  padding: 16px;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
   color: #8b95a1;
   font-size: 14px;
   line-height: 1.5;
-  word-break: keep-all;
+  text-align: center;
 `;
 
-const ManualEmptyState = styled.div`
-  padding: 14px 0;
-  color: #8b95a1;
+const FeedbackText = styled.div<{ $type: "error" | "notice" }>`
   font-size: 14px;
-  line-height: 1.5;
+  font-weight: 500;
+  color: ${({ $type }) => ($type === "error" ? "#f04452" : "#3182f6")};
 `;
 
-const StepActionRow = styled.div`
+const DistrictConfirm = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding-top: 24px;
-  border-top: 1px solid #f2f4f6;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #e8f3ff;
+  color: #3182f6;
+  font-size: 15px;
+  font-weight: 600;
+`;
 
-  @media (max-width: 640px) {
-    align-items: stretch;
-    flex-direction: column;
+const DistrictAddress = styled.span`
+  margin-left: auto;
+  color: #8b95a1;
+  font-size: 13px;
+  font-weight: 400;
+`;
+
+const ReferralSection = styled.div`
+  display: grid;
+  gap: 8px;
+  padding-top: 8px;
+`;
+
+const ReferralLabel = styled.label`
+  font-size: 14px;
+  font-weight: 600;
+  color: #4e5968;
+`;
+
+const ReferralOptional = styled.span`
+  font-weight: 400;
+  color: #b0b8c1;
+`;
+
+const ReferralNotice = styled.div`
+  font-size: 13px;
+  font-weight: 500;
+  color: #3182f6;
+`;
+
+const ReferralInput = styled.input`
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  background: #f2f4f6;
+  color: #191f28;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+
+  &::placeholder {
+    color: #b0b8c1;
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+
+  &:focus {
+    border-color: #3182f6;
+    background: #ffffff;
   }
 `;
 
-const NextStepHint = styled.div`
-  color: #8b95a1;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.5;
-`;
-
-const PrimaryActionButton = styled.button`
-  display: inline-flex;
-  min-height: 44px;
+const ContinueButton = styled.button`
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 0 20px;
+  gap: 8px;
+  width: 100%;
+  height: 56px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 12px;
+  background: #3182f6;
   color: #ffffff;
-  background: #191f28;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
+  transition: background 150ms;
 
   &:hover:enabled {
-    background: #333d4b;
+    background: #2272eb;
   }
 
   &:disabled {
-    color: #8b95a1;
-    background: #f2f4f6;
+    background: #e5e8eb;
+    color: #b0b8c1;
     cursor: not-allowed;
   }
-
-  @media (max-width: 640px) {
-    width: 100%;
-  }
-`;
-
-const HelperText = styled.div`
-  color: #3182f6;
-  font-size: 14px;
-  font-weight: 500;
-`;
-
-const ErrorText = styled.div`
-  color: #e5484d;
-  font-size: 14px;
-  font-weight: 500;
 `;

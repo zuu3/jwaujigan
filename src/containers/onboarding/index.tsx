@@ -120,10 +120,14 @@ export function OnboardingContainer({
   const [selectedProvince, setSelectedProvince] = useState("all");
   const [manualQuery, setManualQuery] = useState("");
   const [referralCode, setReferralCode] = useState("");
+  const [referralAutoFilled, setReferralAutoFilled] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("referral_code");
-    if (stored) setReferralCode(stored);
+    if (stored) {
+      setReferralCode(stored);
+      setReferralAutoFilled(true);
+    }
   }, []);
 
   const question = questions[currentIndex];
@@ -323,11 +327,19 @@ export function OnboardingContainer({
 
       const trimmedCode = referralCode.trim().toUpperCase();
       if (trimmedCode) {
-        void fetch("/api/me/referral/complete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ referralCode: trimmedCode }),
-        }).catch(() => null);
+        try {
+          const refRes = await fetch("/api/me/referral/complete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ referralCode: trimmedCode }),
+          });
+          const refData = await refRes.json() as { ok?: boolean; alreadyUsed?: boolean };
+          if (refData.ok && !refData.alreadyUsed) {
+            localStorage.setItem("referral_reward_pending", "50");
+          }
+        } catch {
+          // 포인트 지급 실패해도 온보딩은 완료
+        }
         localStorage.removeItem("referral_code");
       }
 
@@ -387,6 +399,9 @@ export function OnboardingContainer({
                 manualMatches={manualMatches}
                 districtError={districtError}
                 districtNotice={districtNotice}
+                referralCode={referralCode}
+                referralAutoFilled={referralAutoFilled}
+                onReferralCodeChange={setReferralCode}
                 onResolveLocation={handleResolveLocation}
                 onManualDistrictSelect={handleManualDistrictSelect}
                 onProvinceChange={setSelectedProvince}
@@ -415,21 +430,6 @@ export function OnboardingContainer({
                 onBackToDistrictStep={handleBackToDistrictStep}
               />
 
-              {isLastQuestion && (
-                <ReferralRow>
-                  <ReferralLabel htmlFor="referral-code">추천인 코드 (선택)</ReferralLabel>
-                  <ReferralInput
-                    id="referral-code"
-                    type="text"
-                    value={referralCode}
-                    onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                    placeholder="예: A1B2C3D4"
-                    maxLength={8}
-                    autoComplete="off"
-                    spellCheck={false}
-                  />
-                </ReferralRow>
-              )}
             </>
           )}
         </ContentInner>
@@ -437,40 +437,6 @@ export function OnboardingContainer({
     </Page>
   );
 }
-
-const ReferralRow = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 20px 0 0;
-  border-top: 1px solid #f2f4f6;
-  margin-top: 8px;
-`;
-
-const ReferralLabel = styled.label`
-  font-size: 13px;
-  font-weight: 600;
-  color: #8b95a1;
-`;
-
-const ReferralInput = styled.input`
-  height: 44px;
-  padding: 0 14px;
-  border: 1px solid #e5e8eb;
-  border-radius: 8px;
-  background: #f2f4f6;
-  color: #191f28;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  font-family: inherit;
-  outline: none;
-  width: 100%;
-  box-sizing: border-box;
-
-  &::placeholder { color: #b0b8c1; font-weight: 400; letter-spacing: 0; }
-  &:focus { border-color: #3182f6; background: #ffffff; }
-`;
 
 // Shared styled components — exported for use in DistrictStep and QuestionsStep
 export const StatusLabel = styled.div`

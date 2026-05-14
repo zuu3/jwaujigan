@@ -16,6 +16,7 @@ import type { HotIssue } from "@/types/issue";
 import { SearchBar } from "@/components/home/search";
 import { PoliticianCard } from "@/components/home/politician-card";
 import { IssueCard } from "@/components/home/issue-card";
+import { showToast } from "@/lib/toast";
 
 type HomeContainerProps = {
   session: Session;
@@ -80,6 +81,14 @@ export function HomeContainer({ session }: HomeContainerProps) {
     const t = setTimeout(() => setDebouncedQuery(searchQuery.trim()), 350);
     return () => clearTimeout(t);
   }, [searchQuery]);
+
+  useEffect(() => {
+    const points = localStorage.getItem("referral_reward_pending");
+    if (points) {
+      localStorage.removeItem("referral_reward_pending");
+      showToast(`추천인 코드 적용 완료! +${points}P 지급됐어요.`, "success");
+    }
+  }, []);
 
 const searchResultsQuery = useSearch(debouncedQuery);
   const profileQuery = useUserProfile();

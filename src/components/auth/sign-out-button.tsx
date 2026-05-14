@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentPropsWithoutRef, MouseEvent } from "react";
+import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 
 type SignOutButtonProps = ComponentPropsWithoutRef<"button"> & {
@@ -13,6 +14,8 @@ export function SignOutButton({
   type = "button",
   ...props
 }: SignOutButtonProps) {
+  const router = useRouter();
+
   const handleClick = async (event: MouseEvent<HTMLButtonElement>) => {
     onClick?.(event);
 
@@ -20,9 +23,9 @@ export function SignOutButton({
       return;
     }
 
-    await signOut({
-      callbackUrl,
-    });
+    await signOut({ redirect: false });
+    router.push(callbackUrl);
+    router.refresh();
   };
 
   return (
