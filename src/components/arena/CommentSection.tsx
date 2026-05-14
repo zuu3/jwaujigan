@@ -148,6 +148,10 @@ export function CommentSection({ endpoint }: Props) {
   const [editDraft, setEditDraft] = useState("");
   const [editSaving, setEditSaving] = useState(false);
 
+  // Delete confirm
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; parentId: string | null } | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   useEffect(() => {
     const controller = new AbortController();
     let active = true;
@@ -297,16 +301,24 @@ export function CommentSection({ endpoint }: Props) {
   const handleEditCancel = () => { setEditingId(null); setEditDraft(""); };
 
   // Delete
-  const handleDelete = async (id: string, parentId: string | null) => {
-    if (!confirm("댓글을 삭제할까요?")) return;
+  const handleDelete = (id: string, parentId: string | null) => {
+    setPendingDelete({ id, parentId });
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    const { id, parentId } = pendingDelete;
+    setDeleteLoading(true);
     const r = await fetch(`${endpoint}/${id}`, { method: "DELETE" });
+    setDeleteLoading(false);
+    setPendingDelete(null);
     if (r.ok || r.status === 204) {
       showToast("댓글을 삭제했어요.");
       if (parentId) {
         setComments((prev) =>
           prev.map((c) =>
             c.id === parentId
-              ? { ...c, replies: c.replies.filter((r) => r.id !== id) }
+              ? { ...c, replies: c.replies.filter((reply) => reply.id !== id) }
               : c
           )
         );
@@ -436,8 +448,33 @@ export function CommentSection({ endpoint }: Props) {
           )}
         </CommentList>
       )}
-    </Section>
 
+      {pendingDelete && (
+        <>
+          <DeleteBackdrop onClick={() => !deleteLoading && setPendingDelete(null)} />
+          <DeleteModal>
+            <DeleteModalTitle>댓글을 삭제할까요?</DeleteModalTitle>
+            <DeleteModalText>삭제한 댓글은 복구할 수 없습니다.</DeleteModalText>
+            <DeleteModalActions>
+              <DeleteCancelBtn
+                type="button"
+                disabled={deleteLoading}
+                onClick={() => setPendingDelete(null)}
+              >
+                취소
+              </DeleteCancelBtn>
+              <DeleteConfirmBtn
+                type="button"
+                disabled={deleteLoading}
+                onClick={() => void confirmDelete()}
+              >
+                {deleteLoading ? "삭제 중…" : "삭제"}
+              </DeleteConfirmBtn>
+            </DeleteModalActions>
+          </DeleteModal>
+        </>
+      )}
+    </Section>
   );
 }
 
@@ -761,4 +798,76 @@ const CommentCountSkeleton = styled.span`
   height: 18px;
   border-radius: 4px;
   ${shimmer}
+`;
+
+/* ── Delete confirm modal ─────────────────────────────────── */
+
+const DeleteBackdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(2, 9, 19, 0.5);
+`;
+
+const DeleteModal = styled.div`
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 101;
+  background: #ffffff;
+  border-radius: 16px;
+  width: min(100% - 40px, 320px);
+  padding: 24px 20px;
+  box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.16);
+`;
+
+const DeleteModalTitle = styled.h3`
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #191f28;
+  letter-spacing: -0.02em;
+`;
+
+const DeleteModalText = styled.p`
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: #6b7684;
+  line-height: 1.6;
+`;
+
+const DeleteModalActions = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const DeleteCancelBtn = styled.button`
+  flex: 1;
+  padding: 12px 0;
+  border-radius: 8px;
+  border: 1px solid #e5e8eb;
+  background: #ffffff;
+  color: #6b7684;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+`;
+
+const DeleteConfirmBtn = styled.button`
+  flex: 1;
+  padding: 12px 0;
+  border-radius: 8px;
+  border: none;
+  background: #f04452;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
 `;
