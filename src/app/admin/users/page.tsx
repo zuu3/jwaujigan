@@ -39,7 +39,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
 
       <UserSearch defaultValue={q ?? ""} />
 
-      <PointsForm users={users.map((u) => ({ id: u.id, email: u.email, name: u.name }))} />
+      <PointsForm />
 
       <div style={{ background: "#ffffff", border: "1px solid #e5e8eb", borderRadius: 12, overflow: "hidden", marginTop: 16 }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
