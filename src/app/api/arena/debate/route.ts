@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getGeminiModel } from "@/lib/gemini";
+import { getDailyBattleLimit, kstTodayStartISO } from "@/services/points/points";
+import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -223,6 +225,34 @@ export async function POST(request: Request) {
   }
 
   const body = (await request.json()) as DebateRequestBody;
+
+  // 배틀 첫 호출(round 1, progressive 선발)에서만 일일 한도 체크
+  if (body.round === 1 && body.speakerStance === "progressive") {
+    const supabase = createServiceRoleSupabaseClient();
+    const { data: userRow } = await supabase
+      .from("users")
+      .select("id, points")
+      .eq("email", session.user.email!)
+      .maybeSingle();
+
+    if (userRow) {
+      const dailyLimit = getDailyBattleLimit(userRow.points ?? 0);
+      if (dailyLimit !== Infinity) {
+        const { count } = await supabase
+          .from("battle_logs")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userRow.id)
+          .gte("created_at", kstTodayStartISO());
+
+        if ((count ?? 0) >= dailyLimit) {
+          return NextResponse.json(
+            { message: "daily_limit_reached", limit: dailyLimit },
+            { status: 429 },
+          );
+        }
+      }
+    }
+  }
 
   if (
     !body.issueId ||
