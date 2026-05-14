@@ -1,14 +1,20 @@
 import { requireAdmin } from "@/lib/admin";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 import { PointsForm } from "@/components/admin/points-form";
+import { UserSearch } from "@/components/admin/user-search";
 
-async function getUsers() {
+async function getUsers(query?: string) {
   const supabase = createServiceRoleSupabaseClient();
-  const { data } = await supabase
+  let req = supabase
     .from("users")
     .select("id, email, name, points, created_at")
-    .order("created_at", { ascending: false })
-    .limit(50);
+    .order("created_at", { ascending: false });
+
+  if (query) {
+    req = req.or(`email.ilike.%${query}%,name.ilike.%${query}%`);
+  }
+
+  const { data } = await req.limit(50);
   return data ?? [];
 }
 
@@ -17,9 +23,12 @@ function formatDate(iso: string) {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export default async function AdminUsersPage() {
+type SearchParams = Promise<{ q?: string }>;
+
+export default async function AdminUsersPage({ searchParams }: { searchParams: SearchParams }) {
   await requireAdmin();
-  const users = await getUsers();
+  const { q } = await searchParams;
+  const users = await getUsers(q);
 
   return (
     <>
@@ -28,14 +37,17 @@ export default async function AdminUsersPage() {
         <span style={{ fontSize: 13, color: "#8b95a1" }}>최근 50명</span>
       </div>
 
+      <UserSearch defaultValue={q ?? ""} />
+
       <PointsForm users={users.map((u) => ({ id: u.id, email: u.email, name: u.name }))} />
 
-      <div style={{ background: "#ffffff", border: "1px solid #e5e8eb", borderRadius: 12, overflow: "hidden", marginTop: 24 }}>
+      <div style={{ background: "#ffffff", border: "1px solid #e5e8eb", borderRadius: 12, overflow: "hidden", marginTop: 16 }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr style={{ background: "#f9fafb", borderBottom: "1px solid #e5e8eb" }}>
               <th style={{ padding: "12px 16px", textAlign: "left", color: "#6b7684", fontWeight: 600 }}>이름</th>
               <th style={{ padding: "12px 16px", textAlign: "left", color: "#6b7684", fontWeight: 600 }}>이메일</th>
+              <th style={{ padding: "12px 16px", textAlign: "left", color: "#6b7684", fontWeight: 600, whiteSpace: "nowrap" }}>UUID</th>
               <th style={{ padding: "12px 16px", textAlign: "right", color: "#6b7684", fontWeight: 600, whiteSpace: "nowrap" }}>포인트</th>
               <th style={{ padding: "12px 16px", textAlign: "left", color: "#6b7684", fontWeight: 600, whiteSpace: "nowrap" }}>가입일</th>
             </tr>
@@ -49,6 +61,9 @@ export default async function AdminUsersPage() {
                 <td style={{ padding: "12px 16px", color: "#6b7684" }}>
                   {user.email}
                 </td>
+                <td style={{ padding: "12px 16px", color: "#8b95a1", fontFamily: "monospace", fontSize: 11, whiteSpace: "nowrap" }}>
+                  {user.id}
+                </td>
                 <td style={{ padding: "12px 16px", color: "#191f28", fontWeight: 600, textAlign: "right" }}>
                   {(user.points ?? 0).toLocaleString()}
                 </td>
@@ -61,7 +76,7 @@ export default async function AdminUsersPage() {
         </table>
         {users.length === 0 && (
           <div style={{ padding: 40, textAlign: "center", color: "#8b95a1", fontSize: 14 }}>
-            사용자가 없습니다.
+            {q ? `"${q}"에 해당하는 사용자가 없습니다.` : "사용자가 없습니다."}
           </div>
         )}
       </div>
