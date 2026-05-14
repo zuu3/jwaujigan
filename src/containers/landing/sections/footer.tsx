@@ -28,6 +28,7 @@ export function LandingFooter({ isAuthenticated }: LandingFooterProps) {
           AI 결과는 참고용 정보이며 최종 판단을 대신하지 않습니다.
         </FooterDisclaimer>
         <FooterLinks>
+          <FooterLink href="/terms">이용약관</FooterLink>
           <FooterLink href="/privacy">개인정보처리방침</FooterLink>
         </FooterLinks>
       </FooterInner>
