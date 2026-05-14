@@ -35,6 +35,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "자신의 코드는 사용할 수 없습니다." }, { status: 400 });
   }
 
+  // 추천인 일일 한도 확인 (하루 최대 3명)
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const { count: todayCount } = await supabase
+    .from("referrals" as "users")
+    .select("id", { count: "exact", head: true })
+    .eq("referrer_id" as "id", referrer.id)
+    .gte("completed_at" as "id", todayStart.toISOString());
+
+  if ((todayCount ?? 0) >= 3) {
+    return NextResponse.json({ message: "오늘 추천 한도(3명)에 도달했습니다." }, { status: 429 });
+  }
+
   // 이미 추천인 코드를 사용한 경우 무시
   const { data: existing } = await supabase
     .from("referrals" as "users")
@@ -46,14 +59,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, alreadyUsed: true });
   }
 
-  // 한 번에 completed로 INSERT
   const { error: insertError } = await supabase
     .from("referrals" as "users")
     .insert({
       referrer_id: referrer.id,
       referred_id: referredId,
-      status: "completed",
-      completed_at: new Date().toISOString(),
     } as never);
 
   if (insertError) {

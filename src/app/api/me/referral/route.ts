@@ -40,12 +40,11 @@ export async function GET() {
     }
   }
 
-  // 완료된 초대 수 조회
+  // 초대 수 조회
   const { count } = await supabase
     .from("referrals" as "users")
     .select("id", { count: "exact", head: true })
-    .eq("referrer_id" as "id", userId)
-    .eq("status" as "id", "completed");
+    .eq("referrer_id" as "id", userId);
 
   const referralUrl = `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/?ref=${code}`;
 
