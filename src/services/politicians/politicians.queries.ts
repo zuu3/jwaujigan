@@ -4,6 +4,7 @@ import {
   fetchPoliticianDetail,
   fetchFollowedPoliticianNames,
   fetchFollowStatus,
+  fetchPoliticianBills,
 } from "./politicians.api";
 
 export function useLocalPoliticians({
@@ -43,5 +44,14 @@ export function useFollowStatus(politicianId: string) {
     queryKey: ["follow-status", politicianId],
     queryFn: () => fetchFollowStatus(politicianId),
     staleTime: 60_000,
+  });
+}
+
+export function usePoliticianBills(politicianId: string | null) {
+  return useQuery({
+    queryKey: ["politician-bills", politicianId],
+    enabled: Boolean(politicianId),
+    queryFn: () => fetchPoliticianBills(politicianId!),
+    staleTime: 1000 * 60 * 60,
   });
 }

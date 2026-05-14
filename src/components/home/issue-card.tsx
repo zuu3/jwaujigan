@@ -86,15 +86,15 @@ export function IssueCard({
                   {issue.committee}
                 </IssueMetaChip>
               ) : null}
-              {issue.proposer ? (
-                <IssueMetaChip
-                  $dim={!followedNames.has(issue.proposer)}
-                  $followed={followedNames.has(issue.proposer)}
-                >
-                  <User size={11} />
-                  {followedNames.has(issue.proposer) ? "★ " : ""}{issue.proposer}
-                </IssueMetaChip>
-              ) : null}
+              {issue.proposer ? (() => {
+                const isFollowed = [...followedNames].some((n) => issue.proposer!.includes(n));
+                return (
+                  <IssueMetaChip $dim={!isFollowed} $followed={isFollowed}>
+                    <User size={11} />
+                    {isFollowed ? "★ " : ""}{issue.proposer}
+                  </IssueMetaChip>
+                );
+              })() : null}
             </IssueBodyMeta>
           ) : null}
         </IssueRowBody>

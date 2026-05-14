@@ -76,4 +76,23 @@ export async function toggleFollow({
   return res.json() as Promise<FollowToggleResponse>;
 }
 
+export type PoliticianBill = {
+  title: string;
+  proposer: string;
+  proposedAt: string | null;
+  result: string | null;
+  url: string | null;
+};
+
+export type PoliticianBillsResponse = {
+  bills: PoliticianBill[];
+};
+
+export async function fetchPoliticianBills(politicianId: string): Promise<PoliticianBill[]> {
+  const res = await fetch(`/api/politicians/${politicianId}/bills`);
+  if (!res.ok) throw new Error("Failed to fetch politician bills");
+  const data = (await res.json()) as PoliticianBillsResponse;
+  return data.bills;
+}
+
 export type { PoliticianDetail };

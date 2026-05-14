@@ -111,6 +111,10 @@ export function HomeContainer({ session }: HomeContainerProps) {
   const userLean = getUserLean(issues);
   const showConservativeFirst = balanceMode && userLean === "progressive";
 
+  const followingIssues = issues.filter(
+    (i) => i.proposer && [...followedNames].some((name) => i.proposer!.includes(name))
+  );
+
   const introTitle = needsOnboarding
     ? onboardingCopy.title
     : "진보·보수 두 입장을 직접 비교하고 AI 토론을 판정해보세요.";
@@ -241,6 +245,38 @@ export function HomeContainer({ session }: HomeContainerProps) {
             )}
           </MotionSection>
         ) : null}
+
+        {followingIssues.length > 0 && (
+          <MotionSection id="following-issues">
+            <SectionHeader>
+              <SectionMeta>
+                <SectionTitleRow>
+                  <SectionTitle>팔로잉 이슈</SectionTitle>
+                  <SectionCount>{followingIssues.length}건</SectionCount>
+                </SectionTitleRow>
+              </SectionMeta>
+            </SectionHeader>
+            <IssueLayout>
+              {followingIssues.map((issue) => (
+                <IssueCard
+                  key={issue.id}
+                  issue={issue}
+                  isExpanded={expandedIssueId === issue.id}
+                  showConservativeFirst={showConservativeFirst}
+                  followedNames={followedNames}
+                  isVoting={
+                    voteMutation.isPending &&
+                    voteMutation.variables?.issueId === issue.id
+                  }
+                  onToggleExpand={(id) =>
+                    setExpandedIssueId((current) => (current === id ? null : id))
+                  }
+                  onVote={(issueId, stance) => voteMutation.mutate({ issueId, stance })}
+                />
+              ))}
+            </IssueLayout>
+          </MotionSection>
+        )}
 
         <MotionSection id="hot-issues">
           <SectionHeader>
