@@ -6,6 +6,7 @@ import "@fontsource/pretendard/600.css";
 import "@fontsource/pretendard/700.css";
 import "@fontsource/pretendard/800.css";
 import "@toss/tds-colors/colors.css";
+import { Analytics } from "@vercel/analytics/next";
 import { AppProvider } from "@/components/providers/app-provider";
 import { PointsToaster } from "@/components/PointsToaster";
 
@@ -64,6 +65,7 @@ export default function RootLayout({
           {children}
           <PointsToaster />
         </AppProvider>
+        <Analytics />
       </body>
     </html>
   );
