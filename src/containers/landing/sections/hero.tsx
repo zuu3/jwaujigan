@@ -47,6 +47,13 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
             )}
             <SecondaryCta href="#arena">AI 토론 보기</SecondaryCta>
           </HeroActions>
+          {!isAuthenticated && (
+            <ConsentNote>
+              시작하기 버튼 클릭 시{" "}
+              <ConsentLink href="/terms">이용약관</ConsentLink> 및{" "}
+              <ConsentLink href="/privacy">개인정보처리방침</ConsentLink>에 동의하게 됩니다.
+            </ConsentNote>
+          )}
         </HeroCopy>
 
         <HeroPanel
@@ -420,6 +427,24 @@ const LegendPct = styled.span`
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
+`;
+
+const ConsentNote = styled.p`
+  margin: 0;
+  color: #b0b8c1;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.6;
+`;
+
+const ConsentLink = styled(Link)`
+  color: #8b95a1;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:hover {
+    color: #6b7684;
+  }
 `;
 
 const ChipRow = styled.div`

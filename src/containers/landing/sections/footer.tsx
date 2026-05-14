@@ -16,6 +16,11 @@ export function LandingFooter({ isAuthenticated }: LandingFooterProps) {
             <CtaHeading>지금 시작해보세요</CtaHeading>
             <CtaSub>선동 없는 정치 정보, 좌우지간</CtaSub>
             <CtaButton callbackUrl="/home" />
+            <CtaConsent>
+              시작하기 버튼 클릭 시{" "}
+              <CtaConsentLink href="/terms">이용약관</CtaConsentLink> 및{" "}
+              <CtaConsentLink href="/privacy">개인정보처리방침</CtaConsentLink>에 동의하게 됩니다.
+            </CtaConsent>
           </Container>
         </CtaBand>
       )}
@@ -127,6 +132,24 @@ const FooterLink = styled(Link)`
 
   &:hover {
     color: var(--sub);
+  }
+`;
+
+const CtaConsent = styled.p`
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.6;
+`;
+
+const CtaConsentLink = styled(Link)`
+  color: var(--sub);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:hover {
+    color: var(--text);
   }
 `;
 
