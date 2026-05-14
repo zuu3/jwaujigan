@@ -109,10 +109,10 @@ const SearchBarRoot = styled.div`
   border-radius: 10px;
   padding: 0 14px;
   margin: 16px 0 4px;
-  transition: box-shadow 150ms;
 
   &:focus-within {
-    box-shadow: 0 0 0 2px #3182f6;
+    outline: 2px solid #3182f6;
+    outline-offset: -2px;
   }
 `;
 

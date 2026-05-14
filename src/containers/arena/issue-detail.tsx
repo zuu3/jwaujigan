@@ -188,7 +188,7 @@ const Shell = styled.div`
   padding: 32px 24px 0;
 
   @media (max-width: 640px) {
-    padding: 24px 16px 0;
+    padding: 24px 20px 0;
   }
 `;
 
@@ -210,7 +210,7 @@ const BillMetaRow = styled.div`
   padding: 16px 20px;
   border: 1px solid #e5e8eb;
   border-radius: 8px;
-  background: #f9fafb;
+  background: #f2f4f6;
 `;
 
 const BillMetaItem = styled.div`
@@ -384,7 +384,7 @@ const OpinionSnapshot = styled.div`
   padding: 20px;
   border: 1px solid #e5e8eb;
   border-radius: 12px;
-  background: #f9fafb;
+  background: #f2f4f6;
 `;
 
 const OpinionSnapshotHeader = styled.div`

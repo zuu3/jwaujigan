@@ -63,18 +63,17 @@ export function ArenaIndex({ issues, isAuthenticated }: ArenaIndexProps) {
           <IssueGrid>
             {issues.map((issue) => {
               const total = issue.vote_counts?.total ?? 0;
-              const statusColor =
-                issue.bill_status === "통과" ? "#03b26c" :
-                issue.bill_status === "폐기" ? "#8b95a1" :
-                issue.bill_status ? "#fe9800" : null;
 
               return (
                 <IssueCard key={issue.id} href={`/arena/${issue.id}`}>
                   <IssueCardTop>
-                    {issue.bill_status && statusColor ? (
-                      <IssueCardBadge $color={statusColor}>{issue.bill_status}</IssueCardBadge>
+                    {issue.bill_status ? (
+                      <IssueCardBadge
+                        $bg={issue.bill_status === "통과" ? "#e8f3ff" : issue.bill_status === "폐기" ? "#fef2f2" : "#fff7e6"}
+                        $color={issue.bill_status === "통과" ? "#3182f6" : issue.bill_status === "폐기" ? "#e5484d" : "#fe9800"}
+                      >{issue.bill_status}</IssueCardBadge>
                     ) : (
-                      <IssueCardBadge $color="#8b95a1">토론</IssueCardBadge>
+                      <IssueCardBadge $bg="#f2f4f6" $color="#6b7684">토론</IssueCardBadge>
                     )}
                     {total > 0 ? (
                       <IssueCardParticipants>
@@ -133,7 +132,7 @@ const Shell = styled.div`
   padding: 32px 24px 0;
 
   @media (max-width: 640px) {
-    padding: 24px 16px 0;
+    padding: 24px 20px 0;
   }
 `;
 
@@ -185,7 +184,7 @@ const LoginBanner = styled.div`
   justify-content: space-between;
   gap: 16px;
   padding: 16px 20px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e5e8eb;
   border-radius: 8px;
   background: #ffffff;
 
@@ -231,7 +230,7 @@ const HeroTitle = styled.h1`
   max-width: 780px;
   margin: 0;
   color: #191f28;
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 700;
   line-height: 1.25;
   letter-spacing: -0.02em;
@@ -310,8 +309,8 @@ const IssueCard = styled(Link)`
   align-content: start;
   gap: 12px;
   padding: 24px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1px solid #e5e8eb;
+  border-radius: 12px;
   background: #ffffff;
   transition: border-color 200ms ease;
 
@@ -327,12 +326,12 @@ const IssueCardTop = styled.div`
   gap: 8px;
 `;
 
-const IssueCardBadge = styled.span<{ $color: string }>`
+const IssueCardBadge = styled.span<{ $bg: string; $color: string }>`
   display: inline-flex;
   align-items: center;
   padding: 2px 8px;
   border-radius: 4px;
-  background: ${({ $color }) => `${$color}18`};
+  background: ${({ $bg }) => $bg};
   color: ${({ $color }) => $color};
   font-size: 12px;
   font-weight: 600;
@@ -387,7 +386,7 @@ const IssueCardFooter = styled.div`
 
 const EmptyPanel = styled.div`
   padding: 32px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e5e8eb;
   border-radius: 8px;
   background: #ffffff;
 `;

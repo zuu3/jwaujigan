@@ -108,7 +108,7 @@ const Shell = styled.div`
   gap: 40px;
   margin: 0 auto;
   padding: 32px 24px 0;
-  @media (max-width: 640px) { padding: 24px 16px 0; }
+  @media (max-width: 640px) { padding: 24px 20px 0; }
 `;
 
 const TopBar = styled.div`

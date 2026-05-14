@@ -161,8 +161,8 @@ export function MyPageContainer({
 const Page = styled.main`
   min-height: 100vh;
   padding-bottom: 80px;
-  color: #191F28;
-  background: #FFFFFF;
+  color: #191f28;
+  background: #ffffff;
   animation: fadeIn 200ms ease-out;
 
   @keyframes fadeIn {
@@ -192,7 +192,7 @@ const Shell = styled.div`
   padding: 32px 24px 0;
 
   @media (max-width: 640px) {
-    padding: 24px 16px 0;
+    padding: 24px 20px 0;
   }
 `;
 
@@ -210,7 +210,7 @@ const HeroEyebrow = styled.div`
 
 const HeroTitle = styled.h1`
   margin: 0;
-  color: #191F28;
+  color: #191f28;
   font-size: 32px;
   font-weight: 700;
   line-height: 1.25;
@@ -247,8 +247,8 @@ const Avatar = styled.div`
   justify-content: center;
   overflow: hidden;
   border-radius: 50%;
-  color: #FFFFFF;
-  background: #191F28;
+  color: #ffffff;
+  background: #191f28;
   font-size: 18px;
   font-weight: 700;
 `;
@@ -267,7 +267,7 @@ const ProfileContent = styled.div`
 
 const ProfileName = styled.h2`
   margin: 0;
-  color: #191F28;
+  color: #191f28;
   font-size: 18px;
   font-weight: 700;
 `;
@@ -297,8 +297,8 @@ const ProfileAction = styled(Link)`
   gap: 6px;
   border-radius: 8px;
   padding: 0 16px;
-  color: #FFFFFF;
-  background: #191F28;
+  color: #ffffff;
+  background: #191f28;
   font-size: 14px;
   font-weight: 600;
   transition: opacity 140ms ease-out;

@@ -392,7 +392,7 @@ const MethodologyPanel = styled.section`
   padding: 20px;
   border: 1px solid #e5e8eb;
   border-radius: 12px;
-  background: #f9fafb;
+  background: #f2f4f6;
 `;
 
 const MethodologyHead = styled.div`
@@ -501,7 +501,7 @@ const MetaRow = styled.div`
   padding: 16px 20px;
   border: 1px solid #e5e8eb;
   border-radius: 8px;
-  background: #f9fafb;
+  background: #f2f4f6;
 `;
 
 const MetaItem = styled.div`
@@ -743,7 +743,7 @@ const BattleCta = styled.section`
   padding: 24px;
   border: 1px solid #e5e8eb;
   border-radius: 12px;
-  background: #f9fafb;
+  background: #f2f4f6;
 `;
 
 const BattleCtaLabel = styled.div`
