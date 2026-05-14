@@ -15,7 +15,7 @@ export function LandingFooter({ isAuthenticated }: LandingFooterProps) {
           <Container>
             <CtaHeading>지금 시작해보세요</CtaHeading>
             <CtaSub>선동 없는 정치 정보, 좌우지간</CtaSub>
-            <CtaButton callbackUrl="/home" />
+            <CtaButton callbackUrl="/home">Google로 시작하기</CtaButton>
             <CtaConsent>
               시작하기 버튼 클릭 시{" "}
               <CtaConsentLink href="/terms">이용약관</CtaConsentLink> 및{" "}

@@ -7,6 +7,7 @@ import "@fontsource/pretendard/700.css";
 import "@fontsource/pretendard/800.css";
 import "@toss/tds-colors/colors.css";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AppProvider } from "@/components/providers/app-provider";
 import { PointsToaster } from "@/components/PointsToaster";
 
@@ -15,7 +16,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://jwaujigan.com";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://jwj.zuu3.kr";
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
@@ -66,6 +67,7 @@ export default function RootLayout({
           <PointsToaster />
         </AppProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

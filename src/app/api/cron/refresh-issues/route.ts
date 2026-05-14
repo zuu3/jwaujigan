@@ -18,13 +18,27 @@ export async function GET(req: Request) {
     const bills = await getRecentIssueBills();
     console.log(`[cron] ${bills.length}개 법안 수집`);
 
+    // 이미 DB에 있는 bill_id는 Gemini 호출 없이 건너뜀
+    const { data: existing } = await supabase
+      .from("issues")
+      .select("bill_id")
+      .in("bill_id", bills.map((b) => b.billId).filter(Boolean));
+
+    const existingIds = new Set((existing ?? []).map((r) => r.bill_id));
+    const newBills = bills.filter((b) => !existingIds.has(b.billId));
+    console.log(`[cron] 신규 법안 ${newBills.length}개 (${bills.length - newBills.length}개 기존 스킵)`);
+
+    if (newBills.length === 0) {
+      return NextResponse.json({ ok: true, inserted: 0, skipped: bills.length });
+    }
+
     const results = await Promise.allSettled(
-      bills.map((bill) => buildIssueFromBill(bill)),
+      newBills.map((bill) => buildIssueFromBill(bill)),
     );
 
     const succeeded = results.flatMap((r, i) => {
       if (r.status === "fulfilled") return [r.value];
-      console.error(`[cron] "${bills[i]?.title}" 생성 실패:`, r.reason);
+      console.error(`[cron] "${newBills[i]?.title}" 생성 실패:`, r.reason);
       return [];
     });
 
@@ -47,6 +61,7 @@ export async function GET(req: Request) {
     return NextResponse.json({
       ok: true,
       inserted: succeeded.length,
+      skipped: existingIds.size,
       failed: results.length - succeeded.length,
       elapsed_s: elapsed,
     });

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { CommentItem } from "@/app/api/polls/[id]/comments/route";
+import { ReportButton } from "@/components/community/report-button";
 
 export type { CommentItem };
 
@@ -85,6 +86,9 @@ function CommentRow({
                 <ActionBtn onClick={() => onEdit(c.id, c.content)}>수정</ActionBtn>
                 <ActionBtn $danger onClick={() => onDelete(c.id, c.parent_id)}>삭제</ActionBtn>
               </>
+            )}
+            {!c.is_mine && !isEditing && (
+              <ReportButton commentId={c.id} />
             )}
           </RowActions>
         </RowMeta>
