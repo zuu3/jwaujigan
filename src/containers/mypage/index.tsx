@@ -1,6 +1,6 @@
 "use client";
 
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { Gift, Globe, Link2, Lock, MapPin, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -43,19 +43,23 @@ export function MyPageContainer({
   const [copied, setCopied] = useState(false);
   const [referralCount, setReferralCount] = useState<number | null>(null);
   const [referralTodayCount, setReferralTodayCount] = useState<number | null>(null);
+  const [visibilityLoading, setVisibilityLoading] = useState(false);
   const profileQuery = useUserProfile();
   const queryClient = useQueryClient();
   const isPublic = profileQuery.data?.is_public ?? true;
   const userId = profileQuery.data?.id ?? null;
 
   const handleVisibilityToggle = async () => {
+    if (visibilityLoading) return;
+    setVisibilityLoading(true);
     const next = !isPublic;
     await fetch("/api/me/visibility", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ is_public: next }),
     });
-    void queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+    await queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+    setVisibilityLoading(false);
   };
 
   const handleCopyLink = async () => {
@@ -148,10 +152,12 @@ export function MyPageContainer({
               <Toggle
                 type="button"
                 $on={isPublic}
+                $loading={visibilityLoading}
                 onClick={() => void handleVisibilityToggle()}
+                disabled={visibilityLoading}
                 aria-label={isPublic ? "프로필 비공개로 전환" : "프로필 공개로 전환"}
               >
-                <ToggleThumb $on={isPublic} />
+                <ToggleThumb $on={isPublic} $loading={visibilityLoading} />
               </Toggle>
             </VisibilityRow>
 
@@ -362,19 +368,20 @@ const VisibilityLabel = styled.span`
   font-weight: 500;
 `;
 
-const Toggle = styled.button<{ $on: boolean }>`
+const Toggle = styled.button<{ $on: boolean; $loading?: boolean }>`
   position: relative;
   width: 44px;
   height: 24px;
   border-radius: 9999px;
   border: none;
-  cursor: pointer;
+  cursor: ${({ $loading }) => ($loading ? "not-allowed" : "pointer")};
   background: ${({ $on }) => ($on ? "#3182f6" : "#e5e8eb")};
   transition: background 150ms;
   flex-shrink: 0;
+  opacity: ${({ $loading }) => ($loading ? 0.6 : 1)};
 `;
 
-const ToggleThumb = styled.span<{ $on: boolean }>`
+const ToggleThumb = styled.span<{ $on: boolean; $loading?: boolean }>`
   position: absolute;
   top: 3px;
   left: ${({ $on }) => ($on ? "23px" : "3px")};
@@ -383,6 +390,15 @@ const ToggleThumb = styled.span<{ $on: boolean }>`
   border-radius: 50%;
   background: #ffffff;
   transition: left 150ms;
+  ${({ $loading }) =>
+    $loading &&
+    `
+    animation: thumbPulse 0.8s ease-in-out infinite;
+    @keyframes thumbPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+  `}
 `;
 
 const ChipButton = styled.button`

@@ -1,6 +1,6 @@
 "use client";
 
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { ArrowLeft, Bell, BellOff, ExternalLink, Mail, MapPin, Phone, FileText, Lock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -189,11 +189,19 @@ export function PoliticianDetailContainer({
             <FollowButton
               type="button"
               $following={following}
+              $loading={followLoading}
               disabled={followLoading}
               onClick={() => void handleFollow()}
             >
-              {following ? <BellOff size={15} /> : <Bell size={15} />}
-              <span>{following ? "팔로우 중" : "팔로우"}</span>
+              <FollowButtonContent $hidden={followLoading}>
+                {following ? <BellOff size={15} /> : <Bell size={15} />}
+                <span>{following ? "팔로우 중" : "팔로우"}</span>
+              </FollowButtonContent>
+              {followLoading && (
+                <FollowDotSpinner aria-hidden="true" $following={following}>
+                  <span /><span /><span />
+                </FollowDotSpinner>
+              )}
             </FollowButton>
           </HeroBody>
         </Hero>
@@ -557,7 +565,8 @@ const HeroDescription = styled.p`
   line-height: 1.6;
 `;
 
-const FollowButton = styled.button<{ $following: boolean }>`
+const FollowButton = styled.button<{ $following: boolean; $loading?: boolean }>`
+  position: relative;
   display: inline-flex;
   align-items: center;
   align-self: flex-start;
@@ -583,6 +592,39 @@ const FollowButton = styled.button<{ $following: boolean }>`
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+  }
+`;
+
+const FollowButtonContent = styled.span<{ $hidden: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  visibility: ${({ $hidden }) => ($hidden ? "hidden" : "visible")};
+`;
+
+const FollowDotSpinner = styled.span<{ $following: boolean }>`
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  & > span {
+    display: block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: ${({ $following }) => ($following ? "#8b95a1" : "#ffffff")};
+    animation: dotSeq 1.2s ease-in-out infinite;
+  }
+
+  & > span:nth-child(2) { animation-delay: 0.2s; }
+  & > span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes dotSeq {
+    0%, 80%, 100% { opacity: 0.3; transform: scale(0.85); }
+    40% { opacity: 1; transform: scale(1); }
   }
 `;
 

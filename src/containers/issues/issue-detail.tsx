@@ -1,6 +1,6 @@
 "use client";
 
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { ArrowLeft, CheckCircle2, Clock, ExternalLink, HelpCircle, Landmark, Link2, Swords, User, X, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -289,10 +289,12 @@ export function IssueDetailContainer({ issue: initialIssue, initialBodyText }: I
                   $color={color}
                   $tint={tint}
                   $active={user_vote === stance}
+                  $loading={isVoting}
                   disabled={isVoting}
                   onClick={() => void handleVote(stance)}
                 >
-                  {label}
+                  <ButtonText $hidden={isVoting}>{label}</ButtonText>
+                  {isVoting && <DotSpinner aria-hidden="true"><span /><span /><span /></DotSpinner>}
                 </VoteButton>
               ))}
             </VoteButtons>
@@ -762,7 +764,8 @@ const VoteButtons = styled.div`
   flex-wrap: wrap;
 `;
 
-const VoteButton = styled.button<{ $color: string; $tint: string; $active: boolean }>`
+const VoteButton = styled.button<{ $color: string; $tint: string; $active: boolean; $loading?: boolean }>`
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -770,7 +773,7 @@ const VoteButton = styled.button<{ $color: string; $tint: string; $active: boole
   padding: 0 16px;
   border-radius: 8px;
   border: 1.5px solid ${({ $active, $color }) => $active ? $color : "#e5e8eb"};
-  background: ${({ $active, $tint }) => $active ? $tint : "#ffffff"};
+  background: ${({ $active, $tint, $loading }) => $loading ? "#e5e8eb" : $active ? $tint : "#ffffff"};
   color: ${({ $active, $color }) => $active ? $color : "#4e5968"};
   font-size: 14px;
   font-weight: 600;
@@ -785,8 +788,37 @@ const VoteButton = styled.button<{ $color: string; $tint: string; $active: boole
   }
 
   &:disabled {
-    opacity: 0.6;
     cursor: default;
+  }
+`;
+
+const ButtonText = styled.span<{ $hidden: boolean }>`
+  visibility: ${({ $hidden }) => ($hidden ? "hidden" : "visible")};
+`;
+
+const DotSpinner = styled.span`
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  & > span {
+    display: block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #8b95a1;
+    animation: dotSeq 1.2s ease-in-out infinite;
+  }
+
+  & > span:nth-child(2) { animation-delay: 0.2s; }
+  & > span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes dotSeq {
+    0%, 80%, 100% { opacity: 0.25; transform: scale(0.85); }
+    40% { opacity: 1; transform: scale(1); }
   }
 `;
 
