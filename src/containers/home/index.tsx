@@ -12,7 +12,7 @@ import { useUserProfile } from "@/services/user/user.queries";
 import { useLocalPoliticians, usePoliticianDetail, useFollowedPoliticianNames } from "@/services/politicians/politicians.queries";
 import { useSearch } from "@/services/search/search.queries";
 import { usePollsQuery } from "@/services/community/community.queries";
-import type { HotIssue, HotIssuesResponse } from "@/types/issue";
+import type { HotIssue } from "@/types/issue";
 import { SearchBar } from "@/components/home/search";
 import { PoliticianCard } from "@/components/home/politician-card";
 import { IssueCard } from "@/components/home/issue-card";
@@ -20,7 +20,6 @@ import { showToast } from "@/lib/toast";
 
 type HomeContainerProps = {
   session: Session;
-  initialIssues: HotIssue[];
 };
 
 function getOnboardingCopy({
@@ -64,7 +63,7 @@ function getUserLean(issues: HotIssue[]): "progressive" | "conservative" | null 
   return null;
 }
 
-export function HomeContainer({ session, initialIssues }: HomeContainerProps) {
+export function HomeContainer({ session }: HomeContainerProps) {
   const [expandedPoliticianId, setExpandedPoliticianId] = useState<string | null>(null);
   const [expandedIssueId, setExpandedIssueId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -93,9 +92,7 @@ export function HomeContainer({ session, initialIssues }: HomeContainerProps) {
 
 const searchResultsQuery = useSearch(debouncedQuery);
   const profileQuery = useUserProfile();
-  const initialIssuesData: HotIssuesResponse | undefined =
-    initialIssues.length > 0 ? { issues: initialIssues } : undefined;
-  const issuesQuery = useIssues({ initialData: initialIssuesData });
+  const issuesQuery = useIssues();
 
   const displayName = profileQuery.data?.name ?? session.user.name ?? null;
   const district = profileQuery.data?.district ?? session.user.district ?? null;

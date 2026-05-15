@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { getHotIssuesFromDb } from "@/lib/issues-server";
 import { HomeContainer } from "@/containers/home";
 
 export default async function HomePage() {
@@ -10,7 +9,11 @@ export default async function HomePage() {
     redirect("/");
   }
 
-  const initialIssues = await getHotIssuesFromDb(session.user.id ?? null);
-
-  return <HomeContainer session={session} initialIssues={initialIssues} />;
+  return (
+    <>
+      {/* HTML 파싱 시점에 issues 데이터 fetch 시작 — React Query 실행 전에 응답이 캐시에 있게 함 */}
+      <link rel="preload" href="/api/issues" as="fetch" />
+      <HomeContainer session={session} />
+    </>
+  );
 }

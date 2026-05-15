@@ -4,7 +4,12 @@ import styled from "@emotion/styled";
 import { ArrowRight, CheckCircle2, ChevronDown, Clock, Landmark, User, XCircle } from "lucide-react";
 import Link from "next/link";
 import type { HotIssue, IssueVoteStance } from "@/types/issue";
-import { TendencySection } from "@/containers/community/tendency-section";
+import dynamic from "next/dynamic";
+
+const TendencySection = dynamic(
+  () => import("@/containers/community/tendency-section").then((m) => m.TendencySection),
+  { ssr: false },
+);
 
 type VoteOption = {
   stance: IssueVoteStance;
