@@ -64,6 +64,7 @@ export async function POST(req: Request) {
     .insert({
       referrer_id: referrer.id,
       referred_id: referredId,
+      completed_at: new Date().toISOString(),
     } as never);
 
   if (insertError) {
