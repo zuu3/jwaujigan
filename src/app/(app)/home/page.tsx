@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { getHotIssuesFromDb } from "@/lib/issues-server";
 import { HomeContainer } from "@/containers/home";
 
 export default async function HomePage() {
@@ -9,5 +10,7 @@ export default async function HomePage() {
     redirect("/");
   }
 
-  return <HomeContainer session={session} />;
+  const initialIssues = await getHotIssuesFromDb(session.user.id ?? null);
+
+  return <HomeContainer session={session} initialIssues={initialIssues} />;
 }
