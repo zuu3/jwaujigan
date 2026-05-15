@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Share2, Check } from "lucide-react";
 import {

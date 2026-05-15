@@ -1,6 +1,6 @@
 "use client";
 
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import type { HotIssue } from "@/types/issue";

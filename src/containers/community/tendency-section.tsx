@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 
 type TendencyStanceCounts = {
   progressive: number;

@@ -1,6 +1,6 @@
 "use client";
 
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { ArrowRight, CheckCircle2, ChevronDown, Clock, Landmark, User, XCircle } from "lucide-react";
 import Link from "next/link";
 import type { HotIssue, IssueVoteStance } from "@/types/issue";

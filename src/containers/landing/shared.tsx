@@ -1,4 +1,4 @@
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { motion, type Variants } from "framer-motion";
 
 export const fadeUp: Variants = {

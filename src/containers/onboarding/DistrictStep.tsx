@@ -1,6 +1,6 @@
 "use client";
 
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { ArrowRight, CheckCircle2, Crosshair, Search } from "lucide-react";
 import React from "react";
 import {

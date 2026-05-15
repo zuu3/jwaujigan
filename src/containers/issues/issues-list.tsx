@@ -1,6 +1,6 @@
 "use client";
 
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { CheckCircle2, Clock, Landmark, User, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";

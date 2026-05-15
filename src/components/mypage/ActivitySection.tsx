@@ -1,6 +1,6 @@
 "use client";
 
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { Activity, ArrowRight } from "lucide-react";
 import type { ActivityResponse } from "@/types/mypage";
 import { formatDate, getActivityTypeLabel, getActivityTypeTone } from "@/lib/mypage-utils";

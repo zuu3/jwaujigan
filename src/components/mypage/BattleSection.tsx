@@ -1,6 +1,6 @@
 "use client";
 
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { Swords, ArrowRight } from "lucide-react";
 import type { BattleLogItem } from "@/types/mypage";
 import {

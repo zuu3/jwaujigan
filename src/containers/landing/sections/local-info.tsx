@@ -1,4 +1,4 @@
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { Bookmark } from "lucide-react";
 import { localInfoItems } from "../data";
 import {

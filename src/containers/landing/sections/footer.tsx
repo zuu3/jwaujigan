@@ -1,5 +1,5 @@
 import Link from "next/link";
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { Container } from "../shared";
 

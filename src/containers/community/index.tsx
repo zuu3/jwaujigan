@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useId } from "react";
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import Link from "next/link";
 import { Plus, Trash2, X } from "lucide-react";
 import {

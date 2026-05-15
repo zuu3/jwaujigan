@@ -1,6 +1,6 @@
 "use client";
 
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { useEffect, useState } from "react";
 import type { PointsToastDetail } from "@/lib/points-toast";
 

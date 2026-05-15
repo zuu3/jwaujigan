@@ -1,6 +1,6 @@
 "use client";
 
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { Section, SectionHeader, SectionKicker } from "./shared-styles";
 
 type Props = {

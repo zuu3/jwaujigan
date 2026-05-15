@@ -1,6 +1,6 @@
 "use client";
 
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { ArrowRight, ExternalLink, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";

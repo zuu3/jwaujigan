@@ -1,6 +1,6 @@
 "use client";
 
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import Link from "next/link";
 import { Search, X } from "lucide-react";
 import type { RefObject } from "react";

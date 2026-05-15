@@ -1,6 +1,6 @@
 "use client";
 
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { TargetCursor } from "@/components/cursor/target-cursor";
 import { questions, likertOptions } from "./questions";
 import { StatusLabel, StatusValue, StatusHint, SecondaryActionButton } from "./index";

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signOut } from "next-auth/react";
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { showToast } from "@/lib/toast";
 
 export function DeleteAccountButton() {

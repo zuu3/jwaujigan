@@ -1,6 +1,6 @@
 "use client";
 
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { BarChart3, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import type { PoliticalProfile } from "@/types/mypage";

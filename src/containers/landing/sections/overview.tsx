@@ -1,4 +1,4 @@
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import { motion } from "framer-motion";
 import { values } from "../data";
 import {

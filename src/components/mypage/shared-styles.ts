@@ -1,4 +1,4 @@
-import styled from "@emotion/styled";
+import styled from "@/lib/styled";
 import Link from "next/link";
 
 export const Section = styled.section`
