@@ -1,7 +1,6 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { AnimatePresence, motion } from "framer-motion";
 import { TargetCursor } from "@/components/cursor/target-cursor";
 import { questions, likertOptions } from "./questions";
 import { StatusLabel, StatusValue, StatusHint, SecondaryActionButton } from "./index";
@@ -61,18 +60,10 @@ export function QuestionsStep({
       </Header>
 
       <QuestionStage>
-        <AnimatePresence mode="wait">
-          <QuestionCard
-            key={question.id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <QuestionEyebrow>{question.axis}</QuestionEyebrow>
-            <QuestionText>{question.text}</QuestionText>
-          </QuestionCard>
-        </AnimatePresence>
+        <QuestionCard key={question.id}>
+          <QuestionEyebrow>{question.axis}</QuestionEyebrow>
+          <QuestionText>{question.text}</QuestionText>
+        </QuestionCard>
       </QuestionStage>
 
       <AnswerGrid>
@@ -167,10 +158,16 @@ const QuestionStage = styled.div`
   margin-top: 32px;
 `;
 
-const QuestionCard = styled(motion.div)`
+const QuestionCard = styled.div`
   padding: 24px 0;
   border-top: 1px solid #f2f4f6;
   border-bottom: 1px solid #f2f4f6;
+  animation: fadeIn 200ms ease;
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
 `;
 
 const QuestionEyebrow = styled.div`

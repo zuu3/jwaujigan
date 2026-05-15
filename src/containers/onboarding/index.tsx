@@ -4,9 +4,11 @@ import styled from "@emotion/styled";
 import { useFunnel } from "@use-funnel/browser";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
 import { FullScreenLoader } from "@/components/loading/full-screen-loader";
 import { DISTRICT_AREA_OPTIONS, normalizeKoreanText } from "@/lib/districts/catalog";
 import { ONBOARDING_SKIP_COOKIE } from "@/lib/onboarding";
+import dynamic from "next/dynamic";
 import { useOnboardingStore } from "./store";
 import {
   DistrictStep,
@@ -15,7 +17,11 @@ import {
   resolveCurrentPosition,
   MANUAL_MATCH_LIMIT,
 } from "./DistrictStep";
-import { QuestionsStep } from "./QuestionsStep";
+
+const QuestionsStep = dynamic(
+  () => import("./QuestionsStep").then((m) => m.QuestionsStep),
+  { ssr: false },
+);
 import { questions } from "./questions";
 
 type OnboardingContainerProps = {
@@ -54,6 +60,7 @@ export function OnboardingContainer({
   initialDistrict,
 }: OnboardingContainerProps) {
   const router = useRouter();
+  const { update: updateSession } = useSession();
   const initialFunnelState = useMemo(
     () =>
       initialDistrict
@@ -198,6 +205,7 @@ export function OnboardingContainer({
 
     setDistrict(result.district);
     setResolvedAddress(result.sourceAddress);
+    void updateSession({ district: result.district });
     if (funnel.step === "questions") {
       void funnel.history.replace("questions", {
         district: result.district,
@@ -219,7 +227,6 @@ export function OnboardingContainer({
           ? `${result.matchedArea} 기준으로 지역구를 찾았습니다.`
           : "지역구를 찾았습니다.",
     );
-    router.refresh();
   };
 
   const handleResolveLocation = async () => {
@@ -324,6 +331,8 @@ export function OnboardingContainer({
       if (!response.ok) {
         throw new Error("Failed to save political profile.");
       }
+
+      void updateSession({ hasPoliticalProfile: true });
 
       const trimmedCode = referralCode.trim().toUpperCase();
       if (trimmedCode) {

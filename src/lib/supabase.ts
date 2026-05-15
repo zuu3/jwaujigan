@@ -503,3 +503,7 @@ export function createServerSupabaseClient() {
 export function createServiceRoleSupabaseClient() {
   return createSupabaseClient(getEnv("SUPABASE_SERVICE_ROLE_KEY"));
 }
+
+// 요청당 한 번만 클라이언트를 생성 — React.cache는 동일 요청 내 중복 호출을 dedup함
+import { cache } from "react";
+export const getServiceRoleSupabaseClient = cache(createServiceRoleSupabaseClient);

@@ -30,26 +30,24 @@ export const authOptions: NextAuthOptions = {
 
       return synced.ok;
     },
-    async jwt({ token, user }) {
-      const email = user?.email ?? token.email;
-
-      if (!email) {
-        return token;
+    async jwt({ token, user, trigger, session }) {
+      // 최초 로그인 시에만 DB 조회
+      if (user?.email) {
+        const state = await getUserGateState(user.email);
+        return {
+          ...token,
+          email: user.email,
+          name: user.name ?? token.name,
+          picture: user.image ?? token.picture,
+          userId: state.userId,
+          district: state.district,
+          hasPoliticalProfile: state.hasPoliticalProfile,
+        };
       }
 
-      const state = await getUserGateState(email);
-
-      token.email = email;
-      token.userId = state.userId;
-      token.district = state.district;
-      token.hasPoliticalProfile = state.hasPoliticalProfile;
-
-      if (user?.name) {
-        token.name = user.name;
-      }
-
-      if (user?.image) {
-        token.picture = user.image;
+      // 클라이언트 update() 호출 시 토큰 패치 (DB 조회 없음)
+      if (trigger === "update" && session) {
+        return { ...token, ...session };
       }
 
       return token;
