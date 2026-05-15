@@ -75,7 +75,7 @@ export async function POST(req: Request) {
   }
 
   // 추천인 + 피추천인 동시 포인트 지급
-  await Promise.all([
+  const [referrerResult, referredResult] = await Promise.all([
     supabase.rpc("increment_user_points", {
       p_user_id: referrer.id,
       p_amount: REFERRAL_REWARD_POINTS,
@@ -85,6 +85,15 @@ export async function POST(req: Request) {
       p_amount: REFERRAL_REWARD_POINTS,
     }),
   ]);
+
+  if (referrerResult.error || referredResult.error) {
+    console.error("포인트 지급 실패", {
+      referrerId: referrer.id,
+      referrerError: referrerResult.error,
+      referredId,
+      referredError: referredResult.error,
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }
