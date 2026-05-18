@@ -127,6 +127,7 @@ export function CommunityContainer() {
                 <X size={18} />
               </CloseBtn>
             </FormHeader>
+            <BenefitNote>투표를 만들면 커뮤니티 토론을 직접 이끌 수 있어요</BenefitNote>
             <CostNote>생성에 {POINTS.POLL_CREATE}pt가 소모돼요</CostNote>
             <form onSubmit={(e) => { void handleSubmit(e); }}>
               <FieldGroup>
@@ -243,6 +244,18 @@ export function CommunityContainer() {
                       <OptionTag $mine={false}>+{poll.options.length - 3}</OptionTag>
                     )}
                   </OptionPreview>
+                  {poll.creator && (
+                    <CreatorRow
+                      href={`/u/${poll.creator.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <CreatorAvatar
+                        src={poll.creator.image ?? undefined}
+                        alt={poll.creator.name ?? ""}
+                      />
+                      <CreatorName>{poll.creator.name ?? "익명"}</CreatorName>
+                    </CreatorRow>
+                  )}
                 </PollCard>
               );
             })}
@@ -340,6 +353,13 @@ const CloseBtn = styled.button`
     background: #f2f4f6;
     color: #191f28;
   }
+`;
+
+const BenefitNote = styled.p`
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #8b95a1;
 `;
 
 const CostNote = styled.p`
@@ -649,4 +669,34 @@ const SortTab = styled.button<{ $active: boolean }>`
   &:hover {
     background: ${({ $active }) => ($active ? "#191f28" : "#e5e8eb")};
   }
+`;
+
+const CreatorRow = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 2px 6px 2px 2px;
+  border-radius: 9999px;
+  color: #6b7684;
+  transition: background 150ms;
+
+  &:hover {
+    background: #f2f4f6;
+  }
+`;
+
+const CreatorAvatar = styled.img`
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e5e8eb;
+  flex-shrink: 0;
+`;
+
+const CreatorName = styled.span`
+  font-size: 12px;
+  font-weight: 400;
+  color: #8b95a1;
 `;

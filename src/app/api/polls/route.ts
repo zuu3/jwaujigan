@@ -14,6 +14,7 @@ export type PollRow = {
   created_at: string;
   total_count: number;
   user_option_id: string | null;
+  creator: { id: string; name: string | null; image: string | null } | null;
 };
 
 export async function GET(request: Request) {
@@ -124,16 +125,28 @@ export async function GET(request: Request) {
           .filter((p): p is NonNullable<typeof p> => p !== undefined)
       : polls;
 
-  const result: PollRow[] = orderedPolls.map((p) => ({
-    id: p.id,
-    user_id: p.user_id,
-    question: p.question,
-    options: p.options as PollOption[],
-    expires_at: p.expires_at,
-    created_at: p.created_at,
-    total_count: totalCountMap[p.id] ?? 0,
-    user_option_id: myVoteMap[p.id] ?? null,
-  }));
+  // 제작자 정보
+  const creatorIds = [...new Set(orderedPolls.map((p) => p.user_id))];
+  const { data: creatorRows } = await supabase
+    .from("users")
+    .select("id, name, image")
+    .in("id", creatorIds);
+  const creatorMap = new Map((creatorRows ?? []).map((u) => [u.id, u]));
+
+  const result: PollRow[] = orderedPolls.map((p) => {
+    const c = creatorMap.get(p.user_id);
+    return {
+      id: p.id,
+      user_id: p.user_id,
+      question: p.question,
+      options: p.options as PollOption[],
+      expires_at: p.expires_at,
+      created_at: p.created_at,
+      total_count: totalCountMap[p.id] ?? 0,
+      user_option_id: myVoteMap[p.id] ?? null,
+      creator: c ? { id: c.id, name: c.name, image: c.image } : null,
+    };
+  });
 
   return NextResponse.json({ polls: result });
 }
