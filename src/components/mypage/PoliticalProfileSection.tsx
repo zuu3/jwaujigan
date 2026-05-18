@@ -64,7 +64,7 @@ export function PoliticalProfileSection({
         <EmptyState>
           <EmptyTitle>아직 정치 성향 분석을 하지 않았습니다.</EmptyTitle>
           <EmptyText>
-            12문항에 답하면 경제·사회·안보 3축으로 분석한 나만의 성향 타입이
+            15문항에 답하면 경제·사회·안보 3축으로 분석한 나만의 성향 타입이
             나옵니다.
           </EmptyText>
           <PrimaryLink href="/onboarding">

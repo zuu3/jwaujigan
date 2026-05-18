@@ -17,6 +17,7 @@ import {
   resolveCurrentPosition,
   MANUAL_MATCH_LIMIT,
 } from "./DistrictStep";
+import type { PoliticalProfileResult } from "@/lib/political-profile";
 
 const QuestionsStep = dynamic(
   () => import("./QuestionsStep").then((m) => m.QuestionsStep),
@@ -116,6 +117,7 @@ export function OnboardingContainer({
   const reset = useOnboardingStore((state) => state.reset);
   const answers = useOnboardingStore((state) => state.answers);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [profileResult, setProfileResult] = useState<PoliticalProfileResult | null>(null);
   const step: OnboardingStep = funnel.step;
   const [district, setDistrict] = useState(initialDistrict);
   const [resolvedAddress, setResolvedAddress] = useState<string | null>(null);
@@ -332,6 +334,8 @@ export function OnboardingContainer({
         throw new Error("Failed to save political profile.");
       }
 
+      const result = (await response.json()) as PoliticalProfileResult;
+
       void updateSession({ hasPoliticalProfile: true });
 
       const trimmedCode = referralCode.trim().toUpperCase();
@@ -354,12 +358,17 @@ export function OnboardingContainer({
 
       document.cookie = `${ONBOARDING_SKIP_COOKIE}=; path=/; max-age=0`;
       reset();
-      router.push("/home");
-      router.refresh();
+      setProfileResult(result);
+      setIsSubmitting(false);
     } catch (error) {
       console.error(error);
       setIsSubmitting(false);
     }
+  };
+
+  const handleGoHome = () => {
+    router.push("/home");
+    router.refresh();
   };
 
   return (
@@ -367,13 +376,13 @@ export function OnboardingContainer({
       {isSubmitting ? (
         <FullScreenLoader
           title="결과를 저장하고 있어요"
-          description="정치 성향을 분석한 뒤 홈으로 이동합니다."
+          description="정치 성향을 분석하고 있습니다."
         />
       ) : null}
       <TopBar>
         <TopBarInner>
           <TopText>정치 성향 테스트</TopText>
-          {step === "questions" ? (
+          {step === "questions" && !profileResult ? (
             <SkipButton type="button" onClick={handleSkip} disabled={isSubmitting}>
               건너뛰기
             </SkipButton>
@@ -385,7 +394,9 @@ export function OnboardingContainer({
 
       <Content>
         <ContentInner>
-          {step === "district" ? (
+          {profileResult ? (
+            <ResultScreen result={profileResult} onGoHome={handleGoHome} />
+          ) : step === "district" ? (
             <>
               <StepHeader>
                 <StepChip>1 / 2 지역구</StepChip>
@@ -424,7 +435,7 @@ export function OnboardingContainer({
                 <StepChip>2 / 2 정치 성향 테스트</StepChip>
                 <StepTitle>정치 성향 테스트</StepTitle>
                 <StepDescription>
-                  지역구 선택은 끝났습니다. 답변을 마치면 홈으로 이동합니다.
+                  지역구 선택은 끝났습니다. 답변을 마치면 결과를 확인할 수 있어요.
                 </StepDescription>
               </StepHeader>
 
@@ -591,4 +602,217 @@ const StepDescription = styled.p`
   font-weight: 400;
   line-height: 1.55;
   word-break: keep-all;
+`;
+
+/* ── ResultScreen ─────────────────────────────────────────── */
+
+type AxisBarProps = {
+  label: string;
+  score: number;
+  leftLabel: string;
+  rightLabel: string;
+  leftColor: string;
+  rightColor: string;
+};
+
+function AxisBar({ label, score, leftLabel, rightLabel, leftColor, rightColor }: AxisBarProps) {
+  const clampedScore = Math.max(-100, Math.min(100, score));
+  const isPositive = clampedScore >= 0;
+  const fillPct = Math.abs(clampedScore) / 2;
+  const fillColor = isPositive ? rightColor : leftColor;
+
+  return (
+    <AxisRow>
+      <AxisLabel>{label}</AxisLabel>
+      <AxisTrackWrapper>
+        <AxisSideLabel $align="left">{leftLabel}</AxisSideLabel>
+        <AxisTrack>
+          <AxisCenter />
+          {clampedScore < 0 && (
+            <AxisFill
+              $color={fillColor}
+              $left={50 - fillPct}
+              $width={fillPct}
+            />
+          )}
+          {clampedScore > 0 && (
+            <AxisFill
+              $color={fillColor}
+              $left={50}
+              $width={fillPct}
+            />
+          )}
+        </AxisTrack>
+        <AxisSideLabel $align="right">{rightLabel}</AxisSideLabel>
+      </AxisTrackWrapper>
+    </AxisRow>
+  );
+}
+
+function ResultScreen({
+  result,
+  onGoHome,
+}: {
+  result: PoliticalProfileResult;
+  onGoHome: () => void;
+}) {
+  return (
+    <ResultWrapper>
+      <ResultBadge>분석 완료</ResultBadge>
+      <ResultTypeLabel>{result.political_type}</ResultTypeLabel>
+      <ResultSubtext>3가지 축으로 분석한 정치 성향이에요.</ResultSubtext>
+
+      <AxisList>
+        <AxisBar
+          label="경제"
+          score={result.economic_score}
+          leftLabel="보수"
+          rightLabel="진보"
+          leftColor="#e5484d"
+          rightColor="#3182f6"
+        />
+        <AxisBar
+          label="안보"
+          score={result.security_score}
+          leftLabel="보수"
+          rightLabel="진보"
+          leftColor="#e5484d"
+          rightColor="#3182f6"
+        />
+        <AxisBar
+          label="사회"
+          score={result.social_score}
+          leftLabel="보수"
+          rightLabel="진보"
+          leftColor="#e5484d"
+          rightColor="#3182f6"
+        />
+      </AxisList>
+
+      <GoHomeButton type="button" onClick={onGoHome}>
+        홈으로 가기
+      </GoHomeButton>
+    </ResultWrapper>
+  );
+}
+
+const ResultWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 8px;
+`;
+
+const ResultBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: #e8f3ff;
+  color: #3182f6;
+  font-size: 12px;
+  font-weight: 600;
+  align-self: flex-start;
+`;
+
+const ResultTypeLabel = styled.h2`
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: #191f28;
+  line-height: 1.3;
+  word-break: keep-all;
+
+  @media (max-width: 640px) {
+    font-size: 26px;
+  }
+`;
+
+const ResultSubtext = styled.p`
+  margin: 0;
+  font-size: 15px;
+  font-weight: 400;
+  color: #6b7684;
+`;
+
+const AxisList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px 20px;
+  border: 1px solid #e5e8eb;
+  border-radius: 12px;
+  background: #ffffff;
+`;
+
+const AxisRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const AxisLabel = styled.span`
+  font-size: 13px;
+  font-weight: 600;
+  color: #4e5968;
+`;
+
+const AxisTrackWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const AxisSideLabel = styled.span<{ $align: "left" | "right" }>`
+  font-size: 11px;
+  font-weight: 400;
+  color: #b0b8c1;
+  flex-shrink: 0;
+  width: 24px;
+  text-align: ${({ $align }) => $align};
+`;
+
+const AxisTrack = styled.div`
+  position: relative;
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: #f2f4f6;
+  overflow: hidden;
+`;
+
+const AxisCenter = styled.div`
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background: #e5e8eb;
+  transform: translateX(-50%);
+`;
+
+const AxisFill = styled.div<{ $color: string; $left: number; $width: number }>`
+  position: absolute;
+  top: 0;
+  left: ${({ $left }) => $left}%;
+  width: ${({ $width }) => $width}%;
+  height: 100%;
+  background: ${({ $color }) => $color};
+  transition: width 400ms cubic-bezier(0.0, 0.0, 0.2, 1);
+`;
+
+const GoHomeButton = styled.button`
+  width: 100%;
+  height: 56px;
+  border: 0;
+  border-radius: 12px;
+  background: #3182f6;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: #2272eb;
+  }
 `;
