@@ -16,6 +16,7 @@ export type HotIssue = {
   body: string | null;
   progressive: string;
   conservative: string;
+  scenario: string | null;
   source_url: string | null;
   bill_id: string | null;
   published_at: string | null;

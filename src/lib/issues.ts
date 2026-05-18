@@ -43,6 +43,7 @@ type GeneratedIssueCard = {
   body: string;
   progressive: string;
   conservative: string;
+  scenario: string;
 };
 
 function getIssueGenerativeModel() {
@@ -64,6 +65,7 @@ function normalizeGeneratedIssue(raw: Partial<GeneratedIssueCard>): GeneratedIss
     body: safe(raw.body),
     progressive: compact(raw.progressive),
     conservative: compact(raw.conservative),
+    scenario: safe(raw.scenario),
   };
 
   if (!normalized.title || !normalized.summary || !normalized.body) {
@@ -101,6 +103,9 @@ export async function buildIssueFromBill(bill: AssemblyIssueBill): Promise<Issue
     "  4문단: 쟁점과 향후 전망 — 통과 시 효과, 사회적 논의 지점",
     "- progressive: 진보·공공성·분배·노동자 보호 관점에서 이 법안을 어떻게 평가할지 2~3문장",
     "- conservative: 재정건전성·시장원리·기업 자율·규제 최소화 관점에서 이 법안을 어떻게 평가할지 2~3문장",
+    "- scenario: '만약 이 법이 통과된다면' 가상 상황. 3개 시나리오를 줄바꿈(\\n\\n)으로 구분.",
+    "  각 시나리오는 '• ' 로 시작. 구체적 인물·상황·결과 묘사 (예: '서울에 사는 30대 직장인 A씨는...').",
+    "  추상적 효과가 아니라 일상에서 체감되는 구체적 변화로 작성.",
     "",
     "스타일 규칙:",
     "- 선동적·감정적 표현 금지",
@@ -130,6 +135,7 @@ export async function buildIssueFromBill(bill: AssemblyIssueBill): Promise<Issue
     body: normalized.body,
     progressive: normalized.progressive,
     conservative: normalized.conservative,
+    scenario: normalized.scenario || null,
     source_url: bill.sourceUrl,
     bill_id: bill.billId,
     published_at: bill.publishedAt,

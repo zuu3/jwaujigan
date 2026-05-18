@@ -252,6 +252,25 @@ export function IssueDetailContainer({ issue: initialIssue, initialBodyText }: I
             </BodySection>
           )}
 
+          {issue.scenario && (
+            <ScenarioSection>
+              <ScenarioHeader>
+                <ScenarioBadge>가상 상황</ScenarioBadge>
+                <ScenarioTitle>만약 이 법이 통과된다면</ScenarioTitle>
+              </ScenarioHeader>
+              <ScenarioList>
+                {issue.scenario
+                  .split("\n\n")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .map((para, i) => (
+                    <ScenarioItem key={i}>{para.replace(/^•\s*/, "")}</ScenarioItem>
+                  ))}
+              </ScenarioList>
+              <ScenarioFootnote>법안 통과를 가정한 AI 생성 시나리오입니다.</ScenarioFootnote>
+            </ScenarioSection>
+          )}
+
           <ViewpointGrid>
             <ViewpointBox $side="progressive">
               <ViewpointLabel $color="#3182f6">진보 관점</ViewpointLabel>
@@ -641,6 +660,78 @@ const BodyText = styled.div`
     color: #333d4b;
     word-break: keep-all;
   }
+`;
+
+const ScenarioSection = styled.section`
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid #e5e8eb;
+  border-radius: 12px;
+  background: #ffffff;
+`;
+
+const ScenarioHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const ScenarioBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #f2f4f6;
+  color: #4e5968;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+`;
+
+const ScenarioTitle = styled.h2`
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #191f28;
+`;
+
+const ScenarioList = styled.ul`
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+`;
+
+const ScenarioItem = styled.li`
+  position: relative;
+  padding: 12px 14px 12px 32px;
+  border-radius: 8px;
+  background: #f2f4f6;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.7;
+  color: #333d4b;
+  word-break: keep-all;
+
+  &::before {
+    content: "•";
+    position: absolute;
+    left: 14px;
+    top: 12px;
+    color: #8b95a1;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.7;
+  }
+`;
+
+const ScenarioFootnote = styled.p`
+  margin: 0;
+  font-size: 12px;
+  font-weight: 400;
+  color: #8b95a1;
 `;
 
 const ViewpointGrid = styled.div`

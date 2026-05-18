@@ -7,7 +7,7 @@ import type { HotIssue, IssueVoteCounts } from "@/types/issue";
 type Ctx = { params: Promise<{ id: string }> };
 
 const ISSUE_SELECT =
-  "id, title, summary, body, progressive, conservative, source_url, bill_id, published_at, proposer, committee, bill_status, created_at" as const;
+  "id, title, summary, body, progressive, conservative, scenario, source_url, bill_id, published_at, proposer, committee, bill_status, created_at" as const;
 
 const EMPTY_COUNTS: IssueVoteCounts = { progressive: 0, conservative: 0, neutral: 0, total: 0 };
 

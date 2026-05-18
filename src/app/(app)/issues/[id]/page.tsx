@@ -49,6 +49,7 @@ const getIssue = cache(async (id: string): Promise<HotIssue | null> => {
     body: row.body ?? null,
     progressive: row.progressive,
     conservative: row.conservative,
+    scenario: row.scenario ?? null,
     source_url: row.source_url,
     bill_id: row.bill_id,
     published_at: row.published_at,

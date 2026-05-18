@@ -10,7 +10,7 @@ const LOCK_TTL_MS = 60 * 1000;
 const LOCK_WAIT_MS = 3_000;
 
 const ISSUE_SELECT =
-  "id, title, summary, body, progressive, conservative, source_url, bill_id, published_at, proposer, committee, bill_status, created_at" as const;
+  "id, title, summary, body, progressive, conservative, scenario, source_url, bill_id, published_at, proposer, committee, bill_status, created_at" as const;
 
 type IssueRow = {
   id: string;
@@ -19,6 +19,7 @@ type IssueRow = {
   body: string | null;
   progressive: string;
   conservative: string;
+  scenario: string | null;
   source_url: string | null;
   bill_id: string | null;
   published_at: string | null;
