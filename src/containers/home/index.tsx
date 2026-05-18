@@ -73,6 +73,7 @@ export function HomeContainer({ session }: HomeContainerProps) {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("balance-mode") === "1";
   });
+  const [showGuide, setShowGuide] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const voteMutation = useVoteIssue();
@@ -135,8 +136,18 @@ const searchResultsQuery = useSearch(debouncedQuery);
     ? { href: "/onboarding", label: onboardingCopy.action }
     : { href: "#hot-issues", label: "이슈 바로 보기" };
 
-  const hasVoted = issues.some((i) => i.user_vote !== null);
-  const showFirstRunGuide = !issuesQuery.isLoading && !hasVoted && issues.length > 0;
+  useEffect(() => {
+    if (!needsOnboarding && !issuesQuery.isLoading && issues.length > 0) {
+      if (!localStorage.getItem("home_guide_seen")) {
+        setShowGuide(true);
+      }
+    }
+  }, [needsOnboarding, issuesQuery.isLoading, issues.length]);
+
+  const handleGuideClose = () => {
+    localStorage.setItem("home_guide_seen", "1");
+    setShowGuide(false);
+  };
 
   return (
     <Page>
@@ -323,26 +334,6 @@ const searchResultsQuery = useSearch(debouncedQuery);
             ) : null}
           </SectionHeader>
 
-          {showFirstRunGuide ? (
-            <FirstRunGuide>
-              <FirstRunTitle>처음 오셨나요?</FirstRunTitle>
-              <FirstRunSteps>
-                <FirstRunStep>
-                  <FirstRunNum>1</FirstRunNum>
-                  <FirstRunText>이슈를 눌러 <strong>진보·보수 입장 비교</strong></FirstRunText>
-                </FirstRunStep>
-                <FirstRunStep>
-                  <FirstRunNum>2</FirstRunNum>
-                  <FirstRunText>더 설득력 있는 쪽에 <strong>투표</strong></FirstRunText>
-                </FirstRunStep>
-                <FirstRunStep>
-                  <FirstRunNum>3</FirstRunNum>
-                  <FirstRunText><strong>AI 배틀</strong>로 더 깊이 파고들기</FirstRunText>
-                </FirstRunStep>
-              </FirstRunSteps>
-            </FirstRunGuide>
-          ) : null}
-
           <IssueLayout>
             {issuesQuery.isLoading ? (
               <IssueSkeletonList aria-busy="true">
@@ -453,6 +444,44 @@ const searchResultsQuery = useSearch(debouncedQuery);
           )}
         </MotionSection>
       </Main>
+
+      {showGuide ? (
+        <>
+          <GuideOverlay onClick={handleGuideClose} />
+          <GuideSheet>
+            <GuideHandle />
+            <GuideTitleRow>
+              <GuideTitle>좌우지간 사용법</GuideTitle>
+            </GuideTitleRow>
+            <GuideSteps>
+              <GuideStep>
+                <GuideNum>1</GuideNum>
+                <GuideStepText>
+                  <GuideStepLabel>이슈 카드에서 <strong>입장 비교</strong>를 눌러요</GuideStepLabel>
+                  <GuideStepDesc>진보와 보수의 입장을 나란히 확인할 수 있어요</GuideStepDesc>
+                </GuideStepText>
+              </GuideStep>
+              <GuideStep>
+                <GuideNum>2</GuideNum>
+                <GuideStepText>
+                  <GuideStepLabel>마음에 드는 입장에 <strong>투표</strong>해요</GuideStepLabel>
+                  <GuideStepDesc>진보·보수·모르겠음 중 한 가지를 선택해요</GuideStepDesc>
+                </GuideStepText>
+              </GuideStep>
+              <GuideStep>
+                <GuideNum>3</GuideNum>
+                <GuideStepText>
+                  <GuideStepLabel><strong>AI 배틀</strong>로 더 깊이 파고들어요</GuideStepLabel>
+                  <GuideStepDesc>투표 후 AI가 두 입장을 직접 토론해요</GuideStepDesc>
+                </GuideStepText>
+              </GuideStep>
+            </GuideSteps>
+            <GuideStartButton type="button" onClick={handleGuideClose}>
+              시작하기
+            </GuideStartButton>
+          </GuideSheet>
+        </>
+      ) : null}
     </Page>
   );
 }
@@ -782,59 +811,6 @@ const SkeletonPill = styled.div`
   ${shimmer}
 `;
 
-const FirstRunGuide = styled.div`
-  display: grid;
-  gap: 12px;
-  padding: 16px 20px;
-  border-radius: 10px;
-  background: #f9fafb;
-  border: 1px solid #e5e8eb;
-  margin-bottom: 4px;
-`;
-
-const FirstRunTitle = styled.div`
-  color: #8b95a1;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-`;
-
-const FirstRunSteps = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 20px;
-`;
-
-const FirstRunStep = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const FirstRunNum = styled.div`
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #e5e8eb;
-  color: #4e5968;
-  font-size: 11px;
-  font-weight: 700;
-  flex-shrink: 0;
-`;
-
-const FirstRunText = styled.span`
-  color: #4e5968;
-  font-size: 13px;
-  font-weight: 400;
-
-  strong {
-    color: #191f28;
-    font-weight: 600;
-  }
-`;
-
 const BalanceToggle = styled.button<{ $active: boolean }>`
   display: inline-flex;
   align-items: center;
@@ -948,4 +924,163 @@ const PollPreviewTime = styled.span<{ $expired: boolean }>`
   font-size: 12px;
   font-weight: 600;
   color: ${({ $expired }) => ($expired ? "#b0b8c1" : "#3182f6")};
+`;
+
+/* ── First-visit guide bottom sheet ──────────────────────── */
+
+const GuideOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 9, 19, 0.5);
+  z-index: 200;
+  animation: fadeIn 250ms cubic-bezier(0.0, 0.0, 0.2, 1) both;
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`;
+
+const GuideSheet = styled.div`
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 201;
+  background: #ffffff;
+  border-radius: 16px 16px 0 0;
+  padding: 12px 20px 40px;
+  display: grid;
+  gap: 0;
+  animation: slideUp 250ms cubic-bezier(0.0, 0.0, 0.2, 1) both;
+
+  @keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+
+  @media (min-width: 480px) {
+    top: 50%;
+    bottom: auto;
+    left: 50%;
+    right: auto;
+    width: 400px;
+    border-radius: 16px;
+    padding: 28px 28px 28px;
+    transform: translate(-50%, -50%);
+    animation: fadeScaleIn 200ms cubic-bezier(0.0, 0.0, 0.2, 1) both;
+
+    @keyframes fadeScaleIn {
+      from { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
+      to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+  }
+`;
+
+const GuideHandle = styled.div`
+  width: 36px;
+  height: 4px;
+  border-radius: 9999px;
+  background: #e5e8eb;
+  margin: 0 auto 20px;
+
+  @media (min-width: 480px) {
+    display: none;
+  }
+`;
+
+const GuideTitleRow = styled.div`
+  margin-bottom: 20px;
+`;
+
+const GuideTitle = styled.h2`
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #191f28;
+  letter-spacing: -0.03em;
+`;
+
+const GuideSteps = styled.div`
+  display: grid;
+  gap: 20px;
+  margin-bottom: 28px;
+`;
+
+const GuideStep = styled.div`
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+`;
+
+const GuideNum = styled.div`
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #191f28;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+`;
+
+const GuideStepText = styled.div`
+  display: grid;
+  gap: 4px;
+`;
+
+const GuideStepLabel = styled.div`
+  font-size: 16px;
+  font-weight: 400;
+  color: #191f28;
+  line-height: 1.5;
+  word-break: keep-all;
+
+  strong {
+    font-weight: 700;
+  }
+`;
+
+const GuideStepDesc = styled.div`
+  font-size: 13px;
+  font-weight: 400;
+  color: #8b95a1;
+  line-height: 1.5;
+  word-break: keep-all;
+`;
+
+const GuideStartButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 56px;
+  border-radius: 12px;
+  background: #3182f6;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+  border: 0;
+  cursor: pointer;
+  transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    opacity: 0.88;
+  }
+
+  &:active {
+    opacity: 0.76;
+  }
 `;
