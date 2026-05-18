@@ -19,10 +19,17 @@ const LEVELS = [
   { min: 0, max: 99, title: "정치 입문자" },
   { min: 100, max: 299, title: "관심 유권자" },
   { min: 300, max: 599, title: "정치 논객" },
-  { min: 600, max: Infinity, title: "여론 선도자" },
+  { min: 600, max: 999, title: "정치 논평가" },
+  { min: 1000, max: Infinity, title: "여론 선도자" },
 ] as const;
 
-const LEVEL_BATTLE_LIMITS = [3, 5, 8, Infinity] as const;
+const LEVEL_BATTLE_LIMITS = [3, 5, 8, 12, Infinity] as const;
+
+export const LEVELS_INFO = LEVELS.map((l, i) => ({
+  title: l.title,
+  range: l.max === Infinity ? `${l.min}점 이상` : `${l.min}–${l.max}점`,
+  battleLimit: LEVEL_BATTLE_LIMITS[i] === Infinity ? "무제한" : `${LEVEL_BATTLE_LIMITS[i] as number}회`,
+}));
 
 export function getLevel(points: number): Level {
   const index = LEVELS.findIndex((l) => points <= l.max);
