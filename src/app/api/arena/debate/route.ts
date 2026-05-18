@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getGeminiModel } from "@/lib/gemini";
+import { generateArenaDebateText } from "@/lib/arena-ai";
 import { getDailyBattleLimit, kstTodayStartISO } from "@/services/points/points";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const SSE_CHARACTER_DELAY_MS = 18;
 
 type DebateMessage = {
   role: "progressive" | "conservative" | "user";
@@ -123,18 +125,6 @@ function buildDebatePrompt({
   ].join("\n");
 }
 
-async function collectGeminiStream(
-  stream: AsyncIterable<{ text: () => string }>,
-) {
-  let fullText = "";
-
-  for await (const chunk of stream) {
-    fullText += chunk.text();
-  }
-
-  return fullText.trim();
-}
-
 function isWeakDebateText(text: string, issueTitle: string) {
   const trimmed = text.trimEnd();
   const normalizedText = text.replace(/\s+/g, "");
@@ -169,13 +159,13 @@ function isWeakDebateText(text: string, issueTitle: string) {
 }
 
 function splitForSse(text: string) {
-  const chunks: string[] = [];
+  return Array.from(text);
+}
 
-  for (let index = 0; index < text.length; index += 18) {
-    chunks.push(text.slice(index, index + 18));
-  }
-
-  return chunks;
+function wait(milliseconds: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
 }
 
 function buildFallbackDebateText({
@@ -303,17 +293,13 @@ export async function POST(request: Request) {
   });
 
   try {
-    const model = getGeminiModel({
-      generationConfig: {
-        temperature: 0.6,
-        maxOutputTokens: 2500,
-      },
+    const firstText = await generateArenaDebateText({
+      prompt,
       systemInstruction,
+      temperature: 0.6,
+      maxOutputTokens: 2500,
+      timeoutMs: 30_000,
     });
-    const result = await model.generateContentStream(prompt, {
-      timeout: 30_000,
-    });
-    const firstText = await collectGeminiStream(result.stream);
     console.log(
       `[debate r${body.round} ${aiStance}] raw(${firstText.length}자):`,
       firstText.slice(0, 80),
@@ -334,11 +320,13 @@ export async function POST(request: Request) {
         speakerStance: body.speakerStance,
         retry: true,
       });
-      const retryResult = await model.generateContentStream(retryPrompt, {
-        timeout: 30_000,
+      debateText = await generateArenaDebateText({
+        prompt: retryPrompt,
+        systemInstruction,
+        temperature: 0.6,
+        maxOutputTokens: 2500,
+        timeoutMs: 30_000,
       });
-
-      debateText = await collectGeminiStream(retryResult.stream);
     }
 
     if (isWeakDebateText(debateText, body.issueTitle)) {
@@ -368,6 +356,7 @@ export async function POST(request: Request) {
             controller.enqueue(
               encoder.encode(`data: ${JSON.stringify({ text })}\n\n`),
             );
+            await wait(SSE_CHARACTER_DELAY_MS);
           }
 
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));

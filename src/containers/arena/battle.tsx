@@ -8,8 +8,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { CachedArenaBattle } from "@/lib/arena";
 import type { HotIssue } from "@/types/issue";
 import { showPointsToast } from "@/lib/points-toast";
+import { showBadgeToast } from "@/lib/badge-toast";
 import { showToast } from "@/lib/toast";
-import { DAILY_BONUS, POINTS } from "@/services/points/points";
+import { BADGE_DEFS, DAILY_BONUS, POINTS } from "@/services/points/points";
 
 export type DebateMessage = {
   role: "progressive" | "conservative" | "user";
@@ -77,6 +78,19 @@ export function formatPublishedAt(iso: string | null): string | null {
   return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}.`;
 }
 
+function kstMidnightCountdown(): string {
+  const nowMs = Date.now();
+  const kstOffsetMs = 9 * 3_600_000;
+  const kstNow = new Date(nowMs + kstOffsetMs);
+  const nextMidnightKST = new Date(
+    Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), kstNow.getUTCDate() + 1),
+  );
+  const msLeft = nextMidnightKST.getTime() - kstOffsetMs - nowMs;
+  const h = Math.floor(msLeft / 3_600_000);
+  const m = Math.floor((msLeft % 3_600_000) / 60_000);
+  return h > 0 ? `${h}시간 ${m}분 후` : `${m}분 후`;
+}
+
 function sleep(milliseconds: number) {
   return new Promise((resolve) => {
     window.setTimeout(resolve, milliseconds);
@@ -108,7 +122,16 @@ async function readDebateStream({
   });
 
   if (!response.ok || !response.body) {
-    throw new Error("AI 토론 응답을 불러오지 못했습니다.");
+    const errorPayload = await response
+      .json()
+      .catch(() => null) as { message?: string; limit?: number } | null;
+
+    if (response.status === 429 && errorPayload?.message === "daily_limit_reached") {
+      const limitText = typeof errorPayload.limit === "number" ? ` ${errorPayload.limit}회` : "";
+      throw new Error(`오늘 참여 가능한 배틀${limitText}를 모두 사용했어요. ${kstMidnightCountdown()} 초기화됩니다.`);
+    }
+
+    throw new Error(errorPayload?.message ?? "AI 토론 응답을 불러오지 못했습니다.");
   }
 
   const reader = response.body.getReader();
@@ -346,12 +369,18 @@ export function ArenaBattle({
       });
 
       if (logRes.ok) {
-        const logData = await logRes.json() as { daily_bonus_earned?: boolean };
+        const logData = await logRes.json() as { daily_bonus_earned?: boolean; newly_earned_badges?: string[] };
         showPointsToast({
           points: POINTS.BATTLE,
           label: "배틀 완료",
           bonus: logData.daily_bonus_earned ? DAILY_BONUS : undefined,
         });
+        if (logData.newly_earned_badges?.length) {
+          for (const badgeId of logData.newly_earned_badges) {
+            const badge = BADGE_DEFS.find((b) => b.id === badgeId);
+            if (badge) showBadgeToast({ title: badge.title, desc: badge.desc });
+          }
+        }
         void queryClient.invalidateQueries({ queryKey: ["user-profile"] });
       }
     },
@@ -633,6 +662,7 @@ export function ArenaBattle({
                   <span>다시 도전</span>
                 </ResultButton>
                 <ResultLink href="/arena">다른 이슈</ResultLink>
+                <ResultLink href="/mypage">내 전적</ResultLink>
                 <ShareButton
                   type="button"
                   $copied={shareCopied}
