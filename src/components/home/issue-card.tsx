@@ -1,7 +1,7 @@
 "use client";
 
 import styled from "@/lib/styled";
-import { ArrowRight, CheckCircle2, ChevronDown, Clock, Landmark, User, XCircle } from "lucide-react";
+import { ArrowRight, ChevronDown, Landmark, User } from "lucide-react";
 import Link from "next/link";
 import type { HotIssue, IssueVoteStance } from "@/types/issue";
 import dynamic from "next/dynamic";
@@ -76,16 +76,8 @@ export function IssueCard({
         <IssueRowBody href={getIssueLink(issue)}>
           <IssueTitle>{issue.title}</IssueTitle>
           <IssueSummary>{issue.summary}</IssueSummary>
-          {(issue.committee ?? issue.proposer ?? issue.bill_status) ? (
+          {(issue.committee ?? issue.proposer) ? (
             <IssueBodyMeta>
-              {issue.bill_status ? (
-                <BillStatusBadge $status={issue.bill_status}>
-                  {issue.bill_status === "통과" && <CheckCircle2 size={11} />}
-                  {issue.bill_status === "폐기" && <XCircle size={11} />}
-                  {issue.bill_status === "계류 중" && <Clock size={11} />}
-                  {issue.bill_status}
-                </BillStatusBadge>
-              ) : null}
               {issue.committee ? (
                 <IssueMetaChip>
                   <Landmark size={11} />
@@ -274,21 +266,6 @@ const IssueBodyMeta = styled.div`
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 2px;
-`;
-
-const BillStatusBadge = styled.span<{ $status: string }>`
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1;
-  background: ${({ $status }) =>
-    $status === "통과" ? "#e8f3ff" : $status === "폐기" ? "#fef2f2" : "#fff7e6"};
-  color: ${({ $status }) =>
-    $status === "통과" ? "#3182f6" : $status === "폐기" ? "#e5484d" : "#fe9800"};
 `;
 
 const IssueMetaChip = styled.span<{ $dim?: boolean; $followed?: boolean }>`

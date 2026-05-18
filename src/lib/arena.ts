@@ -99,8 +99,7 @@ export async function getArenaIssues() {
     .from("issues")
     .select("id, title, summary, body, progressive, conservative, scenario, source_url, bill_id, published_at, proposer, committee, bill_status, created_at")
     .gt("expires_at", now)
-    .order("created_at", { ascending: false })
-    .limit(6);
+    .order("created_at", { ascending: false });
 
   if (error) {
     console.error("Failed to fetch arena issues", error);

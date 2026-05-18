@@ -1,7 +1,7 @@
 "use client";
 
 import styled from "@/lib/styled";
-import { CheckCircle2, Clock, Landmark, User, XCircle } from "lucide-react";
+import { Landmark, User } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 
@@ -21,17 +21,6 @@ type IssuesListContainerProps = {
   initialNextCursor: string | null;
 };
 
-function StatusBadge({ status }: { status: string }) {
-  return (
-    <Badge $status={status}>
-      {status === "통과" && <CheckCircle2 size={11} />}
-      {status === "폐기" && <XCircle size={11} />}
-      {status === "계류 중" && <Clock size={11} />}
-      {status}
-    </Badge>
-  );
-}
-
 function formatDate(iso: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);
@@ -43,6 +32,21 @@ export function IssuesListContainer({ initialIssues, initialNextCursor }: Issues
   const [issues, setIssues] = useState(initialIssues);
   const [nextCursor, setNextCursor] = useState(initialNextCursor);
   const [isPending, startTransition] = useTransition();
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<"latest" | "oldest">("latest");
+
+  const searched = query.trim().length >= 1
+    ? issues.filter((i) =>
+        i.title.includes(query.trim()) || i.summary.includes(query.trim())
+      )
+    : issues;
+
+  const displayed = sort === "oldest"
+    ? [...searched].sort((a, b) =>
+        new Date(a.published_at ?? a.created_at).getTime() -
+        new Date(b.published_at ?? b.created_at).getTime()
+      )
+    : searched;
 
   function loadMore() {
     if (!nextCursor || isPending) return;
@@ -63,14 +67,26 @@ export function IssuesListContainer({ initialIssues, initialNextCursor }: Issues
           <PageDesc>국회에서 논의 중이거나 처리된 법안을 모아봤어요.</PageDesc>
         </PageHeader>
 
+        <ControlRow>
+          <SearchInput
+            type="search"
+            placeholder="이슈 검색"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <SortChips>
+            <SortChip type="button" $active={sort === "latest"} onClick={() => setSort("latest")}>최신순</SortChip>
+            <SortChip type="button" $active={sort === "oldest"} onClick={() => setSort("oldest")}>오래된 순</SortChip>
+          </SortChips>
+        </ControlRow>
+
         <IssueList>
-          {issues.map((issue) => (
+          {displayed.map((issue) => (
             <IssueRow key={issue.id} href={`/issues/${issue.id}`}>
               <IssueMain>
                 <IssueTitle>{issue.title}</IssueTitle>
                 <IssueSummary>{issue.summary}</IssueSummary>
                 <IssueMeta>
-                  {issue.bill_status && <StatusBadge status={issue.bill_status} />}
                   {issue.committee && (
                     <MetaChip>
                       <Landmark size={11} />
@@ -89,6 +105,10 @@ export function IssuesListContainer({ initialIssues, initialNextCursor }: Issues
             </IssueRow>
           ))}
         </IssueList>
+
+        {displayed.length === 0 && query.trim().length >= 1 && (
+          <Empty>검색 결과가 없어요. 다른 키워드로 검색해 보세요.</Empty>
+        )}
 
         {nextCursor && (
           <LoadMoreButton type="button" onClick={loadMore} disabled={isPending}>
@@ -142,6 +162,63 @@ const PageDesc = styled.p`
   margin: 0;
   font-size: 14px;
   color: #8b95a1;
+`;
+
+const ControlRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+`;
+
+const SearchInput = styled.input`
+  flex: 1;
+  min-width: 160px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid #e5e8eb;
+  background: #f2f4f6;
+  color: #191f28;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+
+  &::placeholder {
+    color: #b0b8c1;
+  }
+
+  &:focus {
+    border-color: #3182f6;
+    background: #ffffff;
+  }
+`;
+
+const SortChips = styled.div`
+  display: flex;
+  gap: 6px;
+`;
+
+const SortChip = styled.button<{ $active: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 1px solid ${({ $active }) => ($active ? "#191f28" : "#e5e8eb")};
+  background: ${({ $active }) => ($active ? "#191f28" : "transparent")};
+  color: ${({ $active }) => ($active ? "#ffffff" : "#6b7684")};
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+
+  &:hover {
+    border-color: #191f28;
+    color: ${({ $active }) => ($active ? "#ffffff" : "#191f28")};
+  }
 `;
 
 const IssueList = styled.div`
@@ -201,20 +278,6 @@ const IssueMeta = styled.div`
   align-items: center;
   gap: 6px;
   margin-top: 2px;
-`;
-
-const Badge = styled.span<{ $status: string }>`
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  background: ${({ $status }) =>
-    $status === "통과" ? "#e8f3ff" : $status === "폐기" ? "#fef2f2" : "#fff7e6"};
-  color: ${({ $status }) =>
-    $status === "통과" ? "#3182f6" : $status === "폐기" ? "#e5484d" : "#fe9800"};
 `;
 
 const MetaChip = styled.span`

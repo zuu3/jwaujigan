@@ -3,6 +3,7 @@
 import styled from "@/lib/styled";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import type { HotIssue } from "@/types/issue";
 
 type ArenaIndexProps = {
@@ -11,6 +12,19 @@ type ArenaIndexProps = {
 };
 
 export function ArenaIndex({ issues, isAuthenticated }: ArenaIndexProps) {
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<"latest" | "popular">("latest");
+
+  const searched = query.trim().length >= 1
+    ? issues.filter((i) =>
+        i.title.includes(query.trim()) || i.summary.includes(query.trim())
+      )
+    : issues;
+
+  const filtered = sort === "popular"
+    ? [...searched].sort((a, b) => (b.vote_counts?.total ?? 0) - (a.vote_counts?.total ?? 0))
+    : searched;
+
   return (
     <Page>
       <Shell>
@@ -53,21 +67,31 @@ export function ArenaIndex({ issues, isAuthenticated }: ArenaIndexProps) {
         </Hero>
 
         {issues.length > 0 ? (
-          <IssueGrid>
-            {issues.map((issue) => {
+          <>
+            <ControlRow>
+              <SearchInput
+                type="search"
+                placeholder="이슈 검색"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+              <SortChips>
+                <SortChip type="button" $active={sort === "latest"} onClick={() => setSort("latest")}>최신순</SortChip>
+                <SortChip type="button" $active={sort === "popular"} onClick={() => setSort("popular")}>참여자 많은 순</SortChip>
+              </SortChips>
+            </ControlRow>
+
+            {filtered.length > 0 ? (
+              <IssueGrid>
+                {filtered.map((issue) => {
               const total = issue.vote_counts?.total ?? 0;
 
               return (
                 <IssueCard key={issue.id} href={`/arena/${issue.id}`}>
                   <IssueCardTop>
-                    {issue.bill_status ? (
-                      <IssueCardBadge
-                        $bg={issue.bill_status === "통과" ? "#e8f3ff" : issue.bill_status === "폐기" ? "#fef2f2" : "#fff7e6"}
-                        $color={issue.bill_status === "통과" ? "#3182f6" : issue.bill_status === "폐기" ? "#e5484d" : "#fe9800"}
-                      >{issue.bill_status}</IssueCardBadge>
-                    ) : (
-                      <IssueCardBadge $bg="#f2f4f6" $color="#6b7684">토론</IssueCardBadge>
-                    )}
+                    {issue.committee ? (
+                      <IssueCardBadge $bg="#f2f4f6" $color="#6b7684">{issue.committee}</IssueCardBadge>
+                    ) : null}
                     {total > 0 ? (
                       <IssueCardParticipants>
                         {total.toLocaleString()}명 참여
@@ -76,10 +100,8 @@ export function ArenaIndex({ issues, isAuthenticated }: ArenaIndexProps) {
                   </IssueCardTop>
                   <IssueCardTitle>{issue.title}</IssueCardTitle>
                   <IssueCardSummary>{issue.summary}</IssueCardSummary>
-                  {issue.proposer || issue.committee ? (
-                    <IssueCardMeta>
-                      {[issue.committee, issue.proposer].filter(Boolean).join(" · ")}
-                    </IssueCardMeta>
+                  {issue.proposer ? (
+                    <IssueCardMeta>{issue.proposer}</IssueCardMeta>
                   ) : null}
                   <IssueCardFooter>
                     <span>배틀 참여하기</span>
@@ -87,8 +109,15 @@ export function ArenaIndex({ issues, isAuthenticated }: ArenaIndexProps) {
                   </IssueCardFooter>
                 </IssueCard>
               );
-            })}
-          </IssueGrid>
+                })}
+              </IssueGrid>
+            ) : (
+              <EmptyPanel>
+                <EmptyTitle>검색 결과가 없어요</EmptyTitle>
+                <EmptyText>다른 키워드로 검색해 보세요.</EmptyText>
+              </EmptyPanel>
+            )}
+          </>
         ) : (
           <EmptyPanel>
             <EmptyTitle>배틀 이슈가 없어요</EmptyTitle>
@@ -196,6 +225,62 @@ const HeroDescription = styled.p`
   font-size: 16px;
   font-weight: 400;
   line-height: 1.6;
+`;
+
+const ControlRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+`;
+
+const SearchInput = styled.input`
+  flex: 1;
+  min-width: 160px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid #e5e8eb;
+  background: #f2f4f6;
+  color: #191f28;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+
+  &::placeholder {
+    color: #b0b8c1;
+  }
+
+  &:focus {
+    border-color: #3182f6;
+    background: #ffffff;
+  }
+`;
+
+const SortChips = styled.div`
+  display: flex;
+  gap: 6px;
+`;
+
+const SortChip = styled.button<{ $active: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 1px solid ${({ $active }) => ($active ? "#191f28" : "#e5e8eb")};
+  background: ${({ $active }) => ($active ? "#191f28" : "transparent")};
+  color: ${({ $active }) => ($active ? "#ffffff" : "#6b7684")};
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+
+  &:hover {
+    border-color: #191f28;
+    color: ${({ $active }) => ($active ? "#ffffff" : "#191f28")};
+  }
 `;
 
 const IssueGrid = styled.div`
