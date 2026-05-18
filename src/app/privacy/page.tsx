@@ -60,7 +60,8 @@ export default function PrivacyPage() {
               ["Google LLC", "소셜 로그인(OAuth 2.0) 인증"],
               ["Supabase Inc.", "데이터베이스 저장 및 관리"],
               ["Vercel Inc.", "서비스 호스팅"],
-              ["Google LLC (Gemini API)", "AI 기반 이슈 분석 콘텐츠 생성"],
+              ["Google LLC (Gemini API)", "이슈 분석·요약 콘텐츠 AI 생성"],
+              ["DeepSeek (DeepSeek API)", "아레나 토론 및 판정 AI 생성"],
               ["Sentry Inc.", "서비스 오류 모니터링"],
             ]}
           />
@@ -86,8 +87,12 @@ export default function PrivacyPage() {
 
         <Section title="7. AI 생성 콘텐츠 안내">
           <p>
-            좌우지간의 이슈 요약, 진보·보수 분석, 아레나 토론 내용은 Google Gemini API를 통해 생성됩니다.
+            좌우지간의 이슈 요약·진보·보수 분석은 Google Gemini API를 통해 생성되며, 아레나 토론 및 판정은 DeepSeek API를 통해 생성됩니다.
             AI가 생성한 내용은 실제 특정 단체·개인의 공식 입장이 아니며, 정보 제공 목적으로만 활용됩니다.
+          </p>
+          <p>
+            아레나 배틀에서 이용자가 직접 입력한 발언은 토론 맥락 생성을 위해 DeepSeek 서버로 전송됩니다.
+            이름·이메일 등 식별 정보는 전송되지 않으며, 입력 내용은 AI 응답 생성 후 별도로 저장되지 않습니다.
           </p>
         </Section>
 
