@@ -708,8 +708,8 @@ const ResultBadge = styled.div`
   align-items: center;
   padding: 4px 10px;
   border-radius: 9999px;
-  background: #e8f3ff;
-  color: #3182f6;
+  background: #f2f4f6;
+  color: #4e5968;
   font-size: 12px;
   font-weight: 600;
   align-self: flex-start;
