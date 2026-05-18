@@ -8,6 +8,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AppProvider } from "@/components/providers/app-provider";
 import { PointsToaster } from "@/components/PointsToaster";
+import { BadgeToaster } from "@/components/BadgeToaster";
 import { Toaster } from "@/components/Toaster";
 
 const geistMono = Geist_Mono({
@@ -64,6 +65,7 @@ export default function RootLayout({
         <AppProvider>
           {children}
           <PointsToaster />
+          <BadgeToaster />
           <Toaster />
         </AppProvider>
         <Analytics />

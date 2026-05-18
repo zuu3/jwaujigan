@@ -89,6 +89,7 @@ export async function POST(
   let userVote: IssueVoteStance | null;
   let daily_bonus_earned = false;
   let points_earned = 0;
+  const newlyEarnedBadges: string[] = [];
 
   if (existing?.stance === stance) {
     // 동일 입장 재클릭 → 취소
@@ -139,10 +140,22 @@ export async function POST(
       }
       daily_bonus_earned = isFirstVoteToday;
       points_earned = POINTS.VOTE + bonus;
+
+      // 투표 뱃지 체크: 이 INSERT 전 카운트로 임계점 crossing 감지
+      // 현재 insert 포함 카운트에서 -1 = 이전 카운트
+      const { count: totalVotes } = await supabase
+        .from("issue_votes")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId);
+
+      const prevVotes = (totalVotes ?? 1) - 1;
+      const newVotes = prevVotes + 1;
+      if (prevVotes < 1 && newVotes >= 1) newlyEarnedBadges.push("first_vote");
+      if (prevVotes < 10 && newVotes >= 10) newlyEarnedBadges.push("vote_10");
     }
   }
 
   const voteCounts = await getVoteCounts(issueId);
 
-  return NextResponse.json({ vote_counts: voteCounts, user_vote: userVote, daily_bonus_earned, points_earned });
+  return NextResponse.json({ vote_counts: voteCounts, user_vote: userVote, daily_bonus_earned, points_earned, newly_earned_badges: newlyEarnedBadges });
 }

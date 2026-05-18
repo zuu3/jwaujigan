@@ -84,11 +84,19 @@ export async function POST(request: Request) {
   const dailyLimit = getDailyBattleLimit(userPoints);
 
   const todayStart = kstTodayStartISO();
-  const { count: battlesToday } = await supabase
-    .from("battle_logs")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .gte("created_at", todayStart);
+
+  // INSERT 전에 카운트 조회 (임계점 crossing 감지용)
+  const [{ count: battlesToday }, { count: prevTotalBattles }] = await Promise.all([
+    supabase
+      .from("battle_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .gte("created_at", todayStart),
+    supabase
+      .from("battle_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId),
+  ]);
 
   const todayCount = battlesToday ?? 0;
   if (dailyLimit !== Infinity && todayCount >= dailyLimit) {
@@ -126,10 +134,18 @@ export async function POST(request: Request) {
     console.error("[battle-log] points update failed", pointsError);
   }
 
+  // 뱃지 체크: INSERT 전 카운트 → 후 카운트 임계점 crossing 감지
+  const prevTotal = prevTotalBattles ?? 0;
+  const newTotal = prevTotal + 1;
+  const newlyEarnedBadges: string[] = [];
+  if (prevTotal < 1 && newTotal >= 1) newlyEarnedBadges.push("first_battle");
+  if (prevTotal < 10 && newTotal >= 10) newlyEarnedBadges.push("battle_10");
+
   return NextResponse.json({
     id: data.id,
     daily_bonus_earned: isFirstBattleToday,
     battles_today: todayCount + 1,
     limit: dailyLimit === Infinity ? null : dailyLimit,
+    newly_earned_badges: newlyEarnedBadges,
   });
 }

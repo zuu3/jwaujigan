@@ -13,6 +13,7 @@ export type VoteResponse = {
   user_vote: IssueVoteStance | null;
   daily_bonus_earned: boolean;
   points_earned: number;
+  newly_earned_badges?: string[];
 };
 
 export async function voteIssue({

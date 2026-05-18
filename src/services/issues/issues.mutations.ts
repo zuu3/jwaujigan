@@ -2,7 +2,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { voteIssue } from "./issues.api";
 import type { HotIssuesResponse, IssueVoteStance } from "./issues.api";
 import { showPointsToast } from "@/lib/points-toast";
-import { DAILY_BONUS, POINTS } from "@/services/points/points";
+import { showBadgeToast } from "@/lib/badge-toast";
+import { BADGE_DEFS, DAILY_BONUS, POINTS } from "@/services/points/points";
 
 export function useVoteIssue() {
   const queryClient = useQueryClient();
@@ -38,6 +39,12 @@ export function useVoteIssue() {
           bonus: data.daily_bonus_earned ? DAILY_BONUS : undefined,
         });
         void queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+      }
+      if (data.newly_earned_badges?.length) {
+        for (const badgeId of data.newly_earned_badges) {
+          const badge = BADGE_DEFS.find((b) => b.id === badgeId);
+          if (badge) showBadgeToast({ title: badge.title, desc: badge.desc });
+        }
       }
     },
     onError: (_err, _vars, context) => {
