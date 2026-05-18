@@ -84,6 +84,45 @@ export function PublicProfileContainer(props: Props) {
           todayActive={profile.today_active}
         />
 
+        {profile.battle_stats.total > 0 && (
+          <StatsCard>
+            <StatsTitle>배틀 전적</StatsTitle>
+            <StatsRow>
+              <StatTotal>{profile.battle_stats.total}전</StatTotal>
+              <StatSep aria-hidden>·</StatSep>
+              <StatWin>승 {profile.battle_stats.win}</StatWin>
+              <StatSep aria-hidden>·</StatSep>
+              <StatDraw>무 {profile.battle_stats.draw}</StatDraw>
+              <StatSep aria-hidden>·</StatSep>
+              <StatLose>패 {profile.battle_stats.lose}</StatLose>
+            </StatsRow>
+          </StatsCard>
+        )}
+
+        {(() => {
+          const { progressive, conservative, neutral } = profile.vote_ratio;
+          const total = progressive + conservative + neutral;
+          if (total === 0) return null;
+          const pPct = Math.round((progressive / total) * 100);
+          const cPct = Math.round((conservative / total) * 100);
+          const nPct = 100 - pPct - cPct;
+          return (
+            <StatsCard>
+              <StatsTitle>투표 성향</StatsTitle>
+              <VoteBar>
+                {pPct > 0 && <VoteSegment style={{ width: `${pPct}%`, background: "#3182f6" }} />}
+                {nPct > 0 && <VoteSegment style={{ width: `${nPct}%`, background: "#b0b8c1" }} />}
+                {cPct > 0 && <VoteSegment style={{ width: `${cPct}%`, background: "#e5484d" }} />}
+              </VoteBar>
+              <VoteLegend>
+                <VoteLegendItem><VoteDot style={{ background: "#3182f6" }} />진보 <VotePct>{pPct}%</VotePct></VoteLegendItem>
+                <VoteLegendItem><VoteDot style={{ background: "#b0b8c1" }} />중립 <VotePct>{nPct}%</VotePct></VoteLegendItem>
+                <VoteLegendItem><VoteDot style={{ background: "#e5484d" }} />보수 <VotePct>{cPct}%</VotePct></VoteLegendItem>
+              </VoteLegend>
+            </StatsCard>
+          );
+        })()}
+
         <BadgesSection badges={profile.badges} />
       </Shell>
     </Page>
@@ -248,4 +287,97 @@ const ProgressFill = styled.div`
   height: 100%;
   border-radius: 2px;
   background: #3182f6;
+`;
+
+const StatsCard = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 0;
+  border-top: 1px solid #e5e8eb;
+`;
+
+const StatsTitle = styled.h2`
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4e5968;
+`;
+
+const StatsRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+`;
+
+const StatTotal = styled.span`
+  font-size: 16px;
+  font-weight: 700;
+  color: #191f28;
+`;
+
+const StatSep = styled.span`
+  color: #b0b8c1;
+  font-weight: 400;
+`;
+
+const StatWin = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+  color: #3182f6;
+`;
+
+const StatDraw = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+  color: #8b95a1;
+`;
+
+const StatLose = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+  color: #e5484d;
+`;
+
+const VoteBar = styled.div`
+  display: flex;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  gap: 2px;
+`;
+
+const VoteSegment = styled.div`
+  height: 100%;
+  border-radius: 4px;
+`;
+
+const VoteLegend = styled.div`
+  display: flex;
+  gap: 16px;
+`;
+
+const VoteLegendItem = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #6b7684;
+`;
+
+const VoteDot = styled.span`
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+`;
+
+const VotePct = styled.span`
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #191f28;
 `;

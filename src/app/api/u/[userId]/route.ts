@@ -14,6 +14,8 @@ export type PublicProfile = {
   active_dates: string[];
   badges: { id: string; title: string; desc: string; earned: boolean }[];
   political_type: string | null;
+  battle_stats: { total: number; win: number; lose: number; draw: number };
+  vote_ratio: { progressive: number; conservative: number; neutral: number };
 };
 
 export async function GET(
@@ -42,7 +44,7 @@ export async function GET(
   const toKSTDate = (iso: string) =>
     new Date(new Date(iso).getTime() + 9 * 3_600_000).toISOString().slice(0, 10);
 
-  const [votesRes, verdictsRes, battlesRes, followsRes, profileRes] = await Promise.all([
+  const [votesRes, verdictsRes, battlesRes, followsRes, profileRes, battleLogsRes, voteRatioRes] = await Promise.all([
     supabase.from("issue_votes").select("created_at").eq("user_id", userId).gte("created_at", cutoff),
     supabase.from("verdict_votes").select("created_at").eq("user_id", userId).gte("created_at", cutoff),
     supabase.from("battle_logs").select("id", { count: "exact", head: true }).eq("user_id", userId),
@@ -54,6 +56,8 @@ export async function GET(
       .order("completed_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase.from("battle_logs").select("result").eq("user_id", userId),
+    supabase.from("issue_votes").select("stance").eq("user_id", userId),
   ]);
 
   const allDates = [
@@ -75,6 +79,21 @@ export async function GET(
   );
   const badges = BADGE_DEFS.map((b) => ({ ...b, earned: earnedIds.has(b.id) }));
 
+  const battleLogsData = battleLogsRes.data ?? [];
+  const battle_stats = {
+    total: battleLogsData.length,
+    win: battleLogsData.filter((b) => b.result === "win").length,
+    lose: battleLogsData.filter((b) => b.result === "lose").length,
+    draw: battleLogsData.filter((b) => b.result === "draw").length,
+  };
+
+  const votesData = voteRatioRes.data ?? [];
+  const vote_ratio = {
+    progressive: votesData.filter((v) => v.stance === "progressive").length,
+    conservative: votesData.filter((v) => v.stance === "conservative").length,
+    neutral: votesData.filter((v) => v.stance === "neutral").length,
+  };
+
   return NextResponse.json({
     id: userRow.id,
     name: userRow.name,
@@ -87,5 +106,7 @@ export async function GET(
     active_dates,
     badges,
     political_type: profileRes.data?.political_type ?? null,
+    battle_stats,
+    vote_ratio,
   } satisfies PublicProfile);
 }
