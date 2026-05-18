@@ -1,10 +1,10 @@
 "use client";
 
 import styled from "@/lib/styled";
-import { Gift, Globe, Link2, Lock, MapPin, RotateCcw } from "lucide-react";
+import { Gift, Globe, Info, Link2, Lock, MapPin, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { showToast } from "@/lib/toast";
 import type {
   MyPageProfile,
@@ -21,7 +21,7 @@ import { ActivitySection } from "@/components/mypage/ActivitySection";
 import { BadgesSection } from "@/components/mypage/BadgesSection";
 import { StreakCalendar } from "@/components/mypage/StreakCalendar";
 import { DeleteAccountButton } from "@/components/mypage/DeleteAccountButton";
-import { getLevel } from "@/services/points/points";
+import { getDailyBattleLimit, getLevel, LEVELS_INFO } from "@/services/points/points";
 import { useUserProfile } from "@/services/user/user.queries";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -98,8 +98,8 @@ export function MyPageContainer({
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchReferralInfo();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -139,7 +139,10 @@ export function MyPageContainer({
                 <MapPin size={13} />
                 <span>{profile.district ?? "지역구 미설정"}</span>
               </DistrictLine>
-              <PointsBadge points={profileQuery.data?.points ?? profile.points} />
+              <PointsBadge
+                points={profileQuery.data?.points ?? profile.points}
+                battleLogs={battleLogs}
+              />
             </ProfileContent>
           </ProfileTop>
 
@@ -430,14 +433,78 @@ const ChipButton = styled.button`
 
 /* ── PointsBadge ────────────────────────────────────────── */
 
-function PointsBadge({ points }: { points: number }) {
+function todayKST(): string {
+  return new Date(Date.now() + 9 * 3_600_000).toISOString().slice(0, 10);
+}
+
+function PointsBadge({ points, battleLogs }: { points: number; battleLogs: BattleLogItem[] }) {
+  const [showInfo, setShowInfo] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+
   const level = getLevel(points);
+  const dailyLimit = getDailyBattleLimit(points);
+  const todayStr = todayKST();
+  const todayCount = battleLogs.filter((b) =>
+    new Date(new Date(b.created_at).getTime() + 9 * 3_600_000).toISOString().slice(0, 10) === todayStr
+  ).length;
+  const limitText = dailyLimit === Infinity ? "무제한" : `${dailyLimit}`;
+  const currentLevelIndex = LEVELS_INFO.findIndex((l) => l.title === level.title);
+
+  useEffect(() => {
+    if (!showInfo) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(e.target as Node) &&
+        !btnRef.current?.contains(e.target as Node)
+      ) {
+        setShowInfo(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showInfo]);
+
   return (
     <PointsBadgeRoot>
       <PointsRow>
         <span>{level.title}</span>
         <PointsSep aria-hidden="true">•</PointsSep>
         <span>{points.toLocaleString("ko-KR")}점</span>
+        <LevelInfoBtn
+          ref={btnRef}
+          type="button"
+          onClick={() => setShowInfo((v) => !v)}
+          aria-label="등급 안내"
+          aria-expanded={showInfo}
+        >
+          <Info size={13} />
+        </LevelInfoBtn>
+        {showInfo && (
+          <LevelPopover ref={popoverRef} role="tooltip">
+            <LevelPopoverTitle>등급 안내</LevelPopoverTitle>
+            <LevelTable>
+              <thead>
+                <tr>
+                  <LevelTh>등급</LevelTh>
+                  <LevelTh>점수</LevelTh>
+                  <LevelTh>배틀 한도</LevelTh>
+                </tr>
+              </thead>
+              <tbody>
+                {LEVELS_INFO.map((l, i) => (
+                  <LevelTr key={l.title} $active={i === currentLevelIndex}>
+                    <LevelTd>{l.title}</LevelTd>
+                    <LevelTd>{l.range}</LevelTd>
+                    <LevelTd>{l.battleLimit}/일</LevelTd>
+                  </LevelTr>
+                ))}
+              </tbody>
+            </LevelTable>
+            <LevelPopoverNote>배틀 참여, 이슈 투표 등 활동으로 점수가 쌓입니다.</LevelPopoverNote>
+          </LevelPopover>
+        )}
       </PointsRow>
       <ProgressRow>
         <ProgressTrack>
@@ -449,6 +516,14 @@ function PointsBadge({ points }: { points: number }) {
           <ProgressLabel>최고 등급</ProgressLabel>
         )}
       </ProgressRow>
+      <BattleCountRow>
+        <BattleCountLabel>오늘 배틀</BattleCountLabel>
+        <BattleCountValue>
+          <BattleUsed>{todayCount}</BattleUsed>
+          <BattleSlash>/</BattleSlash>
+          <span>{limitText}회</span>
+        </BattleCountValue>
+      </BattleCountRow>
     </PointsBadgeRoot>
   );
 }
@@ -461,9 +536,10 @@ const PointsBadgeRoot = styled.div`
 `;
 
 const PointsRow = styled.div`
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   color: #3182f6;
   font-size: 13px;
   font-weight: 600;
@@ -500,6 +576,121 @@ const ProgressLabel = styled.span`
   color: #8b95a1;
   font-size: 12px;
   font-weight: 400;
+`;
+
+const LevelInfoBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #b0b8c1;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: color 150ms;
+
+  &:hover {
+    color: #3182f6;
+  }
+`;
+
+const LevelPopover = styled.div`
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 40;
+  min-width: 260px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #e5e8eb;
+  background: #ffffff;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.12);
+`;
+
+const LevelPopoverTitle = styled.div`
+  color: #191f28;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 10px;
+`;
+
+const LevelTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+`;
+
+const LevelTh = styled.th`
+  color: #8b95a1;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  padding: 0 8px 6px 0;
+  border-bottom: 1px solid #f2f4f6;
+
+  &:last-child {
+    padding-right: 0;
+  }
+`;
+
+const LevelTr = styled.tr<{ $active: boolean }>`
+  background: ${({ $active }) => ($active ? "#e8f3ff" : "transparent")};
+`;
+
+const LevelTd = styled.td`
+  color: #191f28;
+  font-size: 12px;
+  font-weight: 400;
+  padding: 6px 8px 6px 0;
+  font-variant-numeric: tabular-nums;
+
+  &:last-child {
+    padding-right: 0;
+  }
+`;
+
+const LevelPopoverNote = styled.div`
+  margin-top: 10px;
+  color: #8b95a1;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+`;
+
+const BattleCountRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+`;
+
+const BattleCountLabel = styled.span`
+  color: #8b95a1;
+  font-size: 12px;
+  font-weight: 400;
+`;
+
+const BattleCountValue = styled.span`
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  color: #4e5968;
+  font-size: 12px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+`;
+
+const BattleUsed = styled.span`
+  color: #3182f6;
+  font-weight: 700;
+  font-size: 13px;
+`;
+
+const BattleSlash = styled.span`
+  color: #b0b8c1;
 `;
 
 const Footer = styled.div`
