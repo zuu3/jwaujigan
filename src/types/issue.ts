@@ -24,6 +24,7 @@ export type HotIssue = {
   committee: string | null;
   bill_status: string | null;
   created_at: string;
+  expires_at: string | null;
   vote_counts: IssueVoteCounts;
   user_vote: IssueVoteStance | null;
 };

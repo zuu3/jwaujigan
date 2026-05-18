@@ -57,6 +57,7 @@ const getIssue = cache(async (id: string): Promise<HotIssue | null> => {
     committee: row.committee,
     bill_status: row.bill_status,
     created_at: row.created_at,
+    expires_at: row.expires_at ?? null,
     vote_counts: counts
       ? { progressive: counts.progressive, conservative: counts.conservative, neutral: counts.neutral, total: counts.total }
       : EMPTY_COUNTS,

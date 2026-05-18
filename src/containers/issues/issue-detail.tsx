@@ -50,6 +50,7 @@ export function IssueDetailContainer({ issue: initialIssue, initialBodyText }: I
 
   const { vote_counts: counts, user_vote } = issue;
   const hasMeta = issue.proposer || issue.committee || issue.bill_status || issue.published_at;
+  const isExpired = issue.expires_at ? new Date(issue.expires_at) < new Date() : false;
 
   async function handleShare() {
     const url = `${typeof window !== "undefined" ? window.location.origin : ""}/issues/${issue.id}`;
@@ -115,6 +116,12 @@ export function IssueDetailContainer({ issue: initialIssue, initialBodyText }: I
           <span>다른 이슈 보기</span>
         </BackLink>
 
+        {isExpired && (
+          <ExpiredBanner>
+            이 이슈는 만료되었습니다. 내용은 참고용으로 확인할 수 있으며, 투표는 마감되었습니다.
+          </ExpiredBanner>
+        )}
+
         <Article>
           <Header>
             <TitleRow>
@@ -159,8 +166,8 @@ export function IssueDetailContainer({ issue: initialIssue, initialBodyText }: I
                 <MethodologyText>
                   법안의 제목·제안자·소관위원회·상태는 국회 의안정보 Open API
                   (open.assembly.go.kr)에서 직접 가져옵니다. 본문 설명과 진보·보수
-                  관점은 Google 검색으로 수집한 뉴스·국회 자료를 바탕으로 AI(Gemini)가
-                  작성합니다.
+                  관점은 Google 검색으로 수집한 뉴스·국회 자료를 바탕으로 AI(Google Gemini)가
+                  작성합니다. 아레나 토론 및 판정은 DeepSeek AI가 생성합니다.
                 </MethodologyText>
               </MethodologyBlock>
 
@@ -983,4 +990,15 @@ const BattleWatchLink = styled(Link)`
   transition: background 150ms;
 
   &:hover { background: #f2f4f6; }
+`;
+
+const ExpiredBanner = styled.div`
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e8eb;
+  background: #f9fafb;
+  color: #6b7684;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
 `;

@@ -28,6 +28,7 @@ type IssueRow = {
   committee: string | null;
   bill_status: string | null;
   created_at: string;
+  expires_at: string | null;
 };
 
 export type CachedArenaBattle = {
@@ -97,7 +98,7 @@ export async function getArenaIssues() {
   const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("issues")
-    .select("id, title, summary, body, progressive, conservative, scenario, source_url, bill_id, published_at, proposer, committee, bill_status, created_at")
+    .select("id, title, summary, body, progressive, conservative, scenario, source_url, bill_id, published_at, proposer, committee, bill_status, created_at, expires_at")
     .gt("expires_at", now)
     .order("created_at", { ascending: false });
 
@@ -114,7 +115,7 @@ export async function getArenaIssueById(issueId: string) {
   const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("issues")
-    .select("id, title, summary, body, progressive, conservative, scenario, source_url, bill_id, published_at, proposer, committee, bill_status, created_at")
+    .select("id, title, summary, body, progressive, conservative, scenario, source_url, bill_id, published_at, proposer, committee, bill_status, created_at, expires_at")
     .eq("id", issueId)
     .gt("expires_at", now)
     .maybeSingle();
