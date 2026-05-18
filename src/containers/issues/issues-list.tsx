@@ -85,7 +85,7 @@ export function IssuesListContainer({ initialIssues, initialNextCursor }: Issues
                   )}
                 </IssueMeta>
               </IssueMain>
-              <IssueDate>{formatDate(issue.published_at ?? issue.created_at)}</IssueDate>
+              <IssueDate>발의일 {formatDate(issue.published_at ?? issue.created_at)}</IssueDate>
             </IssueRow>
           ))}
         </IssueList>

@@ -291,7 +291,7 @@ const searchResultsQuery = useSearch(debouncedQuery);
           <SectionHeader>
             <SectionMeta>
               <SectionTitleRow>
-                <SectionTitle>오늘의 핫이슈</SectionTitle>
+                <SectionTitle>핫이슈</SectionTitle>
                 {!issuesQuery.isLoading && issues.length > 0 ? (
                   <SectionCount>{issues.length}건</SectionCount>
                 ) : null}
@@ -392,7 +392,7 @@ const searchResultsQuery = useSearch(debouncedQuery);
               ))
             ) : (
               <EmptyCard>
-                <EmptyCardTitle>오늘은 아직 핫이슈가 없어요.</EmptyCardTitle>
+                <EmptyCardTitle>아직 핫이슈가 없어요.</EmptyCardTitle>
                 <EmptyCardText>
                   최신 법안을 수집 중이에요. 잠시 뒤 다시 들러주세요.
                 </EmptyCardText>

@@ -36,10 +36,11 @@ function getIssueLink(issue: HotIssue) {
 
 function getIssueMetaLabel(issue: HotIssue) {
   if (issue.published_at) {
-    return new Intl.DateTimeFormat("ko-KR", {
+    const date = new Intl.DateTimeFormat("ko-KR", {
       month: "numeric",
       day: "numeric",
     }).format(new Date(issue.published_at));
+    return `발의일\n${date}`;
   }
 
   if (issue.bill_id) {
@@ -230,9 +231,11 @@ const IssueRow = styled.article`
 
 const IssueRowMeta = styled.div`
   color: #8b95a1;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   padding-top: 4px;
+  white-space: pre-line;
+  line-height: 1.5;
 `;
 
 const IssueRowBody = styled(Link)`

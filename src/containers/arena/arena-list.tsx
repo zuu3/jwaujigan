@@ -91,8 +91,8 @@ export function ArenaIndex({ issues, isAuthenticated }: ArenaIndexProps) {
           </IssueGrid>
         ) : (
           <EmptyPanel>
-            <EmptyTitle>오늘은 배틀 이슈가 없어요</EmptyTitle>
-            <EmptyText>매일 새 이슈가 추가돼요. 홈에서 핫이슈를 먼저 확인해 보세요.</EmptyText>
+            <EmptyTitle>배틀 이슈가 없어요</EmptyTitle>
+            <EmptyText>홈에서 핫이슈를 먼저 확인해 보세요.</EmptyText>
           </EmptyPanel>
         )}
       </Shell>
