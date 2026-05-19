@@ -4,6 +4,7 @@ import styled from "@/lib/styled";
 import { Gift, Globe, Info, Link2, Lock, MapPin, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { showToast } from "@/lib/toast";
 import type {
@@ -454,6 +455,9 @@ function PointsBadge({ points, battleLogs }: { points: number; battleLogs: Battl
   const [showInfo, setShowInfo] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const clickCountRef = useRef(0);
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const router = useRouter();
 
   const level = getLevel(points);
   const dailyLimit = getDailyBattleLimit(points);
@@ -484,7 +488,18 @@ function PointsBadge({ points, battleLogs }: { points: number; battleLogs: Battl
       <PointsRow>
         <span>{level.title}</span>
         <PointsSep aria-hidden="true">•</PointsSep>
-        <span>{points.toLocaleString("ko-KR")}점</span>
+        <span
+          style={{ cursor: "default", userSelect: "none" }}
+          onClick={() => {
+            clickCountRef.current++;
+            if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+            clickTimerRef.current = setTimeout(() => { clickCountRef.current = 0; }, 2000);
+            if (clickCountRef.current >= 5) {
+              clickCountRef.current = 0;
+              router.push("/leaderboard");
+            }
+          }}
+        >{points.toLocaleString("ko-KR")}점</span>
         <LevelInfoBtn
           ref={btnRef}
           type="button"
