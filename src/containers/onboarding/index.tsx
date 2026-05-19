@@ -139,6 +139,20 @@ export function OnboardingContainer({
     }
   }, []);
 
+  // 온보딩 중 이탈 추적: questions 스텝에서 언마운트되면 abandon 이벤트 발생
+  useEffect(() => {
+    if (step !== "questions") return;
+    const capturedIndex = currentIndex;
+    return () => {
+      if (capturedIndex < questions.length - 1) {
+        import("@vercel/analytics").then(({ track }) => {
+          track("onboarding_abandon", { question_index: capturedIndex });
+        }).catch(() => undefined);
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
   const question = questions[currentIndex];
   const isLastQuestion = currentIndex === questions.length - 1;
   const isResolvingDistrict = isResolvingLocation || isSavingManualDistrict;

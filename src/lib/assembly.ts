@@ -640,6 +640,20 @@ export type PoliticianBill = {
   url: string | null;
 };
 
+export async function getBillStatusById(billId: string): Promise<string | null> {
+  try {
+    const payload = await fetchAssemblyJson("nzmimeepazxkubdpn", {
+      AGE: 22,
+      BILL_ID: billId,
+      pSize: 1,
+    });
+    const rows = extractRows<BillListRow>(payload, "nzmimeepazxkubdpn");
+    return mapBillStatus(rows[0]?.PROC_RESULT);
+  } catch {
+    return null;
+  }
+}
+
 export async function getBillsByPoliticianName(name: string): Promise<PoliticianBill[]> {
   const payload = await fetchAssemblyJson("nzmimeepazxkubdpn", {
     AGE: 22,

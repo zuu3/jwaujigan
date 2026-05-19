@@ -21,6 +21,8 @@ import { ActivitySection } from "@/components/mypage/ActivitySection";
 import { BadgesSection } from "@/components/mypage/BadgesSection";
 import { StreakCalendar } from "@/components/mypage/StreakCalendar";
 import { DeleteAccountButton } from "@/components/mypage/DeleteAccountButton";
+import { MyPollsSection } from "@/components/mypage/MyPollsSection";
+import type { MyPollItem } from "@/app/api/me/polls/route";
 import { getDailyBattleLimit, getLevel, LEVELS_INFO } from "@/services/points/points";
 import { useUserProfile } from "@/services/user/user.queries";
 import { useQueryClient } from "@tanstack/react-query";
@@ -40,6 +42,7 @@ export function MyPageContainer({
 }: MyPageContainerProps) {
   const [activityData, setActivityData] = useState<ActivityResponse | null>(null);
   const [followedPoliticians, setFollowedPoliticians] = useState<FollowedPolitician[] | null>(null);
+  const [myPolls, setMyPolls] = useState<MyPollItem[] | null>(null);
   const [copied, setCopied] = useState(false);
   const [referralCount, setReferralCount] = useState<number | null>(null);
   const [referralTodayCount, setReferralTodayCount] = useState<number | null>(null);
@@ -116,6 +119,15 @@ export function MyPageContainer({
     fetch("/api/me/activity", { signal: controller.signal })
       .then((r) => r.json() as Promise<ActivityResponse>)
       .then(setActivityData)
+      .catch(() => null);
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/me/polls", { signal: controller.signal })
+      .then((r) => r.json() as Promise<{ polls: MyPollItem[] }>)
+      .then(({ polls }) => setMyPolls(polls))
       .catch(() => null);
     return () => controller.abort();
   }, []);
@@ -208,6 +220,7 @@ export function MyPageContainer({
             <BadgesSection badges={activityData.badges} />
           </>
         )}
+        <MyPollsSection polls={myPolls} />
         <FollowingSection followedPoliticians={followedPoliticians} />
         <Footer>
           <DeleteAccountButton />

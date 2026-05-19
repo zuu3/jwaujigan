@@ -135,7 +135,7 @@ export async function POST(
       const bonus = isFirstVoteToday ? DAILY_BONUS : 0;
       const { error: pointsError } = await supabase
         .from("users")
-        .update({ points: (userRow.points ?? 0) + POINTS.VOTE + bonus })
+        .update({ points: (userRow?.points ?? 0) + POINTS.VOTE + bonus })
         .eq("id", userId);
       if (pointsError) {
         console.error("[vote] points update failed", pointsError);

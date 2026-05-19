@@ -74,6 +74,7 @@ const IssueOpinionSnapshot = memo(function IssueOpinionSnapshot({ issueId }: { i
 
 export function ArenaIssueDetail({ issue }: IssueDetailProps) {
   const hasMeta = issue.proposer || issue.committee || issue.bill_status || issue.published_at;
+  const isExpired = issue.expires_at ? new Date(issue.expires_at) < new Date() : false;
 
   return (
     <Page>
@@ -82,6 +83,15 @@ export function ArenaIssueDetail({ issue }: IssueDetailProps) {
           <ArrowLeft size={16} />
           <span>다른 이슈 보기</span>
         </BackLink>
+
+        {isExpired ? (
+          <ExpiredBanner>
+            이 이슈는 투표가 종료됐습니다.
+            {issue.bill_status ? (
+              <> 최종 법안 상태: <BillStatusBadge status={issue.bill_status} /></>
+            ) : null}
+          </ExpiredBanner>
+        ) : null}
 
         <DetailPanel>
           <HeroEyebrow>어느 쪽 논리가 더 설득력 있을까요?</HeroEyebrow>
@@ -258,6 +268,20 @@ const BillMetaSourceLink = styled(Link)`
   @media (max-width: 480px) {
     margin-left: 0;
   }
+`;
+
+const ExpiredBanner = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #f2f4f6;
+  border: 1px solid #e5e8eb;
+  color: #6b7684;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 const DetailPanel = styled.section`

@@ -600,34 +600,41 @@ export function ArenaBattle({
         {error ? <ErrorPanel>{error}</ErrorPanel> : null}
 
         <ChatPanel aria-live="polite" aria-label="AI 토론 내용">
-          {messages.map((message, index) => (
-            <MessageRow
-              key={`${message.role}-${index}-${message.content}`}
-              $role={message.role}
-            >
-              <MessageBubble
+          {messages.map((message, index) => {
+            const prevMessage = index > 0 ? messages[index - 1] : null;
+            const followsIntervention = message.role !== "user" && prevMessage?.role === "user";
+            return (
+              <MessageRow
+                key={`${message.role}-${index}-${message.content}`}
                 $role={message.role}
-                $tone={
-                  message.role === "user"
-                    ? getStanceTone(stance === "watch" ? "progressive" : stance)
-                    : getStanceTone(message.role)
-                }
               >
-                <MessageLabel
+                <MessageBubble
+                  $role={message.role}
                   $tone={
                     message.role === "user"
                       ? getStanceTone(stance === "watch" ? "progressive" : stance)
                       : getStanceTone(message.role)
                   }
                 >
-                  {message.role === "user"
-                    ? `내 의견`
-                    : `${getStanceLabel(message.role)} AI`}
-                </MessageLabel>
-                <MessageText>{message.content}</MessageText>
-              </MessageBubble>
-            </MessageRow>
-          ))}
+                  <MessageLabelRow>
+                    <MessageLabel
+                      $tone={
+                        message.role === "user"
+                          ? getStanceTone(stance === "watch" ? "progressive" : stance)
+                          : getStanceTone(message.role)
+                      }
+                    >
+                      {message.role === "user"
+                        ? `내 의견`
+                        : `${getStanceLabel(message.role)} AI`}
+                    </MessageLabel>
+                    {followsIntervention ? <InterventionTag>개입 반영</InterventionTag> : null}
+                  </MessageLabelRow>
+                  <MessageText>{message.content}</MessageText>
+                </MessageBubble>
+              </MessageRow>
+            );
+          })}
 
           {streamingText ? (
             <MessageRow $role={streamingRole}>
@@ -758,6 +765,16 @@ export function ArenaBattle({
                   })}
                   <VerdictTotal>총 {verdictCounts.total.toLocaleString()}명 참여</VerdictTotal>
                 </VerdictBars>
+              ) : null}
+
+              {userVerdict && result ? (
+                <VerdictCompare $match={userVerdict === result.winner}>
+                  <span>AI 판정: <strong>{result.winner === "progressive" ? "진보" : result.winner === "conservative" ? "보수" : "무승부"}</strong></span>
+                  <span>내 판정: <strong>{userVerdict === "progressive" ? "진보" : userVerdict === "conservative" ? "보수" : "무승부"}</strong></span>
+                  <VerdictMatchBadge $match={userVerdict === result.winner}>
+                    {userVerdict === result.winner ? "일치" : "불일치"}
+                  </VerdictMatchBadge>
+                </VerdictCompare>
               ) : null}
 
               {!isAuthenticated ? (
@@ -1015,6 +1032,29 @@ const VerdictLoginNote = styled.div`
   color: #8b95a1;
 `;
 
+const VerdictCompare = styled.div<{ $match: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: ${({ $match }) => ($match ? "#e8f3ff" : "#f2f4f6")};
+  font-size: 13px;
+  color: #4e5968;
+
+  strong {
+    font-weight: 700;
+    color: #191f28;
+  }
+`;
+
+const VerdictMatchBadge = styled.span<{ $match: boolean }>`
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: ${({ $match }) => ($match ? "#03b26c" : "#8b95a1")};
+`;
+
 const BattlePage = styled(Page)`
   padding-bottom: 64px;
 `;
@@ -1117,9 +1157,26 @@ const MessageBubble = styled("div", {
   }
 `;
 
+const MessageLabelRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
 const MessageLabel = styled.div<{ $tone?: string }>`
   color: ${({ $tone }) => $tone ?? "#4e5968"};
   font-size: 14px;
+  font-weight: 600;
+`;
+
+const InterventionTag = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 4px;
+  background: #f2f4f6;
+  color: #6b7684;
+  font-size: 11px;
   font-weight: 600;
 `;
 

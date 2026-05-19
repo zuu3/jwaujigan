@@ -56,7 +56,7 @@ export async function GET() {
       .limit(5),
     supabase
       .from("battle_logs")
-      .select("id", { count: "exact" })
+      .select("id, result")
       .eq("user_id", userId),
     supabase
       .from("politician_follows")
@@ -67,7 +67,8 @@ export async function GET() {
   const issueVotes = (issueVotesResult.data ?? []) as unknown as IssueVoteRow[];
   const verdictVotes = (verdictVotesResult.data ?? []) as unknown as VerdictVoteRow[];
   const orientations = orientationResult.data ?? [];
-  const battleCount = battleLogsResult.count ?? 0;
+  const battleLogs = (battleLogsResult.data ?? []) as { id: string; result: string }[];
+  const battleCount = battleLogs.length;
   const followCount = followsResult.count ?? 0;
 
   // Build activities array
@@ -138,6 +139,17 @@ export async function GET() {
   const earnedIds = new Set(computeEarnedBadgeIds({ issueVotes: totalIssues, battles: battleCount, follows: followCount, streak }));
   const badges = BADGE_DEFS.map((b) => ({ ...b, earned: earnedIds.has(b.id) }));
 
+  const battleInsights = battleLogs.reduce(
+    (acc, log) => {
+      if (log.result === "win") acc.wins++;
+      else if (log.result === "lose") acc.losses++;
+      else acc.draws++;
+      return acc;
+    },
+    { wins: 0, losses: 0, draws: 0 },
+  );
+  const winRate = battleCount > 0 ? Math.round((battleInsights.wins / battleCount) * 100) : null;
+
   return NextResponse.json({
     summary: { total_issues: totalIssues, vote_ratio: voteRatio, last_orientation: lastOrientation },
     activities: recent,
@@ -145,5 +157,6 @@ export async function GET() {
     today_active,
     active_dates,
     badges,
+    battle_insights: { ...battleInsights, total: battleCount, win_rate: winRate },
   });
 }

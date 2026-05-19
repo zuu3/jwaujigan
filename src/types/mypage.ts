@@ -49,6 +49,14 @@ export type BadgeStatus = {
   earned: boolean;
 };
 
+export type BattleInsights = {
+  wins: number;
+  losses: number;
+  draws: number;
+  total: number;
+  win_rate: number | null;
+};
+
 export type ActivityResponse = {
   summary: ActivitySummary;
   activities: ActivityItem[];
@@ -56,4 +64,5 @@ export type ActivityResponse = {
   today_active: boolean;
   active_dates: string[];
   badges: BadgeStatus[];
+  battle_insights?: BattleInsights;
 };

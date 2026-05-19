@@ -118,7 +118,8 @@ export function IssueDetailContainer({ issue: initialIssue, initialBodyText }: I
 
         {isExpired && (
           <ExpiredBanner>
-            이 이슈는 만료되었습니다. 내용은 참고용으로 확인할 수 있으며, 투표는 마감되었습니다.
+            투표가 종료됐습니다. 내용은 참고용으로 확인할 수 있습니다.
+            {issue.bill_status ? ` 최종 법안 상태: ${issue.bill_status}` : null}
           </ExpiredBanner>
         )}
 

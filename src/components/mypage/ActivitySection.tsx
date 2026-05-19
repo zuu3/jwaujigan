@@ -2,7 +2,7 @@
 
 import styled from "@/lib/styled";
 import { Activity, ArrowRight } from "lucide-react";
-import type { ActivityResponse } from "@/types/mypage";
+import type { ActivityResponse, BattleInsights } from "@/types/mypage";
 import { formatDate, getActivityTypeLabel, getActivityTypeTone } from "@/lib/mypage-utils";
 import {
   Section,
@@ -73,6 +73,10 @@ export function ActivitySection({ activityData }: ActivitySectionProps) {
                 </>
               ) : null}
             </ActivitySummaryCard>
+
+            {activityData.battle_insights && activityData.battle_insights.total > 0 ? (
+              <BattleInsightsCard insights={activityData.battle_insights} />
+            ) : null}
 
             <Timeline as="ul">
               {activityData.activities.map((item, i) => (
@@ -299,4 +303,85 @@ const ActivitySkeleton = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+`;
+
+/* ── BattleInsightsCard ───────────────────────────────── */
+
+function BattleInsightsCard({ insights }: { insights: BattleInsights }) {
+  return (
+    <BattleInsightWrap>
+      <BattleInsightTitle>배틀 전적</BattleInsightTitle>
+      <BattleInsightRow>
+        <BattleInsightStat $color="#03b26c">
+          <span>{insights.wins}</span>
+          <small>승</small>
+        </BattleInsightStat>
+        <BattleInsightStat $color="#8b95a1">
+          <span>{insights.draws}</span>
+          <small>무</small>
+        </BattleInsightStat>
+        <BattleInsightStat $color="#e5484d">
+          <span>{insights.losses}</span>
+          <small>패</small>
+        </BattleInsightStat>
+        {insights.win_rate !== null ? (
+          <BattleWinRate>
+            승률 <strong>{insights.win_rate}%</strong>
+          </BattleWinRate>
+        ) : null}
+      </BattleInsightRow>
+    </BattleInsightWrap>
+  );
+}
+
+const BattleInsightWrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px;
+  border: 1px solid #e5e8eb;
+  border-radius: 12px;
+  margin-bottom: 4px;
+`;
+
+const BattleInsightTitle = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  color: #8b95a1;
+`;
+
+const BattleInsightRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 20px;
+`;
+
+const BattleInsightStat = styled.div<{ $color: string }>`
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+
+  span {
+    font-size: 24px;
+    font-weight: 700;
+    color: ${({ $color }) => $color};
+    font-variant-numeric: tabular-nums;
+  }
+
+  small {
+    font-size: 12px;
+    font-weight: 600;
+    color: ${({ $color }) => $color};
+  }
+`;
+
+const BattleWinRate = styled.div`
+  margin-left: auto;
+  font-size: 13px;
+  color: #8b95a1;
+
+  strong {
+    font-weight: 700;
+    color: #191f28;
+  }
 `;
