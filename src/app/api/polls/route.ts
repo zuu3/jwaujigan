@@ -32,7 +32,8 @@ export async function GET(request: Request) {
   if (sort === "hot") {
     const { data: voteSummary } = await supabase
       .from("poll_votes")
-      .select("poll_id");
+      .select("poll_id")
+      .limit(10_000);
 
     const voteCount: Record<string, number> = {};
     for (const v of voteSummary ?? []) {

@@ -126,6 +126,12 @@ export async function GET() {
       .order("published_at", { ascending: false, nullsFirst: false })
       .limit(5);
 
+    if ((retryIssues?.length ?? 0) === 0) {
+      return NextResponse.json(
+        { message: "이슈를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요." },
+        { status: 503 },
+      );
+    }
     const issues = await enrichWithVotes(retryIssues ?? [], userId);
     return NextResponse.json({ issues } satisfies HotIssuesResponse);
   }
@@ -145,7 +151,10 @@ export async function GET() {
     });
 
     if (issueRecords.length === 0) {
-      return NextResponse.json({ issues: [] satisfies HotIssue[] });
+      return NextResponse.json(
+        { message: "최신 법안에서 이슈를 생성하지 못했습니다." },
+        { status: 503 },
+      );
     }
 
     const { data: insertedIssues, error: insertError } = await supabase
@@ -163,7 +172,10 @@ export async function GET() {
   } catch (generateError) {
     console.warn("Failed to generate issues from Assembly API", generateError);
 
-    return NextResponse.json({ issues: [] satisfies HotIssue[] });
+    return NextResponse.json(
+      { message: "이슈를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요." },
+      { status: 503 },
+    );
   } finally {
     await supabase.from("generation_locks").delete().eq("key", LOCK_KEY);
   }

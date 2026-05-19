@@ -131,6 +131,13 @@ async function readDebateStream({
       throw new Error(`오늘 참여 가능한 배틀${limitText}를 모두 사용했어요. ${kstMidnightCountdown()} 초기화됩니다.`);
     }
 
+    if (response.status === 429 && errorPayload?.message === "cooldown") {
+      const retryAfter = typeof (errorPayload as { retry_after?: number }).retry_after === "number"
+        ? (errorPayload as { retry_after?: number }).retry_after
+        : 30;
+      throw new Error(`이전 배틀이 끝난 직후예요. ${retryAfter}초 후 다시 시도해 주세요.`);
+    }
+
     throw new Error(errorPayload?.message ?? "AI 토론 응답을 불러오지 못했습니다.");
   }
 

@@ -44,6 +44,14 @@ function getStanceLabel(stance: "progressive" | "conservative") {
   return stance === "progressive" ? "진보" : "보수";
 }
 
+function sanitizeUserContent(content: string): string {
+  return content
+    .slice(0, 200)
+    .replace(/\n/g, " ")
+    .replace(/system:|<\|.*?\|>|ignore (previous|all|above)|forget (previous|instructions)/gi, "")
+    .trim();
+}
+
 function formatHistory(history: DebateMessage[]) {
   if (history.length === 0) {
     return "이전 발언 없음";
@@ -52,7 +60,7 @@ function formatHistory(history: DebateMessage[]) {
   return history
     .map((message) => {
       if (message.role === "user") {
-        return `사용자 개입: ${message.content}`;
+        return `사용자 개입: ${sanitizeUserContent(message.content)}`;
       }
 
       return `${getStanceLabel(message.role)} AI: ${message.content}`;
@@ -216,30 +224,51 @@ export async function POST(request: Request) {
 
   const body = (await request.json()) as DebateRequestBody;
 
-  // 배틀 첫 호출(round 1, progressive 선발)에서만 일일 한도 체크
+  // 배틀 첫 호출(round 1, progressive 선발)에서만 일일 한도 + 쿨다운 체크
   if (body.round === 1 && body.speakerStance === "progressive") {
     const supabase = createServiceRoleSupabaseClient();
+    const userId = session.user.id;
+
     const { data: userRow } = await supabase
       .from("users")
-      .select("id, points")
-      .eq("email", session.user.email!)
+      .select("points")
+      .eq("id", userId)
       .maybeSingle();
 
-    if (userRow) {
-      const dailyLimit = getDailyBattleLimit(userRow.points ?? 0);
-      if (dailyLimit !== Infinity) {
-        const { count } = await supabase
-          .from("battle_logs")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", userRow.id)
-          .gte("created_at", kstTodayStartISO());
+    const dailyLimit = getDailyBattleLimit(userRow?.points ?? 0);
+    if (dailyLimit !== Infinity) {
+      const { count } = await supabase
+        .from("battle_logs")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .gte("created_at", kstTodayStartISO());
 
-        if ((count ?? 0) >= dailyLimit) {
-          return NextResponse.json(
-            { message: "daily_limit_reached", limit: dailyLimit },
-            { status: 429 },
-          );
-        }
+      if ((count ?? 0) >= dailyLimit) {
+        return NextResponse.json(
+          { message: "daily_limit_reached", limit: dailyLimit },
+          { status: 429 },
+        );
+      }
+    }
+
+    // 쿨다운: 마지막 배틀 완료 후 30초 이내 재시작 차단
+    const cooldownMs = 30_000;
+    const { data: lastBattle } = await supabase
+      .from("battle_logs")
+      .select("created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (lastBattle) {
+      const elapsed = Date.now() - new Date(lastBattle.created_at).getTime();
+      if (elapsed < cooldownMs) {
+        const retryAfter = Math.ceil((cooldownMs - elapsed) / 1000);
+        return NextResponse.json(
+          { message: "cooldown", retry_after: retryAfter },
+          { status: 429, headers: { "Retry-After": String(retryAfter) } },
+        );
       }
     }
   }

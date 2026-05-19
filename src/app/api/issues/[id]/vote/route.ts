@@ -45,17 +45,13 @@ export async function POST(
   }
 
   const supabase = createServiceRoleSupabaseClient();
+  const userId = session.user.id;
 
-  // email로 DB id + 현재 포인트 조회
   const { data: userRow } = await supabase
     .from("users")
-    .select("id, points")
-    .eq("email", session.user.email)
+    .select("points")
+    .eq("id", userId)
     .maybeSingle();
-  const userId = userRow?.id;
-  if (!userId) {
-    return NextResponse.json({ message: "User not found" }, { status: 404 });
-  }
 
   // 유효한 이슈인지 확인
   const { data: issue, error: issueError } = await supabase
@@ -116,10 +112,16 @@ export async function POST(
           .insert({ issue_id: issueId, user_id: userId, stance, updated_at: now });
 
     if (voteWrite.error) {
-      console.error("[vote] write failed", voteWrite.error);
-      return NextResponse.json({ message: "투표를 저장하지 못했습니다." }, { status: 500 });
+      // 23505 = unique_violation: concurrent request already inserted — treat as success
+      if ((voteWrite.error as { code?: string }).code === "23505") {
+        userVote = stance;
+      } else {
+        console.error("[vote] write failed", voteWrite.error);
+        return NextResponse.json({ message: "투표를 저장하지 못했습니다." }, { status: 500 });
+      }
+    } else {
+      userVote = stance;
     }
-    userVote = stance;
 
     // 포인트는 이 이슈에 처음 투표할 때만 지급 (입장 변경 시 제외)
     if (!existing) {

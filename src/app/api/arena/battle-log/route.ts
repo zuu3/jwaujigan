@@ -67,20 +67,16 @@ export async function POST(request: Request) {
   }
 
   const supabase = createServiceRoleSupabaseClient();
+  const userId = session.user.id;
 
-  // email로 DB id + 포인트 조회 (JWT 캐시 값 대신 항상 정확한 DB UUID 사용)
   const { data: userRow } = await supabase
     .from("users")
-    .select("id, points")
-    .eq("email", session.user.email)
+    .select("points")
+    .eq("id", userId)
     .maybeSingle();
-  const userId = userRow?.id;
-  if (!userId) {
-    return NextResponse.json({ message: "User not found" }, { status: 404 });
-  }
 
   // 레벨별 일일 배틀 한도 확인
-  const userPoints = userRow.points ?? 0;
+  const userPoints = userRow?.points ?? 0;
   const dailyLimit = getDailyBattleLimit(userPoints);
 
   const todayStart = kstTodayStartISO();
