@@ -146,24 +146,28 @@ export function ArenaIssueDetail({ issue }: IssueDetailProps) {
 
           <IssueOpinionSnapshot issueId={issue.id} />
 
-          <StanceGuide>편을 고르면 AI 토론 중에 내 생각을 추가할 수 있어요. 그냥 구경만 해도 됩니다.</StanceGuide>
-          <StanceActions>
-            <StanceButton
-              href={`/arena/${issue.id}/battle?stance=progressive`}
-              $tone="#3182f6"
-            >
-              진보 편으로 참여
-            </StanceButton>
-            <StanceButton
-              href={`/arena/${issue.id}/battle?stance=conservative`}
-              $tone="#e5484d"
-            >
-              보수 편으로 참여
-            </StanceButton>
-            <WatchButton href={`/arena/${issue.id}/battle?stance=watch`}>
-              구경만 할래요
-            </WatchButton>
-          </StanceActions>
+          {!isExpired ? (
+            <>
+              <StanceGuide>편을 고르면 AI 토론 중에 내 생각을 추가할 수 있어요. 그냥 구경만 해도 됩니다.</StanceGuide>
+              <StanceActions>
+                <StanceButton
+                  href={`/arena/${issue.id}/battle?stance=progressive`}
+                  $tone="#3182f6"
+                >
+                  진보 편으로 참여
+                </StanceButton>
+                <StanceButton
+                  href={`/arena/${issue.id}/battle?stance=conservative`}
+                  $tone="#e5484d"
+                >
+                  보수 편으로 참여
+                </StanceButton>
+                <WatchButton href={`/arena/${issue.id}/battle?stance=watch`}>
+                  구경만 할래요
+                </WatchButton>
+              </StanceActions>
+            </>
+          ) : null}
 
         </DetailPanel>
       </Shell>

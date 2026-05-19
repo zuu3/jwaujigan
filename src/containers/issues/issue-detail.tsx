@@ -305,49 +305,55 @@ export function IssueDetailContainer({ issue: initialIssue, initialBodyText }: I
                 <VoteBar label="보수 지지" color="#e5484d" tint="#fef2f2" pct={pct(counts.conservative, counts.total)} />
               </VoteBarList>
             ) : (
-              <NoVotes>아직 의견을 남긴 사용자가 없어요. 첫 번째로 의견을 남겨보세요.</NoVotes>
+              <NoVotes>{isExpired ? "투표 기간 중 참여한 사용자가 없어요." : "아직 의견을 남긴 사용자가 없어요. 첫 번째로 의견을 남겨보세요."}</NoVotes>
             )}
 
-            <VoteButtons>
-              {STANCE_OPTIONS.map(({ stance, label, color, tint }) => (
-                <VoteButton
-                  key={stance}
-                  type="button"
-                  $color={color}
-                  $tint={tint}
-                  $active={user_vote === stance}
-                  $loading={isVoting}
-                  disabled={isVoting}
-                  onClick={() => void handleVote(stance)}
-                >
-                  <ButtonText $hidden={isVoting}>{label}</ButtonText>
-                  {isVoting && <DotSpinner aria-hidden="true"><span /><span /><span /></DotSpinner>}
-                </VoteButton>
-              ))}
-            </VoteButtons>
-            {user_vote && (
-              <VoteHint>다시 누르면 취소돼요.</VoteHint>
+            {!isExpired && (
+              <>
+                <VoteButtons>
+                  {STANCE_OPTIONS.map(({ stance, label, color, tint }) => (
+                    <VoteButton
+                      key={stance}
+                      type="button"
+                      $color={color}
+                      $tint={tint}
+                      $active={user_vote === stance}
+                      $loading={isVoting}
+                      disabled={isVoting}
+                      onClick={() => void handleVote(stance)}
+                    >
+                      <ButtonText $hidden={isVoting}>{label}</ButtonText>
+                      {isVoting && <DotSpinner aria-hidden="true"><span /><span /><span /></DotSpinner>}
+                    </VoteButton>
+                  ))}
+                </VoteButtons>
+                {user_vote && (
+                  <VoteHint>다시 누르면 취소돼요.</VoteHint>
+                )}
+              </>
             )}
           </OpinionSection>
 
-          <BattleCta>
-            <BattleCtaLabel>
-              <Swords size={16} />
-              AI 배틀
-            </BattleCtaLabel>
-            <BattleCtaDesc>진보·보수 AI가 논쟁하는 걸 보고 판정해보세요.</BattleCtaDesc>
-            <BattleCtaButtons>
-              <BattleLink href={`/arena/${issue.id}/battle?stance=progressive`} $color="#3182f6">
-                진보 편으로 참여
-              </BattleLink>
-              <BattleLink href={`/arena/${issue.id}/battle?stance=conservative`} $color="#e5484d">
-                보수 편으로 참여
-              </BattleLink>
-              <BattleWatchLink href={`/arena/${issue.id}/battle?stance=watch`}>
-                구경만 할래요
-              </BattleWatchLink>
-            </BattleCtaButtons>
-          </BattleCta>
+          {!isExpired && (
+            <BattleCta>
+              <BattleCtaLabel>
+                <Swords size={16} />
+                AI 배틀
+              </BattleCtaLabel>
+              <BattleCtaDesc>진보·보수 AI가 논쟁하는 걸 보고 판정해보세요.</BattleCtaDesc>
+              <BattleCtaButtons>
+                <BattleLink href={`/arena/${issue.id}/battle?stance=progressive`} $color="#3182f6">
+                  진보 편으로 참여
+                </BattleLink>
+                <BattleLink href={`/arena/${issue.id}/battle?stance=conservative`} $color="#e5484d">
+                  보수 편으로 참여
+                </BattleLink>
+                <BattleWatchLink href={`/arena/${issue.id}/battle?stance=watch`}>
+                  구경만 할래요
+                </BattleWatchLink>
+              </BattleCtaButtons>
+            </BattleCta>
+          )}
         </Article>
       </Shell>
     </Page>
@@ -757,8 +763,8 @@ const ViewpointBox = styled.div<{ $side: "progressive" | "conservative" }>`
   gap: 10px;
   padding: 20px;
   border-radius: 10px;
-  background: ${({ $side }) => $side === "progressive" ? "#f0f7ff" : "#fff5f5"};
-  border: 1px solid ${({ $side }) => $side === "progressive" ? "#d0e8ff" : "#ffd9d9"};
+  background: ${({ $side }) => $side === "progressive" ? "#e8f3ff" : "#fef2f2"};
+  border: 1px solid #e5e8eb;
 `;
 
 const ViewpointLabel = styled.div<{ $color: string }>`
