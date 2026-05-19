@@ -320,7 +320,7 @@ function BattleInsightsCard({ insights }: { insights: BattleInsights }) {
           <span>{insights.draws}</span>
           <small>무</small>
         </BattleInsightStat>
-        <BattleInsightStat $color="#e5484d">
+        <BattleInsightStat $color="#6b7684">
           <span>{insights.losses}</span>
           <small>패</small>
         </BattleInsightStat>
