@@ -95,11 +95,9 @@ function parseCachedResult(value: string | null): DebateResult | null {
 
 export async function getArenaIssues() {
   const supabase = createServiceRoleSupabaseClient();
-  const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("issues")
     .select("id, title, summary, body, progressive, conservative, scenario, source_url, bill_id, published_at, proposer, committee, bill_status, created_at, expires_at")
-    .gt("expires_at", now)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -112,12 +110,10 @@ export async function getArenaIssues() {
 
 export async function getArenaIssueById(issueId: string) {
   const supabase = createServiceRoleSupabaseClient();
-  const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("issues")
     .select("id, title, summary, body, progressive, conservative, scenario, source_url, bill_id, published_at, proposer, committee, bill_status, created_at, expires_at")
     .eq("id", issueId)
-    .gt("expires_at", now)
     .maybeSingle();
 
   if (error) {

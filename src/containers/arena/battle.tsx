@@ -3,7 +3,7 @@
 import styled from "@/lib/styled";
 import { ArrowLeft, RotateCcw, Share2, Swords } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { CachedArenaBattle } from "@/lib/arena";
 import type { HotIssue } from "@/types/issue";
@@ -28,7 +28,6 @@ type BattlePhase =
   | "ai-turn"
   | "between-turns"
   | "intervention"
-  | "judging"
   | "result";
 
 type VerdictCounts = { progressive: number; conservative: number; draw: number; total: number };
@@ -50,26 +49,6 @@ function getStanceTone(stance: Stance) {
   return stance === "progressive" ? "#3182f6" : "#e5484d";
 }
 
-function getResultCopy(result: DebateResult) {
-  if (result.winner === "progressive") {
-    return {
-      title: "진보 측 논거가 더 설득력 있게 평가됨",
-      color: "#3182f6",
-    };
-  }
-
-  if (result.winner === "conservative") {
-    return {
-      title: "보수 측 논거가 더 설득력 있게 평가됨",
-      color: "#e5484d",
-    };
-  }
-
-  return {
-    title: "양측 논거가 비슷한 수준으로 평가됨",
-    color: "#4e5968",
-  };
-}
 
 export function formatPublishedAt(iso: string | null): string | null {
   if (!iso) return null;
@@ -193,27 +172,6 @@ async function readDebateStream({
   return fullText.trim();
 }
 
-async function saveBattleCache({
-  issueId,
-  messages,
-  result,
-}: {
-  issueId: string;
-  messages: DebateMessage[];
-  result: DebateResult;
-}) {
-  await fetch("/api/arena/battle-cache", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      issueId,
-      messages,
-      result,
-    }),
-  });
-}
 
 export function ArenaBattle({
   issue,
@@ -227,7 +185,6 @@ export function ArenaBattle({
   const [streamingText, setStreamingText] = useState("");
   const [streamingRole, setStreamingRole] = useState<Stance>("progressive");
   const [argument, setArgument] = useState("");
-  const [result, setResult] = useState<DebateResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [verdictCounts, setVerdictCounts] = useState<VerdictCounts | null>(null);
   const [userVerdict, setUserVerdict] = useState<string | null>(null);
@@ -238,7 +195,6 @@ export function ArenaBattle({
   const runningTurnRef = useRef<number | null>(null);
   const messagesRef = useRef<DebateMessage[]>([]);
   const logSavedRef = useRef(false);
-  const cacheSavedRef = useRef(Boolean(initialCachedBattle));
   const hadInterventionRef = useRef(false);
   const cachedBattleRef = useRef(initialCachedBattle);
   const nextTurnTimerRef = useRef<number | null>(null);
@@ -333,31 +289,8 @@ export function ArenaBattle({
     [],
   );
 
-  const judgeDebate = useCallback(
-    async (history: DebateMessage[]) => {
-      const response = await fetch("/api/arena/judge", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          issueTitle: issue.title,
-          issueBody: issue.body ?? "",
-          history,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("토론 결과를 판정하지 못했습니다.");
-      }
-
-      return (await response.json()) as DebateResult;
-    },
-    [issue.title],
-  );
-
   const saveBattleLog = useCallback(
-    async (winner: DebateResult["winner"], finalMessages: DebateMessage[]) => {
+    async (winner: DebateResult["winner"] | undefined, finalMessages: DebateMessage[]) => {
       if (!isAuthenticated || logSavedRef.current) {
         return;
       }
@@ -394,39 +327,16 @@ export function ArenaBattle({
     [isAuthenticated, issue.title, stance],
   );
 
-  const saveCacheIfReusable = useCallback(
-    async (judged: DebateResult, finalMessages: DebateMessage[]) => {
-      if (cacheSavedRef.current || hadInterventionRef.current) {
-        return;
-      }
-
-      cacheSavedRef.current = true;
-
-      try {
-        await saveBattleCache({
-          issueId: issue.id,
-          messages: finalMessages,
-          result: judged,
-        });
-      } catch (cacheError) {
-        console.error("Failed to save battle cache", cacheError);
-      }
-    },
-    [issue.id],
-  );
-
   const startBattle = useCallback(async () => {
     clearNextTurnTimer();
     startedRef.current = true;
     runningTurnRef.current = null;
     messagesRef.current = [];
     logSavedRef.current = false;
-    cacheSavedRef.current = false;
     hadInterventionRef.current = false;
     cachedBattleRef.current = null;
     setMessages([]);
     setTurnIndex(0);
-    setResult(null);
     setArgument("");
     setStreamingText("");
     setPhase("ai-turn");
@@ -439,7 +349,7 @@ export function ArenaBattle({
   }, []);
 
   useEffect(() => {
-    if (phase !== "ai-turn" || runningTurnRef.current === turnIndex || result) {
+    if (phase !== "ai-turn" || runningTurnRef.current === turnIndex) {
       return;
     }
 
@@ -469,20 +379,8 @@ export function ArenaBattle({
               });
 
         if (turnIndex >= 5) {
-          const cachedResult =
-            !hadInterventionRef.current && cachedBattle
-              ? cachedBattle.result
-              : null;
-
-          setPhase(cachedResult ? "result" : "judging");
-          const judged = cachedResult ?? (await judgeDebate(nextMessages));
-          setResult(judged);
           setPhase("result");
-
-          if (!cachedResult) {
-            void saveCacheIfReusable(judged, nextMessages);
-            void saveBattleLog(judged.winner, nextMessages);
-          }
+          void saveBattleLog(undefined, nextMessages);
 
           // 판정 투표 초기 데이터 로드
           void fetch(`/api/arena/verdict?issueId=${issue.id}`)
@@ -522,12 +420,9 @@ export function ArenaBattle({
     callDebate,
     getNextTurnDelay,
     getSpeakerForTurn,
-    judgeDebate,
     playCachedTurn,
     phase,
-    result,
     saveBattleLog,
-    saveCacheIfReusable,
     turnIndex,
   ]);
 
@@ -571,11 +466,6 @@ export function ArenaBattle({
     setTurnIndex((current) => current + 1);
     setPhase("ai-turn");
   };
-
-  const resultCopy = useMemo(
-    () => (result ? getResultCopy(result) : null),
-    [result],
-  );
 
   return (
     <BattlePage>
@@ -661,15 +551,9 @@ export function ArenaBattle({
           </StatusPanel>
         ) : null}
 
-        {phase === "judging" ? (
-          <StatusPanel>논리성, 근거, 설득력을 기준으로 판정 중입니다.</StatusPanel>
-        ) : null}
-
-        {phase === "result" && result && resultCopy ? (
+        {phase === "result" ? (
           <>
-            <ResultCard $tone={resultCopy.color}>
-              <ResultTitle>{resultCopy.title}</ResultTitle>
-              <ResultReason>{result.reason}</ResultReason>
+            <ResultCard $tone="#4e5968">
               <ResultActions>
                 <ResultButton type="button" onClick={() => void startBattle()}>
                   <RotateCcw size={16} />
@@ -684,7 +568,7 @@ export function ArenaBattle({
                     const url = `${window.location.origin}/arena/${issue.id}`;
                     const shareData = {
                       title: `${issue.title} | 좌우지간 AI 배틀`,
-                      text: resultCopy.title,
+                      text: issue.title,
                       url,
                     };
                     if (navigator.share && navigator.canShare?.(shareData)) {
@@ -765,16 +649,6 @@ export function ArenaBattle({
                   })}
                   <VerdictTotal>총 {verdictCounts.total.toLocaleString()}명 참여</VerdictTotal>
                 </VerdictBars>
-              ) : null}
-
-              {userVerdict && result ? (
-                <VerdictCompare $match={userVerdict === result.winner}>
-                  <span>AI 판정: <strong>{result.winner === "progressive" ? "진보" : result.winner === "conservative" ? "보수" : "무승부"}</strong></span>
-                  <span>내 판정: <strong>{userVerdict === "progressive" ? "진보" : userVerdict === "conservative" ? "보수" : "무승부"}</strong></span>
-                  <VerdictMatchBadge $match={userVerdict === result.winner}>
-                    {userVerdict === result.winner ? "일치" : "불일치"}
-                  </VerdictMatchBadge>
-                </VerdictCompare>
               ) : null}
 
               {!isAuthenticated ? (
@@ -1030,29 +904,6 @@ const VerdictTotal = styled.div`
 const VerdictLoginNote = styled.div`
   font-size: 13px;
   color: #8b95a1;
-`;
-
-const VerdictCompare = styled.div<{ $match: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  border-radius: 8px;
-  background: ${({ $match }) => ($match ? "#e8f3ff" : "#f2f4f6")};
-  font-size: 13px;
-  color: #4e5968;
-
-  strong {
-    font-weight: 700;
-    color: #191f28;
-  }
-`;
-
-const VerdictMatchBadge = styled.span<{ $match: boolean }>`
-  margin-left: auto;
-  font-size: 12px;
-  font-weight: 700;
-  color: ${({ $match }) => ($match ? "#03b26c" : "#8b95a1")};
 `;
 
 const BattlePage = styled(Page)`

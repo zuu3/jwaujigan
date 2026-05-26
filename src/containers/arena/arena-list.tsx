@@ -14,12 +14,19 @@ type ArenaIndexProps = {
 export function ArenaIndex({ issues, isAuthenticated }: ArenaIndexProps) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<"latest" | "popular">("latest");
+  const [activeFilter, setActiveFilter] = useState<"all" | "active">("active");
+
+  const now = new Date().toISOString();
+
+  const statusFiltered = activeFilter === "active"
+    ? issues.filter((i) => i.expires_at && i.expires_at > now)
+    : issues;
 
   const searched = query.trim().length >= 1
-    ? issues.filter((i) =>
+    ? statusFiltered.filter((i) =>
         i.title.includes(query.trim()) || i.summary.includes(query.trim())
       )
-    : issues;
+    : statusFiltered;
 
   const filtered = sort === "popular"
     ? [...searched].sort((a, b) => (b.vote_counts?.total ?? 0) - (a.vote_counts?.total ?? 0))
@@ -75,6 +82,10 @@ export function ArenaIndex({ issues, isAuthenticated }: ArenaIndexProps) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
+              <SortChips>
+                <SortChip type="button" $active={activeFilter === "active"} onClick={() => setActiveFilter("active")}>진행중</SortChip>
+                <SortChip type="button" $active={activeFilter === "all"} onClick={() => setActiveFilter("all")}>전체</SortChip>
+              </SortChips>
               <SortChips>
                 <SortChip type="button" $active={sort === "latest"} onClick={() => setSort("latest")}>최신순</SortChip>
                 <SortChip type="button" $active={sort === "popular"} onClick={() => setSort("popular")}>참여자 많은 순</SortChip>

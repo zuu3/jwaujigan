@@ -3,12 +3,7 @@
 import styled from "@/lib/styled";
 import { Swords, ArrowRight } from "lucide-react";
 import type { BattleLogItem } from "@/types/mypage";
-import {
-  formatDate,
-  getBattleStats,
-  getResultLabel,
-  getResultTone,
-} from "@/lib/mypage-utils";
+import { formatDate } from "@/lib/mypage-utils";
 import {
   Section,
   SectionHeader,
@@ -25,7 +20,6 @@ export interface BattleSectionProps {
 }
 
 export function BattleSection({ battleLogs }: BattleSectionProps) {
-  const stats = getBattleStats(battleLogs);
   const recentBattleLogs = battleLogs.slice(0, 5);
 
   return (
@@ -40,30 +34,11 @@ export function BattleSection({ battleLogs }: BattleSectionProps) {
 
       {recentBattleLogs.length > 0 ? (
         <>
-          <StatsRow>
-            <StatItem>
-              <StatItemLabel>승리</StatItemLabel>
-              <StatItemValue $tone="#03b26c">{stats.win}</StatItemValue>
-            </StatItem>
-            <StatSep aria-hidden="true">·</StatSep>
-            <StatItem>
-              <StatItemLabel>패배</StatItemLabel>
-              <StatItemValue $tone="#8b95a1">{stats.lose}</StatItemValue>
-            </StatItem>
-            <StatSep aria-hidden="true">·</StatSep>
-            <StatItem>
-              <StatItemLabel>무승부</StatItemLabel>
-              <StatItemValue $tone="#8b95a1">{stats.draw}</StatItemValue>
-            </StatItem>
-          </StatsRow>
           <BattleList>
             {recentBattleLogs.map((log) => (
               <BattleItem key={log.id}>
                 <BattleTopic>{log.topic}</BattleTopic>
                 <BattleMeta>
-                  <ResultBadge $tone={getResultTone(log.result)}>
-                    {getResultLabel(log.result)}
-                  </ResultBadge>
                   <span>{formatDate(log.created_at)}</span>
                 </BattleMeta>
               </BattleItem>
@@ -87,47 +62,6 @@ export function BattleSection({ battleLogs }: BattleSectionProps) {
 }
 
 /* ── Styled components ────────────────────────────────── */
-
-const StatsRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px 0;
-  border-bottom: 1px solid #e5e8eb;
-
-  @media (max-width: 480px) {
-    gap: 12px;
-  }
-`;
-
-const StatItem = styled.div`
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-`;
-
-const StatItemLabel = styled.span`
-  color: #8b95a1;
-  font-size: 14px;
-  font-weight: 500;
-`;
-
-const StatItemValue = styled("span", {
-  shouldForwardProp: (prop) => prop !== "$tone",
-})<{ $tone: string }>`
-  color: ${({ $tone }) => $tone};
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-`;
-
-const StatSep = styled.span`
-  color: #e5e8eb;
-  font-size: 16px;
-  font-weight: 400;
-  user-select: none;
-`;
 
 const BattleList = styled.div`
   display: flex;
@@ -170,10 +104,3 @@ const BattleMeta = styled.div`
   font-weight: 500;
 `;
 
-const ResultBadge = styled("span", {
-  shouldForwardProp: (prop) => prop !== "$tone",
-})<{ $tone: string }>`
-  color: ${({ $tone }) => $tone};
-  font-size: 14px;
-  font-weight: 600;
-`;

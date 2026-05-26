@@ -126,6 +126,7 @@ export function OnboardingContainer({
   const [isResolvingLocation, setIsResolvingLocation] = useState(false);
   const [isSavingManualDistrict, setIsSavingManualDistrict] = useState(false);
   const [savingManualOptionId, setSavingManualOptionId] = useState<string | null>(null);
+  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [selectedProvince, setSelectedProvince] = useState("all");
   const [manualQuery, setManualQuery] = useState("");
   const [referralCode, setReferralCode] = useState("");
@@ -257,6 +258,7 @@ export function OnboardingContainer({
         longitude: position.coords.longitude,
       });
       setManualQuery("");
+      setSelectedOptionId(null);
     } catch (error) {
       console.error(error);
       setDistrictError(getLocationErrorMessage(error));
@@ -301,6 +303,7 @@ export function OnboardingContainer({
         matchedArea: option.areaLabel,
         sourceAddress: [option.province, option.areaLabel].filter(Boolean).join(" "),
       });
+      setSelectedOptionId(option.id);
     } catch (error) {
       console.error(error);
       setDistrictError(
@@ -422,6 +425,7 @@ export function OnboardingContainer({
 
               <DistrictStep
                 district={district}
+                selectedOptionId={selectedOptionId}
                 resolvedAddress={resolvedAddress}
                 initialDistrict={initialDistrict}
                 isResolvingLocation={isResolvingLocation}

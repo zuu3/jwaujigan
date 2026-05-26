@@ -96,6 +96,7 @@ async function resolveCurrentPosition() {
 
 export type DistrictStepProps = {
   district: string | null;
+  selectedOptionId: string | null;
   resolvedAddress: string | null;
   initialDistrict: string | null;
   isResolvingLocation: boolean;
@@ -119,6 +120,7 @@ export type DistrictStepProps = {
 
 export function DistrictStep({
   district,
+  selectedOptionId,
   resolvedAddress,
   initialDistrict,
   isResolvingLocation,
@@ -197,7 +199,7 @@ export function DistrictStep({
                   type="button"
                   onClick={() => void onManualDistrictSelect(option)}
                   disabled={isResolvingDistrict}
-                  $selected={district === option.district}
+                  $selected={selectedOptionId === option.id}
                 >
                   <ResultText>
                     <ResultArea>{option.areaLabel}</ResultArea>
@@ -205,10 +207,10 @@ export function DistrictStep({
                       {[option.province, option.districtLabel].filter(Boolean).join(" · ")}
                     </ResultMeta>
                   </ResultText>
-                  <ResultBadge $selected={district === option.district}>
+                  <ResultBadge $selected={selectedOptionId === option.id}>
                     {savingManualOptionId === option.id
                       ? "저장 중"
-                      : district === option.district
+                      : selectedOptionId === option.id
                         ? "선택됨"
                         : "선택"}
                   </ResultBadge>

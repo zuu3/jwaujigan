@@ -310,26 +310,7 @@ const ActivitySkeleton = styled.div`
 function BattleInsightsCard({ insights }: { insights: BattleInsights }) {
   return (
     <BattleInsightWrap>
-      <BattleInsightTitle>배틀 전적</BattleInsightTitle>
-      <BattleInsightRow>
-        <BattleInsightStat $color="#03b26c">
-          <span>{insights.wins}</span>
-          <small>승</small>
-        </BattleInsightStat>
-        <BattleInsightStat $color="#8b95a1">
-          <span>{insights.draws}</span>
-          <small>무</small>
-        </BattleInsightStat>
-        <BattleInsightStat $color="#6b7684">
-          <span>{insights.losses}</span>
-          <small>패</small>
-        </BattleInsightStat>
-        {insights.win_rate !== null ? (
-          <BattleWinRate>
-            승률 <strong>{insights.win_rate}%</strong>
-          </BattleWinRate>
-        ) : null}
-      </BattleInsightRow>
+      <BattleInsightTitle>배틀 {insights.total}전</BattleInsightTitle>
     </BattleInsightWrap>
   );
 }
@@ -350,38 +331,3 @@ const BattleInsightTitle = styled.div`
   color: #8b95a1;
 `;
 
-const BattleInsightRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 20px;
-`;
-
-const BattleInsightStat = styled.div<{ $color: string }>`
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-
-  span {
-    font-size: 24px;
-    font-weight: 700;
-    color: ${({ $color }) => $color};
-    font-variant-numeric: tabular-nums;
-  }
-
-  small {
-    font-size: 12px;
-    font-weight: 600;
-    color: ${({ $color }) => $color};
-  }
-`;
-
-const BattleWinRate = styled.div`
-  margin-left: auto;
-  font-size: 13px;
-  color: #8b95a1;
-
-  strong {
-    font-weight: 700;
-    color: #191f28;
-  }
-`;
