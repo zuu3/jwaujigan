@@ -24,7 +24,7 @@ const Footer = styled.footer`
   padding: 24px 24px 32px;
 
   @media (max-width: 640px) {
-    padding: 20px 20px 28px;
+    padding: 20px 20px calc(28px + 56px + env(safe-area-inset-bottom, 0px));
   }
 `;
 
