@@ -570,7 +570,7 @@ export async function getRecentIssueBills(): Promise<AssemblyIssueBill[]> {
   const payload = await fetchAssemblyJson("nzmimeepazxkubdpn", {
     AGE: 22,
     pIndex: 1,
-    pSize: 100,
+    pSize: 200,
   });
   const rows = extractRows<BillListRow>(payload, "nzmimeepazxkubdpn");
 
@@ -581,9 +581,9 @@ export async function getRecentIssueBills(): Promise<AssemblyIssueBill[]> {
         .join(" ");
       return ISSUE_KEYWORDS.some((keyword) => haystack.includes(keyword));
     })
-    .slice(0, 15)
+    .slice(0, 30)
     .map((row) => ({
-      billId: row.BILL_ID ?? row.BILL_NO ?? "",
+      billId: row.BILL_ID ?? "",
       title: row.BILL_NAME?.trim() ?? "",
       proposer: row.PROPOSER?.trim() ?? null,
       committee: row.COMMITTEE?.trim() ?? row.CURR_COMMITTEE?.trim() ?? null,

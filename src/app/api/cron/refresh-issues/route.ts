@@ -26,33 +26,44 @@ export async function GET(req: Request) {
 
     const existingIds = new Set((existing ?? []).map((r) => r.bill_id));
     const newBills = bills.filter((b) => !existingIds.has(b.billId));
-    console.log(`[cron] 신규 법안 ${newBills.length}개 (${bills.length - newBills.length}개 기존 스킵)`);
+    const existingBills = bills.filter((b) => existingIds.has(b.billId));
+    console.log(`[cron] 신규 법안 ${newBills.length}개, 기존 갱신 대상 ${existingBills.length}개`);
 
-    if (newBills.length === 0) {
-      return NextResponse.json({ ok: true, inserted: 0, skipped: bills.length });
+    // 기존 매칭 법안 expires_at 갱신 (API가 계속 동일 법안 반환해도 이슈 유지)
+    const refreshedAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    if (existingBills.length > 0) {
+      await supabase
+        .from("issues")
+        .update({ expires_at: refreshedAt })
+        .in("bill_id", existingBills.map((b) => b.billId));
+      console.log(`[cron] ${existingBills.length}개 이슈 expires_at 갱신`);
     }
 
-    const results = await Promise.allSettled(
-      newBills.map((bill) => buildIssueFromBill(bill)),
-    );
+    let inserted = 0;
 
-    const succeeded = results.flatMap((r, i) => {
-      if (r.status === "fulfilled") return [r.value];
-      console.error(`[cron] "${newBills[i]?.title}" 생성 실패:`, r.reason);
-      return [];
-    });
+    if (newBills.length > 0) {
+      const results = await Promise.allSettled(
+        newBills.map((bill) => buildIssueFromBill(bill)),
+      );
 
-    if (succeeded.length === 0) {
-      return NextResponse.json({ ok: false, message: "생성된 이슈 없음" }, { status: 500 });
-    }
+      const succeeded = results.flatMap((r, i) => {
+        if (r.status === "fulfilled") return [r.value];
+        console.error(`[cron] "${newBills[i]?.title}" 생성 실패:`, r.reason);
+        return [];
+      });
 
-    const { error } = await supabase
-      .from("issues")
-      .upsert(succeeded, { onConflict: "bill_id" });
+      if (succeeded.length > 0) {
+        const { error } = await supabase
+          .from("issues")
+          .upsert(succeeded, { onConflict: "bill_id" });
 
-    if (error) {
-      console.error("[cron] upsert 실패:", error);
-      return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
+        if (error) {
+          console.error("[cron] upsert 실패:", error);
+        } else {
+          inserted = succeeded.length;
+          console.log(`[cron] ${inserted}개 신규 이슈 저장`);
+        }
+      }
     }
 
     // 최근 7일 내 만료된 이슈의 bill_status 업데이트
@@ -76,13 +87,12 @@ export async function GET(req: Request) {
     console.log(`[cron] 만료 이슈 상태 업데이트 ${statusUpdated}개`);
 
     const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
-    console.log(`[cron] ${succeeded.length}개 이슈 저장 완료 (${elapsed}s)`);
+    console.log(`[cron] 완료 (${elapsed}s)`);
 
     return NextResponse.json({
       ok: true,
-      inserted: succeeded.length,
-      skipped: existingIds.size,
-      failed: results.length - succeeded.length,
+      inserted,
+      refreshed: existingBills.length,
       status_updated: statusUpdated,
       elapsed_s: elapsed,
     });
