@@ -9,6 +9,21 @@ type BeforeInstallPromptEvent = Event & {
 };
 
 const STORAGE_KEY = "pwa-banner-dismissed";
+const VISIT_KEY = "pwa-visited";
+
+function hasVisitedBefore(): boolean {
+  try {
+    return !!localStorage.getItem(VISIT_KEY);
+  } catch {
+    return false;
+  }
+}
+
+function markVisited() {
+  try {
+    localStorage.setItem(VISIT_KEY, "1");
+  } catch { /* ignore */ }
+}
 
 function isIos() {
   if (typeof navigator === "undefined") return false;
@@ -31,6 +46,11 @@ export function PwaInstallBanner() {
   useEffect(() => {
     if (localStorage.getItem(STORAGE_KEY)) return;
     if (isInStandaloneMode()) return;
+
+    // 첫 방문자에겐 배너 안 띄움 — 앱 경험 전에 설치 유도는 역효과
+    const isReturning = hasVisitedBefore();
+    markVisited();
+    if (!isReturning) return;
 
     if (isIos()) {
       setShowIosBanner(true);
