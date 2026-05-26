@@ -17,6 +17,7 @@ import { SearchBar } from "@/components/home/search";
 import { PoliticianCard } from "@/components/home/politician-card";
 import { IssueCard } from "@/components/home/issue-card";
 import { showToast } from "@/lib/toast";
+import { LocalElectionSection } from "./LocalElectionSection";
 
 type HomeContainerProps = {
   session: Session;
@@ -263,6 +264,12 @@ const searchResultsQuery = useSearch(debouncedQuery);
                 <EmptyCardText>온보딩에서 지역구를 다시 설정해 주세요.</EmptyCardText>
               </EmptyCard>
             )}
+          </MotionSection>
+        ) : null}
+
+        {district ? (
+          <MotionSection id="local-election">
+            <LocalElectionSection district={district} />
           </MotionSection>
         ) : null}
 
