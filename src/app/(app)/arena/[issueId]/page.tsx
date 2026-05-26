@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: ArenaIssuePageProps): Promise
   const issue = await getArenaIssueById(issueId);
   if (!issue) return {};
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://jwj.zuu3.kr";
   const ogImageUrl = `${baseUrl}/api/arena/og?issueId=${issueId}`;
 
   return {
