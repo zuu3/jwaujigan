@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "이용약관",
 };
 
-const EFFECTIVE_DATE = "2026년 5월 14일";
+const EFFECTIVE_DATE = "2026년 5월 26일";
 
 export default function TermsPage() {
   return (
@@ -63,7 +63,7 @@ export default function TermsPage() {
 
         <Section title="제5조 콘텐츠 및 AI 생성물">
           <p>
-            서비스 내 이슈 요약·진보·보수 분석은 Google Gemini API를 통해 생성되며, 아레나 토론 및 판정은 DeepSeek API를 통해 생성됩니다.
+            서비스 내 이슈 요약·진보·보수 분석은 Google Gemini API를 통해 생성되며, 아레나 토론은 DeepSeek API를 통해 생성됩니다.
             AI 생성 콘텐츠는 정보 제공 목적으로만 제공되며, 특정 정치 성향을 지지하거나
             공식 입장을 대변하지 않습니다. 이용자는 AI 생성 콘텐츠를 최종 판단의 근거로
             단독 활용하여서는 안 됩니다.

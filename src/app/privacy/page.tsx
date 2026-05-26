@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "개인정보처리방침",
 };
 
-const EFFECTIVE_DATE = "2026년 5월 14일";
+const EFFECTIVE_DATE = "2026년 5월 26일";
 
 export default function PrivacyPage() {
   return (
@@ -61,7 +61,7 @@ export default function PrivacyPage() {
               ["Supabase Inc.", "데이터베이스 저장 및 관리"],
               ["Vercel Inc.", "서비스 호스팅"],
               ["Google LLC (Gemini API)", "이슈 분석·요약 콘텐츠 AI 생성"],
-              ["DeepSeek (DeepSeek API)", "아레나 토론 및 판정 AI 생성"],
+              ["DeepSeek (DeepSeek API)", "아레나 토론 AI 생성"],
               ["Sentry Inc.", "서비스 오류 모니터링"],
             ]}
           />
@@ -87,7 +87,7 @@ export default function PrivacyPage() {
 
         <Section title="7. AI 생성 콘텐츠 안내">
           <p>
-            좌우지간의 이슈 요약·진보·보수 분석은 Google Gemini API를 통해 생성되며, 아레나 토론 및 판정은 DeepSeek API를 통해 생성됩니다.
+            좌우지간의 이슈 요약·진보·보수 분석은 Google Gemini API를 통해 생성되며, 아레나 토론은 DeepSeek API를 통해 생성됩니다.
             AI가 생성한 내용은 실제 특정 단체·개인의 공식 입장이 아니며, 정보 제공 목적으로만 활용됩니다.
           </p>
           <p>
