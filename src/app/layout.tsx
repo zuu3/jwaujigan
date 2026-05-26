@@ -10,6 +10,7 @@ import { AppProvider } from "@/components/providers/app-provider";
 import { PointsToaster } from "@/components/PointsToaster";
 import { BadgeToaster } from "@/components/BadgeToaster";
 import { Toaster } from "@/components/Toaster";
+import { RegisterSW } from "@/components/PwaInstallBanner";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -51,6 +52,13 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: "/favicon.ico",
+    apple: "/icons/icon.svg",
+  },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "좌우지간",
   },
 };
 
@@ -67,6 +75,7 @@ export default function RootLayout({
           <PointsToaster />
           <BadgeToaster />
           <Toaster />
+          <RegisterSW />
         </AppProvider>
         <Analytics />
         <SpeedInsights />
