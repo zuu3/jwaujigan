@@ -3,7 +3,7 @@
 import styled from "@/lib/styled";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useLocalElection } from "@/services/local-election/local-election.queries";
 import { useUserProfile } from "@/services/user/user.queries";
@@ -401,7 +401,10 @@ export function BallotPreview() {
     setCompareB(null);
   }
 
-  const selectedHuboids = new Set([compareA?.huboid, compareB?.huboid].filter(Boolean) as string[]);
+  const selectedHuboids = useMemo(
+    () => new Set([compareA?.huboid, compareB?.huboid].filter(Boolean) as string[]),
+    [compareA?.huboid, compareB?.huboid],
+  );
 
   if (!district) {
     return (
@@ -556,7 +559,7 @@ export function BallotPreview() {
 const Page = styled.main`
   min-height: 100vh;
   background: #f2f4f6;
-  padding-bottom: 80px;
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   position: relative;
 `;
 
@@ -1017,6 +1020,7 @@ const RegRow = styled.div<{ $border: string; $bg: string; $selected?: boolean }>
   display: grid;
   grid-template-columns: 36px minmax(0, 100px) 1fr 28px 38px;
   align-items: center;
+  min-height: 44px;
   padding: 8px 10px;
   border-bottom: 1px solid rgba(0,0,0,0.1);
   border-left: ${({ $selected }) => $selected ? "3px solid #3182f6" : "none"};
@@ -1195,7 +1199,7 @@ const SkeletonCard = styled.div`
 
 const CompareBar = styled.div`
   position: fixed;
-  bottom: 60px;
+  bottom: calc(60px + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
   width: min(calc(100% - 40px), 440px);
@@ -1246,7 +1250,8 @@ const CompareActions = styled.div`
 `;
 
 const CompareBtn = styled.button`
-  padding: 8px 14px;
+  min-height: 44px;
+  padding: 10px 14px;
   background: #3182f6;
   color: #ffffff;
   border: none;
@@ -1259,8 +1264,8 @@ const CompareBtn = styled.button`
 `;
 
 const CompareClearBtn = styled.button`
-  width: 28px;
-  height: 28px;
+  width: 40px;
+  height: 40px;
   background: rgba(255,255,255,0.12);
   color: #ffffff;
   border: none;

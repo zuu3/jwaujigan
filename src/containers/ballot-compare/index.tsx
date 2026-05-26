@@ -197,7 +197,7 @@ export function BallotCompare({ personA, personB }: Props) {
 const PageWrapper = styled.div`
   max-width: 480px;
   margin: 0 auto;
-  padding: 0 20px 80px;
+  padding: 0 20px calc(80px + env(safe-area-inset-bottom, 0px));
 `;
 
 const TopBar = styled.div`
@@ -215,7 +215,8 @@ const BackButton = styled.button`
   font-family: inherit;
   color: #3182f6;
   cursor: pointer;
-  padding: 0;
+  padding: 8px 0;
+  min-height: 44px;
 `;
 
 const TopLabel = styled.span`
@@ -419,12 +420,6 @@ const PledgeTitle = styled.div`
   font-weight: 600;
   color: #191f28;
   line-height: 1.5;
-`;
-
-const PledgeContent = styled.div`
-  font-size: 12px;
-  color: #8b95a1;
-  line-height: 1.6;
 `;
 
 const PledgeNone = styled.div`
