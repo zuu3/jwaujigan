@@ -234,7 +234,7 @@ const PoliticianName = styled.div`
 `;
 
 const DotDivider = styled.span`
-  color: #c5cad1;
+  color: #b0b8c1;
   font-size: 14px;
   line-height: 1;
 `;

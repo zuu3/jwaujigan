@@ -170,7 +170,7 @@ const AvatarWrap = styled.div`
   overflow: hidden;
   border-radius: 50%;
   background: rgba(49, 130, 246, 0.12);
-  color: #1d4ed8;
+  color: #2272eb;
   font-size: 12px;
   font-weight: 700;
   flex-shrink: 0;

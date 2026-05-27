@@ -107,7 +107,7 @@ const ToastItem = styled.div<{ $exiting: boolean }>`
 const Points = styled.span`
   font-size: 15px;
   font-weight: 700;
-  color: #60a5fa;
+  color: #3182f6;
   font-variant-numeric: tabular-nums;
 `;
 
