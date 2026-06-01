@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requestAuth } from "@/lib/request-auth";
 import { generateArenaDebateText } from "@/lib/arena-ai";
 import { getDailyBattleLimit, kstTodayStartISO } from "@/services/points/points";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
@@ -23,6 +23,7 @@ type DebateRequestBody = {
   speakerStance?: "progressive" | "conservative";
   round?: number;
   history?: DebateMessage[];
+  responseMode?: "stream" | "json";
 };
 
 function isValidHistory(value: unknown): value is DebateMessage[] {
@@ -217,7 +218,7 @@ function buildFallbackDebateText({
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
+  const session = await requestAuth(request);
   if (!session?.user?.id) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
@@ -372,6 +373,10 @@ export async function POST(request: Request) {
         history: body.history,
         round: body.round,
       });
+    }
+
+    if (body.responseMode === "json") {
+      return NextResponse.json({ text: debateText });
     }
 
     const encoder = new TextEncoder();

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requestAuth } from "@/lib/request-auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 import type { PollOption } from "@/app/api/polls/route";
 
@@ -28,11 +28,11 @@ function getTendencyGroup(politicalType: string | null | undefined) {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id: pollId } = await params;
-  const session = await auth();
+  const session = await requestAuth(request);
   const supabase = createServiceRoleSupabaseClient();
 
   const { data: poll, error } = await supabase

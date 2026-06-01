@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requestAuth } from "@/lib/request-auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 import { getUserGateState } from "@/lib/users";
 import { calcStreak, kstTodayStartISO } from "@/services/points/points";
 
-export async function GET() {
-  const session = await auth();
+export async function GET(request: Request) {
+  const session = await requestAuth(request);
 
   if (!session?.user?.email) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });

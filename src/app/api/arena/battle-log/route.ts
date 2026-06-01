@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requestAuth } from "@/lib/request-auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 import { DAILY_BONUS, POINTS, getDailyBattleLimit, getLevel, kstTodayStartISO } from "@/services/points/points";
 
@@ -47,7 +47,7 @@ function mapWinnerToResult(
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
+  const session = await requestAuth(request);
 
   if (!session?.user?.email) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });

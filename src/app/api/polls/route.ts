@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requestAuth } from "@/lib/request-auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 import { POINTS } from "@/services/points/points";
 
@@ -18,7 +18,7 @@ export type PollRow = {
 };
 
 export async function GET(request: Request) {
-  const session = await auth();
+  const session = await requestAuth(request);
   const supabase = createServiceRoleSupabaseClient();
 
   const { searchParams } = new URL(request.url);
@@ -153,7 +153,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
+  const session = await requestAuth(request);
   if (!session?.user?.email) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }

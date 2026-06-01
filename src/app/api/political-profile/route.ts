@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requestAuth } from "@/lib/request-auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 import { ONBOARDING_SKIP_COOKIE } from "@/lib/onboarding";
 import {
@@ -11,7 +11,7 @@ import {
 import { POINTS } from "@/services/points/points";
 
 export async function POST(request: Request) {
-  const session = await auth();
+  const session = await requestAuth(request);
 
   if (!session?.user?.id) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });

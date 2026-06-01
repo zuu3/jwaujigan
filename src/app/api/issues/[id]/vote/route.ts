@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requestAuth } from "@/lib/request-auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 import type { IssueVoteCounts, IssueVoteStance } from "@/types/issue";
 import { DAILY_BONUS, POINTS, kstTodayStartISO } from "@/services/points/points";
@@ -31,7 +31,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await auth();
+  const session = await requestAuth(request);
   if (!session?.user?.email) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }

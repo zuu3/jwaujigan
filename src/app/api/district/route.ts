@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requestAuth } from "@/lib/request-auth";
 import { getDistrictEntryByName, resolveDistrictFromAddress } from "@/lib/districts";
 import { updateUserDistrict } from "@/lib/users";
 
@@ -155,7 +155,7 @@ async function reverseGeocodeCandidates(latitude: number, longitude: number) {
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
+  const session = await requestAuth(request);
 
   if (!session?.user?.email) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });

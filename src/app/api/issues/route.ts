@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requestAuth } from "@/lib/request-auth";
 import { getRecentIssueBills } from "@/lib/assembly";
 import { buildIssueFromBill } from "@/lib/issues";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
@@ -61,8 +61,8 @@ async function enrichWithVotes(
   });
 }
 
-export async function GET() {
-  const session = await auth();
+export async function GET(request: Request) {
+  const session = await requestAuth(request);
 
   if (!session?.user?.email) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });

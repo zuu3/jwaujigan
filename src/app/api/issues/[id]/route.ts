@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requestAuth } from "@/lib/request-auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 import type { HotIssue, IssueVoteCounts } from "@/types/issue";
 
@@ -11,9 +10,9 @@ const ISSUE_SELECT =
 
 const EMPTY_COUNTS: IssueVoteCounts = { progressive: 0, conservative: 0, neutral: 0, total: 0 };
 
-export async function GET(_req: Request, { params }: Ctx) {
+export async function GET(request: Request, { params }: Ctx) {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
+  const session = await requestAuth(request);
   const supabase = createServiceRoleSupabaseClient();
 
   const { data: row, error } = await supabase
