@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requestAuth } from "@/lib/request-auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 import { BADGE_DEFS, calcStreak, computeEarnedBadgeIds, kstTodayStartISO } from "@/services/points/points";
 
@@ -23,8 +23,8 @@ const VERDICT_LABEL: Record<string, string> = {
   draw: "무승부 판정",
 };
 
-export async function GET() {
-  const session = await auth();
+export async function GET(request: Request) {
+  const session = await requestAuth(request);
   if (!session?.user?.id) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
