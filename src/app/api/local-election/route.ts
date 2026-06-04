@@ -1,5 +1,4 @@
-import { auth } from "@/lib/auth";
-import { createServiceRoleSupabaseClient } from "@/lib/supabase";
+import { requestAuth } from "@/lib/request-auth";
 import {
   extractLocalElectionFilter,
   getLocalElectionData,
@@ -7,21 +6,14 @@ import {
 import { getDistrictEntryByName } from "@/lib/districts/index";
 import { NextResponse } from "next/server";
 
-export async function GET() {
-  const session = await auth();
+export async function GET(request: Request) {
+  const session = await requestAuth(request);
 
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const supabase = createServiceRoleSupabaseClient();
-  const { data: user } = await supabase
-    .from("users")
-    .select("district")
-    .eq("email", session.user.email)
-    .single();
-
-  const userDistrict = user?.district as string | null;
+  const userDistrict = session.user.district ?? null;
 
   if (!userDistrict) {
     return NextResponse.json(
