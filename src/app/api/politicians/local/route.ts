@@ -1,32 +1,17 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requestAuth } from "@/lib/request-auth";
 import { getLocalPoliticiansByDistrict } from "@/lib/assembly";
-import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 
-export async function GET() {
-  const session = await auth();
+export async function GET(request: Request) {
+  const session = await requestAuth(request);
 
   if (!session?.user?.email) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const supabase = createServiceRoleSupabaseClient();
-  const { data: user, error } = await supabase
-    .from("users")
-    .select("district")
-    .eq("email", session.user.email)
-    .maybeSingle();
+  const district = session.user.district ?? null;
 
-  if (error) {
-    console.error("Failed to fetch user district", error);
-
-    return NextResponse.json(
-      { message: "Failed to fetch district." },
-      { status: 500 },
-    );
-  }
-
-  if (!user?.district) {
+  if (!district) {
     return NextResponse.json({
       district: null,
       politicians: [],
@@ -34,24 +19,16 @@ export async function GET() {
   }
 
   try {
-    const politicians = await getLocalPoliticiansByDistrict(user.district);
+    const politicians = await getLocalPoliticiansByDistrict(district);
 
     if (politicians.length === 0) {
-      console.warn("[local-politicians] no politicians matched", {
-        district: user.district,
-      });
+      console.warn("[local-politicians] no politicians matched", { district });
     }
 
-    return NextResponse.json({
-      district: user.district,
-      politicians,
-    });
+    return NextResponse.json({ district, politicians });
   } catch (routeError) {
     console.error("Failed to fetch local politicians", routeError);
 
-    return NextResponse.json({
-      district: user.district,
-      politicians: [],
-    });
+    return NextResponse.json({ district, politicians: [] });
   }
 }
