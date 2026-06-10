@@ -108,6 +108,9 @@ function extractSggInfo(para, currentWiw) {
   return null;
 }
 
+// 표 헤더에서 districtRe 오매칭되는 단어 제외
+const DISTRICT_HEADER_WORDS = new Set(['지역구', '선거구']);
+
 /** 단락 배열에서 선거구→동 맵핑 파싱 */
 function parseSggMappings(paragraphs) {
   const result = {};
@@ -119,6 +122,8 @@ function parseSggMappings(paragraphs) {
   for (const para of paragraphs) {
     const p = para.trim();
     const pNorm = normalizePara(p);
+    // 공백 제거 버전 — "동  구" 같은 표 셀 처리
+    const pCompact = pNorm.replace(/\s+/g, '');
 
     // 선거구명 감지
     const sggInfo = extractSggInfo(p, currentWiw);
@@ -128,9 +133,9 @@ function parseSggMappings(paragraphs) {
       continue;
     }
 
-    // 구/군/시/읍 이름 → currentWiw 갱신
-    if (districtRe.test(pNorm)) {
-      currentWiw = pNorm;
+    // 구/군/시/읍 이름 → currentWiw 갱신 (헤더 단어 제외)
+    if (districtRe.test(pCompact) && !DISTRICT_HEADER_WORDS.has(pCompact)) {
+      currentWiw = pCompact;
       continue;
     }
 
