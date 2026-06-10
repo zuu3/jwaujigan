@@ -48,15 +48,14 @@ export function AreaNudgeFloat() {
 }
 
 const float = keyframes`
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-6px); }
 `;
 
 const Float = styled.div`
   position: fixed;
   bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   left: 50%;
-  transform: translateX(-50%);
   z-index: 30;
   display: flex;
   align-items: center;
