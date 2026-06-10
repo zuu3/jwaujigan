@@ -163,7 +163,7 @@ async function fetchAllItems(
   }
 
   const expiresAt = new Date(Date.now() + CACHE_TTL).toISOString();
-  void supabase.from("election_cache").upsert(
+  await supabase.from("election_cache").upsert(
     { cache_key: cacheKey, data: allItems, expires_at: expiresAt },
     { onConflict: "cache_key" },
   );

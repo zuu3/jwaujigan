@@ -506,7 +506,7 @@ export async function getLocalPoliticiansByDistrict(
   }
 
   const expiresAt = new Date(Date.now() + CACHE_TTL_MS).toISOString();
-  void supabase.from("election_cache").upsert(
+  await supabase.from("election_cache").upsert(
     { cache_key: cacheKey, data: politicians, expires_at: expiresAt },
     { onConflict: "cache_key" },
   );
