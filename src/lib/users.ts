@@ -71,36 +71,21 @@ export async function getUserGateState(email: string): Promise<UserGateState> {
 
   const { data: user, error: userError } = await supabase
     .from("users")
-    .select("id, district")
+    .select("id, district, user_political_profiles(user_id)")
     .eq("email", email)
     .maybeSingle();
-
-  let profile: { user_id: string } | null = null;
-  let profileError: { code?: string } | null = null;
-
-  if (user?.id) {
-    const profileResponse = await supabase
-      .from("user_political_profiles")
-      .select("user_id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    profile = profileResponse.data;
-    profileError = profileResponse.error;
-  }
 
   if (userError) {
     console.error("Failed to fetch user state", userError);
   }
 
-  if (profileError && profileError.code !== "PGRST116") {
-    console.error("Failed to fetch political profile state", profileError);
-  }
+  const profiles = user?.user_political_profiles;
+  const hasProfile = Array.isArray(profiles) ? profiles.length > 0 : Boolean(profiles);
 
   return {
     userId: user?.id ?? null,
     district: user?.district ?? null,
-    hasPoliticalProfile: Boolean(profile?.user_id),
+    hasPoliticalProfile: hasProfile,
   };
 }
 
