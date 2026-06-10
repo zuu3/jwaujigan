@@ -41,6 +41,7 @@ export const authOptions: NextAuthOptions = {
           picture: user.image ?? token.picture,
           userId: state.userId,
           district: state.district,
+          area: state.area,
           hasPoliticalProfile: state.hasPoliticalProfile,
         };
       }
@@ -61,6 +62,8 @@ export const authOptions: NextAuthOptions = {
         typeof token.userId === "string" ? token.userId : token.sub ?? "";
       session.user.district =
         typeof token.district === "string" ? token.district : null;
+      session.user.area =
+        typeof token.area === "string" ? token.area : null;
       session.user.hasPoliticalProfile = Boolean(token.hasPoliticalProfile);
 
       if (typeof token.email === "string") {

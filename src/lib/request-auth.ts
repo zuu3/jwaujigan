@@ -8,6 +8,7 @@ export type RequestUser = {
   name?: string | null;
   image?: string | null;
   district?: string | null;
+  area?: string | null;
   hasPoliticalProfile?: boolean;
 };
 
@@ -26,6 +27,7 @@ export async function requestAuth(request?: Request): Promise<RequestSession | n
         name: webSession.user.name ?? null,
         image: webSession.user.image ?? null,
         district: webSession.user.district ?? null,
+        area: webSession.user.area ?? null,
         hasPoliticalProfile: webSession.user.hasPoliticalProfile,
       },
       source: "web",
@@ -45,6 +47,7 @@ export async function requestAuth(request?: Request): Promise<RequestSession | n
       name: mobileUser.name,
       image: mobileUser.image,
       district: gateState.district,
+      area: gateState.area,
       hasPoliticalProfile: gateState.hasPoliticalProfile,
     },
     source: "mobile",

@@ -5,6 +5,7 @@ declare module "next-auth" {
     user: DefaultSession["user"] & {
       id: string;
       district: string | null;
+      area: string | null;
       hasPoliticalProfile: boolean;
     };
   }
@@ -14,6 +15,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     userId: string | null;
     district: string | null;
+    area?: string | null;
     hasPoliticalProfile?: boolean;
   }
 }

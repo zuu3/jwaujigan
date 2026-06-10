@@ -2,6 +2,7 @@ import { requestAuth } from "@/lib/request-auth";
 import {
   extractLocalElectionFilter,
   getLocalElectionData,
+  resolveLocalSggName,
 } from "@/lib/local-election";
 import { getDistrictEntryByName } from "@/lib/districts/index";
 import { NextResponse } from "next/server";
@@ -14,6 +15,7 @@ export async function GET(request: Request) {
   }
 
   const userDistrict = session.user.district ?? null;
+  const userArea = session.user.area ?? null;
 
   if (!userDistrict) {
     return NextResponse.json(
@@ -44,8 +46,18 @@ export async function GET(request: Request) {
     );
   }
 
+  const { localSggName, provincialSggName } = resolveLocalSggName(
+    filter.sdName,
+    userArea,
+  );
+
   try {
-    const data = await getLocalElectionData(filter.sdName, filter.wiwNames);
+    const data = await getLocalElectionData(
+      filter.sdName,
+      filter.wiwNames,
+      localSggName,
+      provincialSggName,
+    );
     return NextResponse.json({ ...data, district: userDistrict });
   } catch (err) {
     console.error("local-election API error:", err);

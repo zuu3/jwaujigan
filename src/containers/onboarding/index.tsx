@@ -222,7 +222,7 @@ export function OnboardingContainer({
 
     setDistrict(result.district);
     setResolvedAddress(result.sourceAddress);
-    void updateSession({ district: result.district });
+    void updateSession({ district: result.district, area: result.matchedArea ?? null });
     if (funnel.step === "questions") {
       void funnel.history.replace("questions", {
         district: result.district,

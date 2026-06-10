@@ -174,7 +174,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const updated = await updateUserDistrict(session.user.email, entry.district);
+    const matchedArea = body.matchedArea?.trim() || null;
+    const updated = await updateUserDistrict(session.user.email, entry.district, matchedArea);
 
     if (!updated.ok) {
       return NextResponse.json(
@@ -186,7 +187,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       district: entry.district,
       province: entry.province,
-      matchedArea: body.matchedArea?.trim() || null,
+      matchedArea,
       sourceAddress: body.sourceAddress?.trim() || entry.district,
     });
   }
@@ -248,6 +249,7 @@ export async function POST(request: Request) {
   const updated = await updateUserDistrict(
     session.user.email,
     resolvedCandidate.resolved.district,
+    resolvedCandidate.resolved.matchedArea,
   );
 
   if (!updated.ok) {

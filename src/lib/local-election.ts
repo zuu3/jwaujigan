@@ -1,6 +1,7 @@
 import "server-only";
 import { get as httpsGet } from "node:https";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
+import localElectionMapData from "@/lib/districts/local-election-map.json";
 
 export type {
   ElectionType,
@@ -196,10 +197,16 @@ function matchesRegion(
   sdName: string,
   wiwNames: string[],
   sdOnly: boolean,
+  sggName?: string | null,
 ): boolean {
   if (item.sdName !== sdName) return false;
 
   if (sdOnly) return true;
+
+  // When sggName is set (from 동→선거구 mapping), filter to exact 선거구
+  if (sggName) {
+    return item.sggName === sggName;
+  }
 
   // wiwName match — API value may differ slightly (e.g. "성남시분당구" vs "분당구")
   const apiWiw = item.wiwName ?? "";
@@ -242,6 +249,29 @@ export function getLocalElectionPhotoUrl(
   const gsg = SD_GSG[sdName];
   if (!gsg || !huboid) return null;
   return `https://cdn.nec.go.kr/photo_${sgId}/Gsg${gsg}/Hb${huboid}/gicho/${huboid}.JPG`;
+}
+
+// ─── 동→선거구 mapping ───────────────────────────────────────────────────────
+
+type LocalElectionMapEntry = {
+  local?: string;   // 구시군의원 선거구 sggName (e.g. "부산진구나선거구")
+  provincial?: string; // 시도의원 선거구 sggName
+};
+
+type LocalElectionMap = Record<string, Record<string, LocalElectionMapEntry>>;
+
+const LOCAL_ELECTION_MAP = localElectionMapData as unknown as LocalElectionMap;
+
+export function resolveLocalSggName(
+  sdName: string,
+  area: string | null,
+): { localSggName: string | null; provincialSggName: string | null } {
+  if (!area) return { localSggName: null, provincialSggName: null };
+  const entry = LOCAL_ELECTION_MAP[sdName]?.[area];
+  return {
+    localSggName: entry?.local ?? null,
+    provincialSggName: entry?.provincial ?? null,
+  };
 }
 
 // ─── Public API ──────────────────────────────────────────────────────────────
@@ -312,8 +342,16 @@ export async function getLocalElectionPerson(
 export async function getLocalElectionData(
   province: string,
   wiwNames: string[],
+  localSggName?: string | null,
+  provincialSggName?: string | null,
 ): Promise<LocalElectionResult> {
   const electionTypes = Object.keys(WINNER_SG_TYPE) as ElectionType[];
+
+  const getSggName = (type: ElectionType) => {
+    if (type === "local" || type === "localPr") return localSggName ?? null;
+    if (type === "provincial" || type === "provincialPr") return provincialSggName ?? null;
+    return null;
+  };
 
   const [winnerSets, candidateSets] = await Promise.all([
     Promise.all(
@@ -326,7 +364,7 @@ export async function getLocalElectionData(
         ).then((items) => ({
           type,
           items: items.filter((item) =>
-            matchesRegion(item, province, wiwNames, SD_ONLY_TYPES.has(type)),
+            matchesRegion(item, province, wiwNames, SD_ONLY_TYPES.has(type), getSggName(type)),
           ),
         })),
       ),
@@ -341,7 +379,7 @@ export async function getLocalElectionData(
         ).then((items) => ({
           type,
           items: items.filter((item) =>
-            matchesRegion(item, province, wiwNames, SD_ONLY_TYPES.has(type)),
+            matchesRegion(item, province, wiwNames, SD_ONLY_TYPES.has(type), getSggName(type)),
           ),
         })),
       ),

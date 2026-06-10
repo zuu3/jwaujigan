@@ -9,6 +9,7 @@ type SyncUserInput = {
 export type UserGateState = {
   userId: string | null;
   district: string | null;
+  area: string | null;
   hasPoliticalProfile: boolean;
 };
 
@@ -42,7 +43,7 @@ export async function syncUserRecord(input: SyncUserInput) {
   };
 }
 
-export async function updateUserDistrict(email: string, district: string) {
+export async function updateUserDistrict(email: string, district: string, area?: string | null) {
   const supabase = createServiceRoleSupabaseClient();
   const updated_at = new Date().toISOString();
 
@@ -50,10 +51,11 @@ export async function updateUserDistrict(email: string, district: string) {
     .from("users")
     .update({
       district,
+      ...(area !== undefined ? { area: area ?? null } : {}),
       updated_at,
     })
     .eq("email", email)
-    .select("id, email, district")
+    .select("id, email, district, area")
     .single();
 
   if (error) {
@@ -71,7 +73,7 @@ export async function getUserGateState(email: string): Promise<UserGateState> {
 
   const { data: user, error: userError } = await supabase
     .from("users")
-    .select("id, district, user_political_profiles(user_id)")
+    .select("id, district, area, user_political_profiles(user_id)")
     .eq("email", email)
     .maybeSingle();
 
@@ -85,6 +87,7 @@ export async function getUserGateState(email: string): Promise<UserGateState> {
   return {
     userId: user?.id ?? null,
     district: user?.district ?? null,
+    area: user?.area ?? null,
     hasPoliticalProfile: hasProfile,
   };
 }
