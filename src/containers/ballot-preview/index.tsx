@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useLocalElection } from "@/services/local-election/local-election.queries";
+import { useSession } from "next-auth/react";
 import { useUserProfile } from "@/services/user/user.queries";
 import { ELECTION_TYPE_LABELS } from "@/lib/local-election.types";
 import type { ElectionType, LocalElectionCandidate } from "@/lib/local-election.types";
@@ -386,7 +387,9 @@ export function BallotPreview() {
   const router = useRouter();
   const profileQuery = useUserProfile();
   const district = profileQuery.data?.district ?? null;
-  const query = useLocalElection(district);
+  const { data: session } = useSession();
+  const area = session?.user?.area ?? null;
+  const query = useLocalElection(district, area);
 
   const [compareA, setCompareA] = useState<{ huboid: string; type: ElectionType; name: string } | null>(null);
   const [compareB, setCompareB] = useState<{ huboid: string; type: ElectionType; name: string } | null>(null);
