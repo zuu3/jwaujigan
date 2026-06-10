@@ -300,8 +300,8 @@ export function OnboardingContainer({
     try {
       await saveDistrict({
         district: option.district,
-        matchedArea: option.areaLabel,
-        sourceAddress: [option.province, option.areaLabel].filter(Boolean).join(" "),
+        matchedArea: option.area,
+        sourceAddress: [option.province, option.area].filter(Boolean).join(" "),
       });
       setSelectedOptionId(option.id);
     } catch (error) {
