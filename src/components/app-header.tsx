@@ -74,7 +74,10 @@ export function AppHeader({ userName, userImage }: AppHeaderProps) {
           <BottomNavLabel>커뮤니티</BottomNavLabel>
         </BottomNavItem>
         <BottomNavItem href="/mypage" $active={pathname === "/mypage"}>
-          <User size={22} aria-hidden="true" />
+          <IconWrap>
+            <User size={22} aria-hidden="true" />
+            {!session?.user?.area && <AreaDot aria-label="지역 미설정" />}
+          </IconWrap>
           <BottomNavLabel>마이페이지</BottomNavLabel>
         </BottomNavItem>
       </BottomNav>
@@ -248,4 +251,22 @@ const BottomNavLabel = styled.span`
   font-size: 10px;
   font-weight: 500;
   line-height: 1;
+`;
+
+const IconWrap = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const AreaDot = styled.span`
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e5484d;
+  border: 1.5px solid #ffffff;
 `;
