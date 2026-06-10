@@ -476,7 +476,7 @@ export function BallotPreview() {
         <PageHeader>
           <BackLink href="/">← 홈</BackLink>
           <PageTitle>내 투표용지 미리보기</PageTitle>
-          <PageDesc>{district} · 투표용지 {activeBallots.length}장</PageDesc>
+          <PageDesc>{area ? `${area} · ` : ""}{district} · 투표용지 {activeBallots.length}장</PageDesc>
           <PageNotice>
             6.3 제9회 전국동시지방선거 후보 등록 기준 정보입니다. 실제 투표용지와 다를 수 있어요.
           </PageNotice>
