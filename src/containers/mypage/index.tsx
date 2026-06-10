@@ -34,12 +34,14 @@ type MyPageContainerProps = {
   profile: MyPageProfile;
   politicalProfile: PoliticalProfile | null;
   battleLogs: BattleLogItem[];
+  area: string | null;
 };
 
 export function MyPageContainer({
   profile,
   politicalProfile,
   battleLogs,
+  area,
 }: MyPageContainerProps) {
   const [activityData, setActivityData] = useState<ActivityResponse | null>(null);
   const [followedPoliticians, setFollowedPoliticians] = useState<FollowedPolitician[] | null>(null);
@@ -207,6 +209,16 @@ export function MyPageContainer({
             </ResetLink>
           </ProfileActionBar>
         </ProfileSection>
+
+        {!area && (
+          <AreaNudgeBanner>
+            <AreaNudgeText>
+              <AreaNudgeTitle>내 지역 대표를 확인하려면</AreaNudgeTitle>
+              <AreaNudgeDesc>행정동을 설정하면 내 지역 구시군의원 후보를 볼 수 있어요.</AreaNudgeDesc>
+            </AreaNudgeText>
+            <AreaNudgeButton href="/settings/district">설정하기</AreaNudgeButton>
+          </AreaNudgeBanner>
+        )}
 
         <PoliticalProfileSection politicalProfile={politicalProfile} />
         <ActivitySection activityData={activityData} />
@@ -719,6 +731,47 @@ const BattleUsed = styled.span`
 
 const BattleSlash = styled.span`
   color: #b0b8c1;
+`;
+
+const AreaNudgeBanner = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  background: #e8f3ff;
+  border-radius: 12px;
+`;
+
+const AreaNudgeText = styled.div`
+  display: grid;
+  gap: 2px;
+`;
+
+const AreaNudgeTitle = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: #191f28;
+`;
+
+const AreaNudgeDesc = styled.div`
+  font-size: 13px;
+  font-weight: 400;
+  color: #4e5968;
+`;
+
+const AreaNudgeButton = styled(Link)`
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: #3182f6;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
 `;
 
 const Footer = styled.div`

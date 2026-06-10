@@ -20,7 +20,7 @@ export default async function MyPage() {
   const supabase = createServiceRoleSupabaseClient();
   const { data: user, error: userError } = await supabase
     .from("users")
-    .select("id, email, name, image, district, points, created_at")
+    .select("id, email, name, image, district, area, points, created_at")
     .eq("email", session.user.email)
     .maybeSingle();
 
@@ -35,6 +35,7 @@ export default async function MyPage() {
     name: user?.name ?? session.user.name ?? null,
     image: user?.image ?? session.user.image ?? null,
     district: user?.district ?? session.user.district ?? null,
+    area: user?.area ?? null,
     points: user?.points ?? 0,
     created_at: user?.created_at ?? null,
   };
@@ -69,6 +70,7 @@ export default async function MyPage() {
       profile={profile}
       politicalProfile={(politicalProfileResult.data?.[0] ?? null) as PoliticalProfile | null}
       battleLogs={(battleLogsResult.data ?? []) as BattleLogItem[]}
+      area={profile.area}
     />
   );
 }

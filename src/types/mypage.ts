@@ -4,6 +4,7 @@ export type MyPageProfile = {
   name: string | null;
   image: string | null;
   district: string | null;
+  area: string | null;
   points: number;
   created_at: string | null;
 };
