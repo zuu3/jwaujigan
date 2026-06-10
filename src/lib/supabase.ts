@@ -300,6 +300,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      election_cache: {
+        Row: {
+          cache_key: string;
+          data: Json;
+          expires_at: string;
+          created_at: string;
+        };
+        Insert: {
+          cache_key: string;
+          data: Json;
+          expires_at: string;
+          created_at?: string;
+        };
+        Update: {
+          cache_key?: string;
+          data?: Json;
+          expires_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       polls: {
         Row: {
           id: string;

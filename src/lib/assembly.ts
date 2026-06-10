@@ -1,5 +1,6 @@
 import "server-only";
 import { getDistrictEntryByName, getDistrictSearchTokens, normalizeKoreanText } from "@/lib/districts";
+import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 
 const ASSEMBLY_API_BASE_URL = "https://open.assembly.go.kr/portal/openapi";
 
@@ -457,12 +458,29 @@ async function fetchIntegratedMemberById(naasCd: string) {
 export async function getLocalPoliticiansByDistrict(
   district: string,
 ): Promise<LocalPolitician[]> {
+  const cacheKey = `assembly:local:${district}`;
+  const CACHE_TTL_MS = 60 * 60 * 1000;
+
+  const supabase = createServiceRoleSupabaseClient();
+  const { data: dbCached } = await supabase
+    .from("election_cache")
+    .select("data, expires_at")
+    .eq("cache_key", cacheKey)
+    .gt("expires_at", new Date().toISOString())
+    .maybeSingle();
+
+  if (dbCached) {
+    return dbCached.data as LocalPolitician[];
+  }
+
   const entry = getDistrictEntryByName(district);
   const members = await fetchPersonalMembersByDistrict(district);
 
+  let politicians: LocalPolitician[];
+
   if (members.length === 0) {
     const integratedMembers = await fetchIntegratedMembersByDistrict(district);
-    return integratedMembers.map((member) => ({
+    politicians = integratedMembers.map((member) => ({
       id: member.NAAS_CD,
       name: member.NAAS_NM,
       party: member.PLPT_NM ?? "",
@@ -472,19 +490,25 @@ export async function getLocalPoliticiansByDistrict(
       office: null,
       image: member.NAAS_PIC ?? null,
     }));
+  } else {
+    politicians = await Promise.all(
+      members.map(async (member) => ({
+        id: member.MONA_CD,
+        name: member.HG_NM,
+        party: member.POLY_NM,
+        district: member.ORIG_NM,
+        committee: member.CMITS ?? member.CMIT_NM ?? null,
+        reelection: member.REELE_GBN_NM ?? null,
+        office: member.ASSEM_ADDR ?? null,
+        image: await fetchMemberPicture(member.HG_NM, district, entry?.province ?? null),
+      })),
+    );
   }
 
-  const politicians = await Promise.all(
-    members.map(async (member) => ({
-      id: member.MONA_CD,
-      name: member.HG_NM,
-      party: member.POLY_NM,
-      district: member.ORIG_NM,
-      committee: member.CMITS ?? member.CMIT_NM ?? null,
-      reelection: member.REELE_GBN_NM ?? null,
-      office: member.ASSEM_ADDR ?? null,
-      image: await fetchMemberPicture(member.HG_NM, district, entry?.province ?? null),
-    })),
+  const expiresAt = new Date(Date.now() + CACHE_TTL_MS).toISOString();
+  void supabase.from("election_cache").upsert(
+    { cache_key: cacheKey, data: politicians, expires_at: expiresAt },
+    { onConflict: "cache_key" },
   );
 
   return politicians;

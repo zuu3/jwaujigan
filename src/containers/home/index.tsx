@@ -200,7 +200,7 @@ const searchResultsQuery = useSearch(debouncedQuery);
             <SectionHeader>
               <SectionMeta>
                 <SectionTitleRow>
-                  <SectionTitle>내 지역구 의원</SectionTitle>
+                  <SectionTitle>내 지역구 국회의원</SectionTitle>
                   <SectionSubtle>{district}</SectionSubtle>
                 </SectionTitleRow>
               </SectionMeta>

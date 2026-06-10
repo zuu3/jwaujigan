@@ -1,5 +1,6 @@
 import "server-only";
 import { get as httpsGet } from "node:https";
+import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 
 export type {
   ElectionType,
@@ -119,27 +120,34 @@ async function fetchAllItems(
   apiPath: string,
   sgId: string,
   sgTypecode: number,
-  cache: Map<string, CacheEntry>,
+  memCache: Map<string, CacheEntry>,
 ): Promise<Record<string, string>[]> {
-  const cacheKey = `${sgId}:${sgTypecode}`;
-  const cached = cache.get(cacheKey);
+  const cacheKey = `election:${sgId}:${sgTypecode}`;
 
-  if (cached && cached.expiry > Date.now()) {
-    return cached.data;
+  const memCached = memCache.get(cacheKey);
+  if (memCached && memCached.expiry > Date.now()) {
+    return memCached.data;
   }
 
-  // Get total count
+  const supabase = createServiceRoleSupabaseClient();
+  const { data: dbCached } = await supabase
+    .from("election_cache")
+    .select("data, expires_at")
+    .eq("cache_key", cacheKey)
+    .gt("expires_at", new Date().toISOString())
+    .maybeSingle();
+
+  if (dbCached) {
+    const data = dbCached.data as Record<string, string>[];
+    memCache.set(cacheKey, { data, expiry: Date.now() + CACHE_TTL });
+    return data;
+  }
+
   const firstXml = await fetchPage(apiPath, sgId, sgTypecode, 1, 1);
-
-  if (!isOkResponse(firstXml)) {
-    return [];
-  }
+  if (!isOkResponse(firstXml)) return [];
 
   const total = parseTotalCount(firstXml);
-
-  if (total === 0) {
-    return [];
-  }
+  if (total === 0) return [];
 
   const pageCount = Math.ceil(total / PAGE_SIZE);
   const pageNums = Array.from({ length: pageCount }, (_, i) => i + 1);
@@ -153,8 +161,14 @@ async function fetchAllItems(
     );
     allItems.push(...results.flat());
   }
-  cache.set(cacheKey, { data: allItems, expiry: Date.now() + CACHE_TTL });
 
+  const expiresAt = new Date(Date.now() + CACHE_TTL).toISOString();
+  void supabase.from("election_cache").upsert(
+    { cache_key: cacheKey, data: allItems, expires_at: expiresAt },
+    { onConflict: "cache_key" },
+  );
+
+  memCache.set(cacheKey, { data: allItems, expiry: Date.now() + CACHE_TTL });
   return allItems;
 }
 
