@@ -231,7 +231,7 @@ export function LocalElectionSection({ district }: { district: string | null }) 
     <SectionWrapper>
       <SectionHeaderRow>
         <SectionTitleGroup>
-          <SectionTitle>지방선거</SectionTitle>
+          <SectionTitle>내 지역 대표</SectionTitle>
           {wiwLabel && <SectionSubtle>{wiwLabel}</SectionSubtle>}
         </SectionTitleGroup>
         <BallotPreviewLink href="/ballot-preview">내 투표용지 미리보기</BallotPreviewLink>
