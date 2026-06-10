@@ -571,7 +571,7 @@ export async function getRecentIssueBills(): Promise<AssemblyIssueBill[]> {
     AGE: 22,
     pIndex: 1,
     pSize: 200,
-  });
+  }, { timeoutMs: 20_000 });
   const rows = extractRows<BillListRow>(payload, "nzmimeepazxkubdpn");
 
   return rows

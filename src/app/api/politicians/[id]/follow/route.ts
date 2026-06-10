@@ -63,7 +63,7 @@ export async function POST(request: Request, { params }: RouteContext) {
   await supabase.from("politician_follows").insert({
     user_id: userId,
     politician_id: id,
-    politician_name: body.name ?? null,
+    politician_name: body.name ?? "",
     politician_image: body.image ?? null,
   });
   await supabase.rpc("increment_user_points", { p_user_id: userId, p_amount: POINTS.FOLLOW });
