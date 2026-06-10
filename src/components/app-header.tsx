@@ -42,13 +42,16 @@ export function AppHeader({ userName, userImage }: AppHeaderProps) {
 
           <Actions>
             <ProfileChip href="/mypage" aria-label="마이페이지로 이동">
-              <AvatarWrap aria-hidden="true">
-                {resolvedImage ? (
-                  <AvatarImg src={resolvedImage} alt="" width={28} height={28} />
-                ) : (
-                  getInitial(resolvedName)
-                )}
-              </AvatarWrap>
+              <IconWrap>
+                <AvatarWrap aria-hidden="true">
+                  {resolvedImage ? (
+                    <AvatarImg src={resolvedImage} alt="" width={28} height={28} />
+                  ) : (
+                    getInitial(resolvedName)
+                  )}
+                </AvatarWrap>
+                {!session?.user?.area && <AreaDot aria-label="지역 미설정" />}
+              </IconWrap>
               <ProfileName>{resolvedName ?? "사용자"}</ProfileName>
             </ProfileChip>
             <SignOutBtn callbackUrl="/" />
