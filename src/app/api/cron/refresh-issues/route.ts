@@ -30,7 +30,7 @@ export async function GET(req: Request) {
     console.log(`[cron] 신규 법안 ${newBills.length}개, 기존 갱신 대상 ${existingBills.length}개`);
 
     // 기존 매칭 법안 expires_at 갱신 (API가 계속 동일 법안 반환해도 이슈 유지)
-    const refreshedAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const refreshedAt = new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString();
     if (existingBills.length > 0) {
       await supabase
         .from("issues")

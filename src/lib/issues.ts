@@ -127,7 +127,7 @@ export async function buildIssueFromBill(bill: AssemblyIssueBill): Promise<Issue
   const text = result.response.text();
   const parsed = JSON.parse(text) as Partial<GeneratedIssueCard>;
   const normalized = normalizeGeneratedIssue(parsed);
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  const expiresAt = new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString();
 
   return {
     title: normalized.title,
