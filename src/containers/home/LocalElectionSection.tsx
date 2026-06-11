@@ -3,11 +3,13 @@
 import styled from "@/lib/styled";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { HelpCircle } from "lucide-react";
 import { useLocalElection } from "@/services/local-election/local-election.queries";
 import { ELECTION_TYPE_LABELS } from "@/lib/local-election.types";
 import type { ElectionType, LocalElectionWinner, LocalElectionCandidate } from "@/lib/local-election.types";
 import { getPartyPresentation } from "@/lib/parties";
+import { PROVINCIAL_GAP_DONGS, isProvincialGapDong } from "@/lib/districts/provincial-gaps";
 
 type Tab = "winners" | "candidates";
 
@@ -179,8 +181,20 @@ function LoadingSkeleton() {
 export function LocalElectionSection({ district }: { district: string | null }) {
   const [activeTab, setActiveTab] = useState<Tab>("candidates");
   const [typeIndex, setTypeIndex] = useState(0);
+  const [showGapHelp, setShowGapHelp] = useState(false);
+  const helpRef = useRef<HTMLDivElement>(null);
   const query = useLocalElection(district);
   const touchStartX = useRef<number | null>(null);
+
+  const isGapDong = district && isProvincialGapDong(district);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (helpRef.current && !helpRef.current.contains(e.target as Node)) setShowGapHelp(false);
+    }
+    if (showGapHelp) document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [showGapHelp]);
 
   if (!district) return null;
 
@@ -232,6 +246,29 @@ export function LocalElectionSection({ district }: { district: string | null }) 
       <SectionHeaderRow>
         <SectionTitleGroup>
           <SectionTitle>내 지역 대표</SectionTitle>
+          {isGapDong && (
+            <HelpPopover ref={helpRef}>
+              <HelpButton
+                type="button"
+                onClick={() => setShowGapHelp(!showGapHelp)}
+                aria-label="도움말"
+              >
+                <HelpCircle size={16} />
+              </HelpButton>
+              {showGapHelp && (
+                <HelpTooltip>
+                  <HelpTitle>이 지역 정보를 표시할 수 없어요</HelpTitle>
+                  <HelpText>
+                    행정동 체계 변경으로 법령 데이터와 맞지 않습니다. 자세한 내용은{" "}
+                    <a href="https://github.com/jwaujigan/jwaujigan/blob/main/src/lib/districts/PROVINCIAL_GAPS.md" target="_blank" rel="noopener noreferrer">
+                      여기
+                    </a>
+                    를 참고하세요.
+                  </HelpText>
+                </HelpTooltip>
+              )}
+            </HelpPopover>
+          )}
           {wiwLabel && <SectionSubtle>{wiwLabel}</SectionSubtle>}
         </SectionTitleGroup>
         <BallotPreviewLink href="/ballot-preview">내 투표용지 미리보기</BallotPreviewLink>
@@ -720,4 +757,59 @@ const EmptyText = styled.div`
   font-size: 14px;
   color: #8b95a1;
   padding: 16px 0;
+`;
+
+const HelpPopover = styled.div`
+  position: relative;
+`;
+
+const HelpButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #8b95a1;
+  cursor: pointer;
+  transition: color 150ms;
+
+  &:hover {
+    color: #3182f6;
+  }
+`;
+
+const HelpTooltip = styled.div`
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  background: #191f28;
+  color: #ffffff;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  max-width: 240px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+
+  a {
+    color: #3182f6;
+    text-decoration: underline;
+
+    &:hover {
+      color: #2272eb;
+    }
+  }
+`;
+
+const HelpTitle = styled.div`
+  font-weight: 600;
+  margin-bottom: 4px;
+`;
+
+const HelpText = styled.div`
+  line-height: 1.5;
+  opacity: 0.9;
 `;
