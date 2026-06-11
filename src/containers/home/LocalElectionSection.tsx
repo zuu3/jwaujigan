@@ -260,7 +260,7 @@ export function LocalElectionSection({ district }: { district: string | null }) 
                   <HelpTitle>이 지역 정보를 표시할 수 없어요</HelpTitle>
                   <HelpText>
                     행정동 체계 변경으로 법령 데이터와 맞지 않습니다. 자세한 내용은{" "}
-                    <a href="https://github.com/jwaujigan/jwaujigan/blob/main/src/lib/districts/PROVINCIAL_GAPS.md" target="_blank" rel="noopener noreferrer">
+                    <a href="https://github.com/zuu3/jwaujigan/blob/main/src/lib/districts/PROVINCIAL_GAPS.md" target="_blank" rel="noopener noreferrer">
                       여기
                     </a>
                     를 참고하세요.
