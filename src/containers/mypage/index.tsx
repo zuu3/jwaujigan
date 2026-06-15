@@ -1,7 +1,7 @@
 "use client";
 
 import styled from "@/lib/styled";
-import { Gift, Globe, Info, Link2, Lock, MapPin, RotateCcw } from "lucide-react";
+import { Gift, Globe, Info, Link2, Lock, Mail, MapPin, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -50,10 +50,26 @@ export function MyPageContainer({
   const [referralCount, setReferralCount] = useState<number | null>(null);
   const [referralTodayCount, setReferralTodayCount] = useState<number | null>(null);
   const [visibilityLoading, setVisibilityLoading] = useState(false);
+  const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
   const profileQuery = useUserProfile();
   const queryClient = useQueryClient();
   const isPublic = profileQuery.data?.is_public ?? true;
   const userId = profileQuery.data?.id ?? null;
+
+  const handleNewsletterToggle = async () => {
+    if (newsletterLoading) return;
+    setNewsletterLoading(true);
+    const next = !newsletterSubscribed;
+    setNewsletterSubscribed(next);
+    const res = await fetch("/api/newsletter/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subscribed: next }),
+    });
+    if (!res.ok) setNewsletterSubscribed(!next);
+    setNewsletterLoading(false);
+  };
 
   const handleVisibilityToggle = async () => {
     if (visibilityLoading) return;
@@ -106,6 +122,13 @@ export function MyPageContainer({
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchReferralInfo();
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/newsletter/subscribe")
+      .then((r) => r.json() as Promise<{ subscribed: boolean }>)
+      .then(({ subscribed }) => setNewsletterSubscribed(subscribed))
+      .catch(() => null);
   }, []);
 
   useEffect(() => {
@@ -208,6 +231,24 @@ export function MyPageContainer({
               <span>성향 재검사</span>
             </ResetLink>
           </ProfileActionBar>
+
+          <NewsletterRow>
+            <VisibilityLabel>
+              <Mail size={13} />
+              <span>뉴스레터 구독</span>
+            </VisibilityLabel>
+            <NewsletterDesc>매주 월요일 이슈 요약을 이메일로 받습니다.</NewsletterDesc>
+            <Toggle
+              type="button"
+              $on={newsletterSubscribed}
+              $loading={newsletterLoading}
+              onClick={() => void handleNewsletterToggle()}
+              disabled={newsletterLoading}
+              aria-label={newsletterSubscribed ? "뉴스레터 구독 취소" : "뉴스레터 구독"}
+            >
+              <ToggleThumb $on={newsletterSubscribed} $loading={newsletterLoading} />
+            </Toggle>
+          </NewsletterRow>
         </ProfileSection>
 
         {!area && (
@@ -731,6 +772,20 @@ const BattleUsed = styled.span`
 
 const BattleSlash = styled.span`
   color: #b0b8c1;
+`;
+
+const NewsletterRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+`;
+
+const NewsletterDesc = styled.span`
+  flex: 1;
+  color: #8b95a1;
+  font-size: 12px;
+  font-weight: 400;
 `;
 
 const AreaNudgeBanner = styled.div`

@@ -146,6 +146,8 @@ export type Database = {
           area: string | null;
           points: number;
           is_public: boolean;
+          newsletter_subscribed: boolean;
+          newsletter_token: string;
           created_at: string;
           updated_at: string;
         };
@@ -157,6 +159,8 @@ export type Database = {
           district?: string | null;
           area?: string | null;
           is_public?: boolean;
+          newsletter_subscribed?: boolean;
+          newsletter_token?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -169,6 +173,8 @@ export type Database = {
           area?: string | null;
           points?: number;
           is_public?: boolean;
+          newsletter_subscribed?: boolean;
+          newsletter_token?: string;
           created_at?: string;
           updated_at?: string;
         };
