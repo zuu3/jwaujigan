@@ -1,8 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import styled from "@/lib/styled";
+import { HelpCircle, X } from "lucide-react";
 import { TargetCursor } from "@/components/cursor/target-cursor";
 import { questions, likertOptions } from "./questions";
+
+const AXIS_LABEL: Record<string, string> = {
+  economic: "경제",
+  security: "안보",
+  social: "사회",
+};
 
 export type QuestionsStepProps = {
   district: string | null;
@@ -27,6 +35,12 @@ export function QuestionsStep({
 }: QuestionsStepProps) {
   const question = questions[currentIndex];
   const progress = ((currentIndex + 1) / questions.length) * 100;
+  const [contextOpen, setContextOpen] = useState(false);
+
+  const handleAnswer = async (score: number) => {
+    setContextOpen(false);
+    await onAnswer(score);
+  };
 
   return (
     <>
@@ -40,8 +54,21 @@ export function QuestionsStep({
           </ProgressBar>
         </QuestionMeta>
         <QuestionCard key={question.id}>
-          <QuestionEyebrow>{question.axis}</QuestionEyebrow>
+          <QuestionEyebrow>{AXIS_LABEL[question.axis] ?? question.axis} 축</QuestionEyebrow>
           <QuestionText>{question.text}</QuestionText>
+          {question.context && (
+            <ContextToggle
+              type="button"
+              onClick={() => setContextOpen((v) => !v)}
+              aria-expanded={contextOpen}
+            >
+              {contextOpen ? <X size={14} /> : <HelpCircle size={14} />}
+              <span>{contextOpen ? "닫기" : "이 질문이 뭔가요?"}</span>
+            </ContextToggle>
+          )}
+          {contextOpen && question.context && (
+            <ContextCard>{question.context}</ContextCard>
+          )}
         </QuestionCard>
       </QuestionStage>
 
@@ -52,7 +79,7 @@ export function QuestionsStep({
             key={option.label}
             type="button"
             data-cursor-target="onboarding-answer"
-            onClick={() => void onAnswer(option.value)}
+            onClick={() => void handleAnswer(option.value)}
             disabled={!canAnswer}
             $selected={currentSelection === option.value}
           >
@@ -139,6 +166,44 @@ const QuestionText = styled.p`
 
   @media (max-width: 640px) {
     font-size: 18px;
+  }
+`;
+
+const ContextToggle = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 14px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #8b95a1;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 150ms;
+
+  &:hover {
+    color: #4e5968;
+  }
+`;
+
+const ContextCard = styled.div`
+  margin-top: 10px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #f2f4f6;
+  color: #4e5968;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.6;
+  word-break: keep-all;
+  animation: fadeIn 180ms ease;
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 `;
 
