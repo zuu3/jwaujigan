@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { showToast } from "@/lib/toast";
 import { LandingFooter } from "./sections/footer";
 import { LandingHeader } from "./sections/header";
 import { HeroSection } from "./sections/hero";
@@ -23,6 +24,12 @@ export function LandingContainer({ isAuthenticated }: LandingContainerProps) {
     const ref = searchParams.get("ref");
     if (ref) {
       localStorage.setItem("referral_code", ref.trim().toUpperCase());
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (searchParams.get("unsubscribed") === "1") {
+      showToast("뉴스레터 구독이 취소됐습니다.");
     }
   }, [searchParams]);
 

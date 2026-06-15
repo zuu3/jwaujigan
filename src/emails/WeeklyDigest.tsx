@@ -119,7 +119,7 @@ export default function WeeklyDigest({ issues, unsubscribeUrl, appUrl }: Props) 
 }
 
 const body = {
-  backgroundColor: GREY100,
+  backgroundColor: WHITE,
   fontFamily: '"Apple SD Gothic Neo", "Noto Sans KR", sans-serif',
   margin: "0",
   padding: "0",
