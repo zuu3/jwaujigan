@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase";
+import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 import { GLOSSARY } from "@/lib/glossary";
 
 const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com";
@@ -14,7 +14,7 @@ export async function GET(req: Request) {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) return NextResponse.json({ error: "no DEEPSEEK_API_KEY" }, { status: 500 });
 
-  const supabase = createServiceClient();
+  const supabase = createServiceRoleSupabaseClient();
   const { data: issues, error } = await supabase
     .from("issues")
     .select("title,body,progressive,conservative")
