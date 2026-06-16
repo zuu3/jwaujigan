@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useEffect } from "react";
 import styled from "@/lib/styled";
 import { QRCodeSVG } from "qrcode.react";
 import { questions, likertOptions } from "@/containers/onboarding/questions";
@@ -10,6 +10,7 @@ import type { PoliticalAnswers, PoliticalProfileResult } from "@/lib/political-p
 type Screen = "landing" | "test" | "result";
 
 const BASE_URL = "https://jwj.zuu3.kr";
+const AXIS_LABEL: Record<string, string> = { economic: "경제", security: "안보", social: "사회" };
 
 export function DemoContainer() {
   const [screen, setScreen] = useState<Screen>("landing");
@@ -17,11 +18,15 @@ export function DemoContainer() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [result, setResult] = useState<PoliticalProfileResult | null>(null);
 
-  const handleAnswer = useCallback(async (score: number) => {
-    const q = questions[currentIndex];
-    const next = { ...answers, [q.id]: score };
-    setAnswers(next);
+  const currentQuestion = questions[currentIndex];
+  const existingAnswer = answers[currentQuestion?.id] ?? null;
 
+  const handleSelect = (score: number) => {
+    setAnswers((prev) => ({ ...prev, [currentQuestion.id]: score }));
+  };
+
+  const handleNext = () => {
+    const next = { ...answers };
     if (currentIndex + 1 >= questions.length) {
       const profile = calculatePoliticalProfile(next);
       setResult(profile);
@@ -29,7 +34,11 @@ export function DemoContainer() {
     } else {
       setCurrentIndex((i) => i + 1);
     }
-  }, [currentIndex, answers]);
+  };
+
+  const handlePrev = () => {
+    if (currentIndex > 0) setCurrentIndex((i) => i - 1);
+  };
 
   const reset = () => {
     setScreen("landing");
@@ -42,14 +51,17 @@ export function DemoContainer() {
   if (screen === "test") return (
     <TestScreen
       currentIndex={currentIndex}
-      onAnswer={handleAnswer}
+      selectedAnswer={existingAnswer as number | null}
+      onSelect={handleSelect}
+      onNext={handleNext}
+      onPrev={handlePrev}
     />
   );
-  if (screen === "result" && result) return (
-    <ResultScreen result={result} onReset={reset} />
-  );
+  if (screen === "result" && result) return <ResultScreen result={result} onReset={reset} />;
   return null;
 }
+
+// ─── Landing ────────────────────────────────────────────────────────────────
 
 function LandingScreen({ onStart }: { onStart: () => void }) {
   return (
@@ -57,7 +69,9 @@ function LandingScreen({ onStart }: { onStart: () => void }) {
       <LandingInner>
         <AppBadge>좌우지간</AppBadge>
         <LandingTitle>나의 정치 성향을<br />알아보세요.</LandingTitle>
-        <LandingDesc>15개 질문으로 경제·안보·사회 3가지 축의<br />정치 성향을 분석해드립니다.</LandingDesc>
+        <LandingDesc>
+          15개 질문으로 경제·안보·사회 3가지 축의<br />정치 성향을 분석해드립니다.
+        </LandingDesc>
         <StartButton onClick={onStart}>성향 테스트 시작</StartButton>
         <LandingCaption>로그인 없이 체험할 수 있어요</LandingCaption>
       </LandingInner>
@@ -65,62 +79,79 @@ function LandingScreen({ onStart }: { onStart: () => void }) {
   );
 }
 
+// ─── Test ────────────────────────────────────────────────────────────────────
+
 function TestScreen({
   currentIndex,
-  onAnswer,
+  selectedAnswer,
+  onSelect,
+  onNext,
+  onPrev,
 }: {
   currentIndex: number;
-  onAnswer: (score: number) => void;
+  selectedAnswer: number | null;
+  onSelect: (score: number) => void;
+  onNext: () => void;
+  onPrev: () => void;
 }) {
   const question = questions[currentIndex];
-  const progress = ((currentIndex) / questions.length) * 100;
-  const [selected, setSelected] = useState<number | null>(null);
-
-  const handleSelect = (value: number) => {
-    setSelected(value);
-    setTimeout(() => {
-      setSelected(null);
-      onAnswer(value);
-    }, 180);
-  };
+  const progress = (currentIndex / questions.length) * 100;
+  const canGoNext = selectedAnswer !== null;
+  const isLast = currentIndex === questions.length - 1;
 
   return (
     <FullPage>
-      <TestInner>
-        <ProgressBarWrap>
-          <ProgressFill style={{ width: `${progress}%` }} />
-        </ProgressBarWrap>
-        <QuestionCount>{currentIndex + 1} / {questions.length}</QuestionCount>
-        <AxisBadge>{question.axis === "economic" ? "경제" : question.axis === "security" ? "안보" : "사회"}</AxisBadge>
-        <QuestionText>{question.text}</QuestionText>
-        {question.context && (
-          <ContextBox>{question.context}</ContextBox>
-        )}
-        <AnswerGrid>
-          {[...likertOptions].reverse().map((opt) => (
-            <AnswerBtn
-              key={opt.value}
-              $selected={selected === opt.value}
-              onClick={() => handleSelect(opt.value)}
-            >
-              {opt.label}
-            </AnswerBtn>
-          ))}
-        </AnswerGrid>
-      </TestInner>
+      <TestLayout>
+        {/* Top: progress + meta */}
+        <TestHeader>
+          <ProgressBarWrap>
+            <ProgressFill style={{ width: `${progress}%` }} />
+          </ProgressBarWrap>
+          <TestMeta>
+            <QuestionCount>{currentIndex + 1} / {questions.length}</QuestionCount>
+            <AxisBadge>{AXIS_LABEL[question.axis]}</AxisBadge>
+          </TestMeta>
+        </TestHeader>
+
+        {/* Middle: question + context — fixed height prevents jump */}
+        <QuestionArea>
+          <QuestionText>{question.text}</QuestionText>
+          <ContextSlot>
+            {question.context ? (
+              <ContextBox>{question.context}</ContextBox>
+            ) : null}
+          </ContextSlot>
+        </QuestionArea>
+
+        {/* Bottom: answers + navigation */}
+        <AnswerArea>
+          <AnswerGrid>
+            {[...likertOptions].reverse().map((opt) => (
+              <AnswerBtn
+                key={opt.value}
+                $selected={selectedAnswer === opt.value}
+                onClick={() => onSelect(opt.value)}
+              >
+                {opt.label}
+              </AnswerBtn>
+            ))}
+          </AnswerGrid>
+
+          <NavRow>
+            <NavBtn onClick={onPrev} disabled={currentIndex === 0}>이전</NavBtn>
+            <NextBtn onClick={onNext} disabled={!canGoNext}>
+              {isLast ? "결과 보기" : "다음"}
+            </NextBtn>
+          </NavRow>
+        </AnswerArea>
+      </TestLayout>
     </FullPage>
   );
 }
 
-function ResultScreen({
-  result,
-  onReset,
-}: {
-  result: PoliticalProfileResult;
-  onReset: () => void;
-}) {
-  const qrUrl = BASE_URL;
+// ─── Result ──────────────────────────────────────────────────────────────────
 
+function ResultScreen({ result, onReset }: { result: PoliticalProfileResult; onReset: () => void }) {
   return (
     <FullPage>
       <ResultInner>
@@ -137,9 +168,11 @@ function ResultScreen({
         <Divider />
 
         <QRSection>
-          <QRText>QR 스캔하고 로그인하면<br /><strong>내 결과를 저장</strong>할 수 있어요</QRText>
+          <QRText>
+            QR을 스캔하고 로그인하면<br /><strong>내 결과를 저장</strong>할 수 있어요
+          </QRText>
           <QRWrap>
-            <QRCodeSVG value={qrUrl} size={160} />
+            <QRCodeSVG value={BASE_URL} size={160} />
           </QRWrap>
           <QRUrl>jwj.zuu3.kr</QRUrl>
         </QRSection>
@@ -150,30 +183,35 @@ function ResultScreen({
   );
 }
 
+// ─── AxisBar ─────────────────────────────────────────────────────────────────
+
 function AxisBar({ label, score }: { label: string; score: number }) {
-  const pct = Math.round((score + 100) / 2);
-  const isLeft = score < -10;
-  const isRight = score > 10;
+  const pct = (score + 100) / 2; // 0~100
+  const isPositive = score >= 0;
 
   return (
     <AxisWrap>
       <AxisMeta>
         <AxisLabel>{label}</AxisLabel>
         <AxisSides>
-          <span style={{ color: "#e5484d", fontWeight: isLeft ? 700 : 400 }}>보수</span>
-          <span style={{ color: "#8b95a1" }}>·</span>
-          <span style={{ color: "#3182f6", fontWeight: isRight ? 700 : 400 }}>진보</span>
+          <span style={{ color: "#e5484d", fontWeight: score < -10 ? 700 : 400 }}>보수</span>
+          <span style={{ color: "#b0b8c1" }}>·</span>
+          <span style={{ color: "#3182f6", fontWeight: score > 10 ? 700 : 400 }}>진보</span>
         </AxisSides>
       </AxisMeta>
       <BarTrack>
         <BarCenter />
-        <BarFill $pct={pct} $positive={score >= 0} />
+        {isPositive ? (
+          <BarFill style={{ left: "50%", width: `${pct - 50}%`, background: "#3182f6" }} />
+        ) : (
+          <BarFill style={{ left: `${pct}%`, width: `${50 - pct}%`, background: "#e5484d" }} />
+        )}
       </BarTrack>
     </AxisWrap>
   );
 }
 
-// ─── Styled ─────────────────────────────────────────────────────────────────
+// ─── Styled ──────────────────────────────────────────────────────────────────
 
 const FullPage = styled.div`
   min-height: 100dvh;
@@ -184,6 +222,8 @@ const FullPage = styled.div`
   justify-content: center;
   font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
 `;
+
+// Landing
 
 const LandingInner = styled.div`
   display: flex;
@@ -199,34 +239,28 @@ const AppBadge = styled.div`
   font-size: 15px;
   font-weight: 600;
   color: #3182f6;
-  letter-spacing: 0.02em;
   margin-bottom: 32px;
 `;
 
 const LandingTitle = styled.h1`
-  font-size: 48px;
+  font-size: 52px;
   font-weight: 700;
   color: #191f28;
   line-height: 1.3;
   margin: 0 0 20px;
   word-break: keep-all;
 
-  @media (max-width: 600px) {
-    font-size: 34px;
-  }
+  @media (max-width: 600px) { font-size: 34px; }
 `;
 
 const LandingDesc = styled.p`
   font-size: 20px;
-  font-weight: 400;
   color: #6b7684;
-  line-height: 1.6;
+  line-height: 1.7;
   margin: 0 0 48px;
   word-break: keep-all;
 
-  @media (max-width: 600px) {
-    font-size: 16px;
-  }
+  @media (max-width: 600px) { font-size: 16px; }
 `;
 
 const StartButton = styled.button`
@@ -246,10 +280,7 @@ const StartButton = styled.button`
   &:hover { background: #2272eb; }
   &:active { background: #1a65d6; }
 
-  @media (max-width: 600px) {
-    height: 60px;
-    font-size: 18px;
-  }
+  @media (max-width: 600px) { height: 60px; font-size: 18px; }
 `;
 
 const LandingCaption = styled.p`
@@ -258,18 +289,22 @@ const LandingCaption = styled.p`
   color: #b0b8c1;
 `;
 
-// Test
+// Test layout — fixed 3-zone: header / question / answers+nav
 
-const TestInner = styled.div`
+const TestLayout = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
   max-width: 640px;
-  padding: 48px 40px 60px;
+  min-height: 100dvh;
+  padding: 40px 40px 48px;
 
-  @media (max-width: 600px) {
-    padding: 32px 24px 40px;
-  }
+  @media (max-width: 600px) { padding: 28px 24px 36px; }
+`;
+
+const TestHeader = styled.div`
+  flex-shrink: 0;
+  margin-bottom: 32px;
 `;
 
 const ProgressBarWrap = styled.div`
@@ -277,7 +312,7 @@ const ProgressBarWrap = styled.div`
   height: 4px;
   background: #f2f4f6;
   border-radius: 2px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 `;
 
 const ProgressFill = styled.div`
@@ -287,77 +322,136 @@ const ProgressFill = styled.div`
   transition: width 300ms ease;
 `;
 
+const TestMeta = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
 const QuestionCount = styled.div`
   font-size: 14px;
   font-weight: 500;
   color: #8b95a1;
-  margin-bottom: 12px;
 `;
 
 const AxisBadge = styled.div`
-  display: inline-flex;
-  align-self: flex-start;
   padding: 4px 12px;
   background: #e8f3ff;
   color: #3182f6;
   font-size: 13px;
   font-weight: 600;
   border-radius: 9999px;
-  margin-bottom: 20px;
+`;
+
+// Question area: flex: 1 so it fills the middle, won't jump
+
+const QuestionArea = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  margin-bottom: 32px;
 `;
 
 const QuestionText = styled.h2`
   font-size: 26px;
   font-weight: 700;
   color: #191f28;
-  line-height: 1.45;
-  margin: 0 0 20px;
+  line-height: 1.5;
+  margin: 0 0 24px;
   word-break: keep-all;
 
-  @media (max-width: 600px) {
-    font-size: 20px;
-  }
+  @media (max-width: 600px) { font-size: 20px; }
+`;
+
+/* Fixed-height slot prevents layout jump when context appears/disappears */
+const ContextSlot = styled.div`
+  min-height: 96px;
 `;
 
 const ContextBox = styled.p`
   font-size: 14px;
   color: #6b7684;
   line-height: 1.7;
-  background: #f9fafb;
-  border-radius: 10px;
+  border: 1px solid #e5e8eb;
+  border-radius: 12px;
   padding: 14px 16px;
-  margin: 0 0 28px;
+  margin: 0;
   word-break: keep-all;
+`;
+
+// Answer area: fixed at bottom
+
+const AnswerArea = styled.div`
+  flex-shrink: 0;
 `;
 
 const AnswerGrid = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  margin-bottom: 20px;
 `;
 
 const AnswerBtn = styled.button<{ $selected: boolean }>`
   width: 100%;
-  height: 68px;
+  height: 64px;
   border: 1.5px solid ${({ $selected }) => $selected ? "#3182f6" : "#e5e8eb"};
   background: ${({ $selected }) => $selected ? "#e8f3ff" : "#ffffff"};
   color: ${({ $selected }) => $selected ? "#3182f6" : "#191f28"};
-  border-radius: 14px;
+  border-radius: 12px;
   font-size: 18px;
   font-weight: ${({ $selected }) => $selected ? 600 : 400};
   font-family: inherit;
   cursor: pointer;
-  transition: all 120ms;
+  transition: border-color 120ms, background 120ms, color 120ms;
 
   &:hover {
     border-color: #3182f6;
     background: #f0f7ff;
   }
 
-  @media (max-width: 600px) {
-    height: 58px;
-    font-size: 16px;
-  }
+  @media (max-width: 600px) { height: 54px; font-size: 16px; }
+`;
+
+const NavRow = styled.div`
+  display: flex;
+  gap: 12px;
+`;
+
+const NavBtn = styled.button`
+  height: 56px;
+  padding: 0 28px;
+  background: #f2f4f6;
+  color: #4e5968;
+  border: none;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 150ms;
+  flex-shrink: 0;
+
+  &:hover:not(:disabled) { background: #e5e8eb; }
+  &:disabled { opacity: 0.35; cursor: default; }
+`;
+
+const NextBtn = styled.button`
+  flex: 1;
+  height: 56px;
+  background: #3182f6;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 150ms;
+
+  &:hover:not(:disabled) { background: #2272eb; }
+  &:disabled { opacity: 0.35; cursor: default; }
 `;
 
 // Result
@@ -371,9 +465,7 @@ const ResultInner = styled.div`
   padding: 48px 40px 60px;
   text-align: center;
 
-  @media (max-width: 600px) {
-    padding: 32px 24px 40px;
-  }
+  @media (max-width: 600px) { padding: 32px 24px 40px; }
 `;
 
 const ResultBadge = styled.div`
@@ -392,9 +484,7 @@ const ResultType = styled.h1`
   color: #191f28;
   margin: 0 0 12px;
 
-  @media (max-width: 600px) {
-    font-size: 32px;
-  }
+  @media (max-width: 600px) { font-size: 32px; }
 `;
 
 const ResultSub = styled.p`
@@ -411,9 +501,7 @@ const AxisList = styled.div`
   margin-bottom: 32px;
 `;
 
-const AxisWrap = styled.div`
-  width: 100%;
-`;
+const AxisWrap = styled.div`width: 100%;`;
 
 const AxisMeta = styled.div`
   display: flex;
@@ -451,19 +539,14 @@ const BarCenter = styled.div`
   height: 100%;
   background: #e5e8eb;
   transform: translateX(-50%);
+  z-index: 1;
 `;
 
-const BarFill = styled.div<{ $pct: number; $positive: boolean }>`
+const BarFill = styled.div`
   position: absolute;
   top: 0;
   height: 100%;
-  background: ${({ $positive }) => $positive ? "#3182f6" : "#e5484d"};
   border-radius: 5px;
-  ${({ $pct, $positive }) =>
-    $positive
-      ? `left: 50%; width: ${Math.abs($pct - 50)}%;`
-      : `right: ${100 - $pct}%; width: ${Math.abs($pct - 50)}%;`
-  }
 `;
 
 const Divider = styled.div`
@@ -488,16 +571,12 @@ const QRText = styled.p`
   margin: 0;
   word-break: keep-all;
 
-  strong {
-    color: #191f28;
-    font-weight: 700;
-  }
+  strong { color: #191f28; font-weight: 700; }
 `;
 
 const QRWrap = styled.div`
   padding: 16px;
-  background: #ffffff;
-  border: 1.5px solid #e5e8eb;
+  border: 1px solid #e5e8eb;
   border-radius: 16px;
 `;
 
