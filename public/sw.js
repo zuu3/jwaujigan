@@ -22,6 +22,11 @@ self.addEventListener("fetch", (e) => {
   const { request } = e;
   const url = new URL(request.url);
 
+  // GET만 캐싱 (POST 등은 Cache.put 불가)
+  if (request.method !== "GET") {
+    return;
+  }
+
   // 외부 도메인, API 라우트, Next.js 내부 — 항상 네트워크
   if (
     url.origin !== self.location.origin ||

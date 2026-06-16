@@ -22,37 +22,48 @@ export function DemoContainer() {
   const [answers, setAnswers] = useState<PoliticalAnswers>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [result, setResult] = useState<PoliticalProfileResult | null>(null);
+  const [locked, setLocked] = useState(false);
 
   const currentQuestion = questions[currentIndex];
   const existingAnswer = answers[currentQuestion?.id] ?? null;
 
+  // 모든 문항 답 완료 시에만 결과로 전환 (불완전하면 첫 미답 문항으로 이동)
+  const goToResult = (finalAnswers: PoliticalAnswers) => {
+    const firstUnanswered = questions.findIndex((q) => typeof finalAnswers[q.id] !== "number");
+    if (firstUnanswered !== -1) {
+      setCurrentIndex(firstUnanswered);
+      return;
+    }
+    setResult(calculatePoliticalProfile(finalAnswers));
+    setScreen("result");
+  };
+
   const handleSelect = (score: number) => {
+    if (locked || !currentQuestion) return;
     const next = { ...answers, [currentQuestion.id]: score };
     setAnswers(next);
+    setLocked(true);
     setTimeout(() => {
+      setLocked(false);
       if (currentIndex + 1 >= questions.length) {
-        const profile = calculatePoliticalProfile(next);
-        setResult(profile);
-        setScreen("result");
+        goToResult(next);
       } else {
-        setCurrentIndex((i) => i + 1);
+        setCurrentIndex((i) => Math.min(i + 1, questions.length - 1));
       }
     }, 180);
   };
 
   const handleNext = () => {
-    if (existingAnswer === null) return;
+    if (locked || existingAnswer === null) return;
     if (currentIndex + 1 >= questions.length) {
-      const profile = calculatePoliticalProfile(answers as PoliticalAnswers);
-      setResult(profile);
-      setScreen("result");
+      goToResult(answers);
     } else {
-      setCurrentIndex((i) => i + 1);
+      setCurrentIndex((i) => Math.min(i + 1, questions.length - 1));
     }
   };
 
   const handlePrev = () => {
-    if (currentIndex > 0) setCurrentIndex((i) => i - 1);
+    if (currentIndex > 0) setCurrentIndex((i) => Math.max(i - 1, 0));
   };
 
   const reset = () => {
@@ -60,6 +71,7 @@ export function DemoContainer() {
     setAnswers({});
     setCurrentIndex(0);
     setResult(null);
+    setLocked(false);
   };
 
   if (screen === "landing") return <LandingScreen onStart={() => setScreen("test")} />;
