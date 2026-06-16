@@ -100,7 +100,6 @@ function LandingScreen({ onStart }: { onStart: () => void }) {
           15개 질문으로 경제·안보·사회<br />3가지 축을 분석해드려요.
         </LandingDesc>
         <StartButton onClick={onStart}>테스트 시작하기</StartButton>
-        <LandingCaption>로그인 없이도 할 수 있어요</LandingCaption>
       </LandingInner>
     </FullPage>
   );
@@ -311,11 +310,6 @@ const StartButton = styled.button`
   @media (max-width: 600px) { height: 60px; font-size: 18px; }
 `;
 
-const LandingCaption = styled.p`
-  margin-top: 16px;
-  font-size: 14px;
-  color: #b0b8c1;
-`;
 
 // Test layout — fixed 3-zone: header / question / answers+nav
 
