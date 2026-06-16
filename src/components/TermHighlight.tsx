@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import styled from "@/lib/styled";
 import { GLOSSARY } from "@/lib/glossary";
 
-const TERMS = Object.keys(GLOSSARY);
+const TERMS = Object.keys(GLOSSARY).sort((a, b) => b.length - a.length);
 const PATTERN = new RegExp(`(${TERMS.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`, "g");
 
 function TermSpan({ term, definition }: { term: string; definition: string }) {
