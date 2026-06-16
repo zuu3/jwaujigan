@@ -22,18 +22,17 @@ export function DemoContainer() {
   const existingAnswer = answers[currentQuestion?.id] ?? null;
 
   const handleSelect = (score: number) => {
-    setAnswers((prev) => ({ ...prev, [currentQuestion.id]: score }));
-  };
-
-  const handleNext = () => {
-    const next = { ...answers };
-    if (currentIndex + 1 >= questions.length) {
-      const profile = calculatePoliticalProfile(next);
-      setResult(profile);
-      setScreen("result");
-    } else {
-      setCurrentIndex((i) => i + 1);
-    }
+    const next = { ...answers, [currentQuestion.id]: score };
+    setAnswers(next);
+    setTimeout(() => {
+      if (currentIndex + 1 >= questions.length) {
+        const profile = calculatePoliticalProfile(next);
+        setResult(profile);
+        setScreen("result");
+      } else {
+        setCurrentIndex((i) => i + 1);
+      }
+    }, 180);
   };
 
   const handlePrev = () => {
@@ -53,7 +52,6 @@ export function DemoContainer() {
       currentIndex={currentIndex}
       selectedAnswer={existingAnswer as number | null}
       onSelect={handleSelect}
-      onNext={handleNext}
       onPrev={handlePrev}
     />
   );
@@ -85,19 +83,15 @@ function TestScreen({
   currentIndex,
   selectedAnswer,
   onSelect,
-  onNext,
   onPrev,
 }: {
   currentIndex: number;
   selectedAnswer: number | null;
   onSelect: (score: number) => void;
-  onNext: () => void;
   onPrev: () => void;
 }) {
   const question = questions[currentIndex];
   const progress = (currentIndex / questions.length) * 100;
-  const canGoNext = selectedAnswer !== null;
-  const isLast = currentIndex === questions.length - 1;
 
   return (
     <FullPage>
@@ -139,9 +133,6 @@ function TestScreen({
 
           <NavRow>
             <NavBtn onClick={onPrev} disabled={currentIndex === 0}>이전</NavBtn>
-            <NextBtn onClick={onNext} disabled={!canGoNext}>
-              {isLast ? "결과 보기" : "다음"}
-            </NextBtn>
           </NavRow>
         </AnswerArea>
       </TestLayout>
