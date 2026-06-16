@@ -6,10 +6,17 @@ const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek
 const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
 
 export async function GET(req: Request) {
-  const auth = req.headers.get("authorization");
+  const { searchParams } = new URL(req.url);
+  const secret = searchParams.get("secret");
   const cronSecret = process.env.CRON_SECRET;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (auth !== `Bearer ${cronSecret}` && auth !== `Bearer ${serviceKey}`) {
+  const auth = req.headers.get("authorization");
+  const isAuthorized =
+    secret === cronSecret ||
+    secret === serviceKey ||
+    auth === `Bearer ${cronSecret}` ||
+    auth === `Bearer ${serviceKey}`;
+  if (!isAuthorized) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
