@@ -27,6 +27,7 @@ import { questions } from "./questions";
 
 type OnboardingContainerProps = {
   initialDistrict: string | null;
+  isRetest?: boolean;
 };
 
 type OnboardingStep = "district" | "questions";
@@ -59,6 +60,7 @@ type DistrictRequestPayload = {
 
 export function OnboardingContainer({
   initialDistrict,
+  isRetest = false,
 }: OnboardingContainerProps) {
   const router = useRouter();
   const { update: updateSession } = useSession();
@@ -384,7 +386,7 @@ export function OnboardingContainer({
   };
 
   const handleGoHome = () => {
-    router.push("/home");
+    router.push(isRetest ? "/mypage" : "/home");
     router.refresh();
   };
 
@@ -412,7 +414,7 @@ export function OnboardingContainer({
       <Content>
         <ContentInner>
           {profileResult ? (
-            <ResultScreen result={profileResult} onGoHome={handleGoHome} />
+            <ResultScreen result={profileResult} onGoHome={handleGoHome} isRetest={isRetest} />
           ) : step === "district" ? (
             <>
               <StepHeader>
@@ -450,10 +452,12 @@ export function OnboardingContainer({
           ) : (
             <>
               <StepHeader>
-                <StepChip>2 / 2 정치 성향 테스트</StepChip>
-                <StepTitle>정치 성향 테스트</StepTitle>
+                {!isRetest && <StepChip>2 / 2 정치 성향 테스트</StepChip>}
+                <StepTitle>{isRetest ? "성향 재검사" : "정치 성향 테스트"}</StepTitle>
                 <StepDescription>
-                  지역구 선택은 끝났습니다. 답변을 마치면 결과를 확인할 수 있어요.
+                  {isRetest
+                    ? "답변을 마치면 새로운 결과로 업데이트돼요."
+                    : "지역구 선택은 끝났습니다. 답변을 마치면 결과를 확인할 수 있어요."}
                 </StepDescription>
               </StepHeader>
 
@@ -670,9 +674,11 @@ function AxisBar({ label, score, leftLabel, rightLabel, leftColor, rightColor }:
 function ResultScreen({
   result,
   onGoHome,
+  isRetest,
 }: {
   result: PoliticalProfileResult;
   onGoHome: () => void;
+  isRetest?: boolean;
 }) {
   return (
     <ResultWrapper>
@@ -708,7 +714,7 @@ function ResultScreen({
       </AxisList>
 
       <GoHomeButton type="button" onClick={onGoHome}>
-        홈으로 가기
+        {isRetest ? "마이페이지로 돌아가기" : "홈으로 가기"}
       </GoHomeButton>
     </ResultWrapper>
   );

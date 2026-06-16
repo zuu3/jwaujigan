@@ -226,7 +226,7 @@ export function MyPageContainer({
               </span>
             </ChipButton>
 
-            <ResetLink href="/onboarding">
+            <ResetLink href="/onboarding?retest=true">
               <RotateCcw size={13} />
               <span>성향 재검사</span>
             </ResetLink>
