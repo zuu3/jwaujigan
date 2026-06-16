@@ -25,28 +25,24 @@ export async function GET(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const existingKeys = Object.keys(GLOSSARY);
+
+  // 전체 이슈 텍스트를 하나로 합쳐서 DeepSeek 1회 호출
+  const combinedText = issues
+    .map((issue) =>
+      [issue.title, issue.body, issue.progressive, issue.conservative]
+        .filter(Boolean)
+        .join(" ")
+        .slice(0, 800)
+    )
+    .join("\n---\n")
+    .slice(0, 12000);
+
+  const extracted = await extractTerms(combinedText, existingKeys, apiKey);
   const allNew = new Map<string, string>();
-  const failures: number[] = [];
-
-  for (let i = 0; i < issues.length; i++) {
-    const issue = issues[i];
-    const text = [issue.title, issue.body, issue.progressive, issue.conservative]
-      .filter(Boolean)
-      .join("\n\n")
-      .slice(0, 3000);
-
-    try {
-      const terms = await extractTerms(text, [...existingKeys, ...allNew.keys()], apiKey);
-      for (const t of terms) {
-        if (t.term && t.definition && !existingKeys.includes(t.term)) {
-          allNew.set(t.term, t.definition);
-        }
-      }
-    } catch {
-      failures.push(i + 1);
+  for (const t of extracted) {
+    if (t.term && t.definition && !existingKeys.includes(t.term)) {
+      allNew.set(t.term, t.definition);
     }
-
-    await sleep(200);
   }
 
   const newTerms = [...allNew.entries()].map(([term, definition]) => ({ term, definition }));
@@ -54,7 +50,6 @@ export async function GET(req: Request) {
   return NextResponse.json({
     existing: existingKeys.length,
     issues_processed: issues.length,
-    failures,
     new_terms: newTerms,
     glossary_patch: newTerms
       .map(({ term, definition }) => `  "${term}": "${definition.replace(/"/g, '\\"')}",`)
@@ -113,8 +108,4 @@ async function extractTerms(
   } catch {
     return [];
   }
-}
-
-function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
 }
