@@ -23,6 +23,7 @@ import { BadgesSection } from "@/components/mypage/BadgesSection";
 import { StreakCalendar } from "@/components/mypage/StreakCalendar";
 import { DeleteAccountButton } from "@/components/mypage/DeleteAccountButton";
 import { MyPollsSection } from "@/components/mypage/MyPollsSection";
+import { UnderstoodTermsSection } from "@/components/mypage/UnderstoodTermsSection";
 import type { MyPollItem } from "@/app/api/me/polls/route";
 import { getDailyBattleLimit, getLevel, LEVELS_INFO } from "@/services/points/points";
 import { useUserProfile } from "@/services/user/user.queries";
@@ -275,6 +276,7 @@ export function MyPageContainer({
           </>
         )}
         <MyPollsSection polls={myPolls} />
+        <UnderstoodTermsSection />
         <FollowingSection followedPoliticians={followedPoliticians} />
         <Footer>
           <DeleteAccountButton />
