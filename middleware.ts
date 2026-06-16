@@ -45,6 +45,9 @@ export default async function middleware(req: NextRequest) {
   }
 
   if (pathname.startsWith("/onboarding")) {
+    if (searchParams.get("retest") === "true") {
+      return NextResponse.next();
+    }
     return NextResponse.redirect(new URL("/home", origin));
   }
 
