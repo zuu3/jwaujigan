@@ -28,6 +28,7 @@ import { questions } from "./questions";
 type OnboardingContainerProps = {
   initialDistrict: string | null;
   isRetest?: boolean;
+  hasPoliticalProfile?: boolean;
 };
 
 type OnboardingStep = "district" | "questions";
@@ -61,6 +62,7 @@ type DistrictRequestPayload = {
 export function OnboardingContainer({
   initialDistrict,
   isRetest = false,
+  hasPoliticalProfile = false,
 }: OnboardingContainerProps) {
   const router = useRouter();
   const { update: updateSession } = useSession();
@@ -272,6 +274,14 @@ export function OnboardingContainer({
   const handleContinueToQuestions = () => {
     if (!district) {
       setDistrictError("지역구를 먼저 선택하세요.");
+      return;
+    }
+
+    // 데모 등으로 이미 성향 검사를 마친 유저는 지역구만 채우면 끝 (질문 재출제 X)
+    if (hasPoliticalProfile && !isRetest) {
+      reset();
+      router.push("/home");
+      router.refresh();
       return;
     }
 
