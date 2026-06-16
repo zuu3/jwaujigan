@@ -10,6 +10,11 @@ import type { PoliticalAnswers, PoliticalProfileResult } from "@/lib/political-p
 type Screen = "landing" | "test" | "result";
 
 const BASE_URL = "https://jwj.zuu3.kr";
+
+function encodeAnswers(answers: PoliticalAnswers): string {
+  const encoded = btoa(JSON.stringify(answers));
+  return encodeURIComponent(encoded);
+}
 const AXIS_LABEL: Record<string, string> = { economic: "경제", security: "안보", social: "사회" };
 
 export function DemoContainer() {
@@ -35,6 +40,17 @@ export function DemoContainer() {
     }, 180);
   };
 
+  const handleNext = () => {
+    if (existingAnswer === null) return;
+    if (currentIndex + 1 >= questions.length) {
+      const profile = calculatePoliticalProfile(answers as PoliticalAnswers);
+      setResult(profile);
+      setScreen("result");
+    } else {
+      setCurrentIndex((i) => i + 1);
+    }
+  };
+
   const handlePrev = () => {
     if (currentIndex > 0) setCurrentIndex((i) => i - 1);
   };
@@ -53,9 +69,10 @@ export function DemoContainer() {
       selectedAnswer={existingAnswer as number | null}
       onSelect={handleSelect}
       onPrev={handlePrev}
+      onNext={handleNext}
     />
   );
-  if (screen === "result" && result) return <ResultScreen result={result} onReset={reset} />;
+  if (screen === "result" && result) return <ResultScreen result={result} answers={answers} onReset={reset} />;
   return null;
 }
 
@@ -66,12 +83,12 @@ function LandingScreen({ onStart }: { onStart: () => void }) {
     <FullPage>
       <LandingInner>
         <AppBadge>좌우지간</AppBadge>
-        <LandingTitle>나의 정치 성향을<br />알아보세요.</LandingTitle>
+        <LandingTitle>나는 어떤<br />정치 성향일까?</LandingTitle>
         <LandingDesc>
-          15개 질문으로 경제·안보·사회 3가지 축의<br />정치 성향을 분석해드립니다.
+          15개 질문으로 경제·안보·사회<br />3가지 축을 분석해드려요.
         </LandingDesc>
-        <StartButton onClick={onStart}>성향 테스트 시작</StartButton>
-        <LandingCaption>로그인 없이 체험할 수 있어요</LandingCaption>
+        <StartButton onClick={onStart}>테스트 시작하기</StartButton>
+        <LandingCaption>로그인 없이도 할 수 있어요</LandingCaption>
       </LandingInner>
     </FullPage>
   );
@@ -84,14 +101,17 @@ function TestScreen({
   selectedAnswer,
   onSelect,
   onPrev,
+  onNext,
 }: {
   currentIndex: number;
   selectedAnswer: number | null;
   onSelect: (score: number) => void;
   onPrev: () => void;
+  onNext: () => void;
 }) {
   const question = questions[currentIndex];
   const progress = (currentIndex / questions.length) * 100;
+  const isLast = currentIndex === questions.length - 1;
 
   return (
     <FullPage>
@@ -133,6 +153,9 @@ function TestScreen({
 
           <NavRow>
             <NavBtn onClick={onPrev} disabled={currentIndex === 0}>이전</NavBtn>
+            <NextBtn onClick={onNext} disabled={selectedAnswer === null}>
+              {isLast ? "결과 보기" : "다음"}
+            </NextBtn>
           </NavRow>
         </AnswerArea>
       </TestLayout>
@@ -142,7 +165,9 @@ function TestScreen({
 
 // ─── Result ──────────────────────────────────────────────────────────────────
 
-function ResultScreen({ result, onReset }: { result: PoliticalProfileResult; onReset: () => void }) {
+function ResultScreen({ result, answers, onReset }: { result: PoliticalProfileResult; answers: PoliticalAnswers; onReset: () => void }) {
+  const qrUrl = `${BASE_URL}/onboarding?demo=1&a=${encodeAnswers(answers)}`;
+
   return (
     <FullPage>
       <ResultInner>
@@ -160,10 +185,10 @@ function ResultScreen({ result, onReset }: { result: PoliticalProfileResult; onR
 
         <QRSection>
           <QRText>
-            QR을 스캔하고 로그인하면<br /><strong>내 결과를 저장</strong>할 수 있어요
+            QR을 스캔하고 로그인하면<br /><strong>내 결과가 저장</strong>돼요
           </QRText>
           <QRWrap>
-            <QRCodeSVG value={BASE_URL} size={160} />
+            <QRCodeSVG value={qrUrl} size={160} />
           </QRWrap>
           <QRUrl>jwj.zuu3.kr</QRUrl>
         </QRSection>
