@@ -4,12 +4,36 @@ import { useEffect, useRef, useState } from "react";
 import styled from "@/lib/styled";
 import { GLOSSARY } from "@/lib/glossary";
 
+const LS_KEY = "jwj_understood_terms";
+
+function getUnderstood(): Set<string> {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveUnderstood(term: string) {
+  try {
+    const set = getUnderstood();
+    set.add(term);
+    localStorage.setItem(LS_KEY, JSON.stringify([...set]));
+  } catch {}
+}
+
 const TERMS = Object.keys(GLOSSARY).sort((a, b) => b.length - a.length);
 const PATTERN = new RegExp(`(${TERMS.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`, "g");
 
 function TermSpan({ term, definition }: { term: string; definition: string }) {
   const [open, setOpen] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const rootRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (getUnderstood().has(term)) setDismissed(true);
+  }, [term]);
 
   useEffect(() => {
     if (!open) return;
@@ -21,6 +45,14 @@ function TermSpan({ term, definition }: { term: string; definition: string }) {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
+
+  if (dismissed) return <>{term}</>;
+
+  const handleUnderstood = () => {
+    saveUnderstood(term);
+    setDismissed(true);
+    setOpen(false);
+  };
 
   return (
     <TermRoot ref={rootRef}>
@@ -37,6 +69,7 @@ function TermSpan({ term, definition }: { term: string; definition: string }) {
         <Tooltip role="tooltip">
           <TooltipTerm>{term}</TooltipTerm>
           <TooltipDef>{definition}</TooltipDef>
+          <UnderstoodBtn onClick={handleUnderstood}>이해했어요</UnderstoodBtn>
         </Tooltip>
       )}
     </TermRoot>
@@ -94,7 +127,6 @@ const Tooltip = styled.div`
   background: #191f28;
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
   animation: tooltipIn 150ms cubic-bezier(0.0, 0.0, 0.2, 1);
-  pointer-events: none;
 
   @keyframes tooltipIn {
     from { opacity: 0; transform: translateX(-50%) translateY(4px); }
@@ -127,4 +159,24 @@ const TooltipDef = styled.div`
   font-weight: 400;
   line-height: 1.6;
   word-break: keep-all;
+`;
+
+const UnderstoodBtn = styled.button`
+  display: block;
+  margin-top: 10px;
+  width: 100%;
+  padding: 6px 0;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 150ms;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.18);
+  }
 `;
