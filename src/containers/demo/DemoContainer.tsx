@@ -178,7 +178,7 @@ function TestScreen({
 // ─── Result ──────────────────────────────────────────────────────────────────
 
 function ResultScreen({ result, answers, onReset }: { result: PoliticalProfileResult; answers: PoliticalAnswers; onReset: () => void }) {
-  const qrUrl = `${BASE_URL}/onboarding?demo=1&a=${encodeAnswers(answers)}`;
+  const qrUrl = `${BASE_URL}/save-result?a=${encodeAnswers(answers)}`;
 
   return (
     <FullPage>

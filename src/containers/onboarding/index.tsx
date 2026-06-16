@@ -17,7 +17,7 @@ import {
   resolveCurrentPosition,
   MANUAL_MATCH_LIMIT,
 } from "./DistrictStep";
-import type { PoliticalAnswers, PoliticalProfileResult } from "@/lib/political-profile";
+import type { PoliticalProfileResult } from "@/lib/political-profile";
 
 const QuestionsStep = dynamic(
   () => import("./QuestionsStep").then((m) => m.QuestionsStep),
@@ -28,7 +28,6 @@ import { questions } from "./questions";
 type OnboardingContainerProps = {
   initialDistrict: string | null;
   isRetest?: boolean;
-  demoAnswers?: PoliticalAnswers | null;
 };
 
 type OnboardingStep = "district" | "questions";
@@ -62,7 +61,6 @@ type DistrictRequestPayload = {
 export function OnboardingContainer({
   initialDistrict,
   isRetest = false,
-  demoAnswers = null,
 }: OnboardingContainerProps) {
   const router = useRouter();
   const { update: updateSession } = useSession();
@@ -122,27 +120,6 @@ export function OnboardingContainer({
   const answers = useOnboardingStore((state) => state.answers);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileResult, setProfileResult] = useState<PoliticalProfileResult | null>(null);
-
-  // demo mode: auto-submit pre-filled answers from QR scan
-  useEffect(() => {
-    if (!demoAnswers) return;
-    setIsSubmitting(true);
-    fetch("/api/political-profile", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ answers: demoAnswers }),
-    })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Failed");
-        const result = (await res.json()) as PoliticalProfileResult;
-        void updateSession({ hasPoliticalProfile: true });
-        document.cookie = `${ONBOARDING_SKIP_COOKIE}=; path=/; max-age=0`;
-        setProfileResult(result);
-      })
-      .catch(() => { /* silently fall through to normal flow */ })
-      .finally(() => setIsSubmitting(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   const step: OnboardingStep = funnel.step;
   const [district, setDistrict] = useState(initialDistrict);
   const [resolvedAddress, setResolvedAddress] = useState<string | null>(null);
