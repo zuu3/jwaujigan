@@ -69,13 +69,15 @@ const TermRoot = styled.span`
 `;
 
 const TermWord = styled.span`
-  border-bottom: 1.5px dotted #8b95a1;
+  background: #e8f3ff;
+  color: #3182f6;
+  border-radius: 3px;
+  padding: 0 3px;
   cursor: pointer;
-  transition: border-color 150ms, color 150ms;
+  transition: background 150ms;
 
   &:hover {
-    border-color: #3182f6;
-    color: #3182f6;
+    background: #cce0ff;
   }
 `;
 
