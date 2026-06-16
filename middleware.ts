@@ -5,14 +5,17 @@ import { ONBOARDING_SKIP_COOKIE } from "./src/lib/onboarding";
 import { getUserGateState } from "./src/lib/users";
 
 export default async function middleware(req: NextRequest) {
-  const { pathname, searchParams, origin } = req.nextUrl;
+  const { pathname, search, searchParams, origin } = req.nextUrl;
   const token = await getToken({
     req,
     secret: process.env.AUTH_SECRET,
   });
 
   if (typeof token?.email !== "string") {
-    return NextResponse.redirect(new URL("/", origin));
+    const loginUrl = new URL("/", origin);
+    // 로그인 후 원래 경로(+쿼리)로 복귀 (데모 QR 답안 등 보존)
+    loginUrl.searchParams.set("next", pathname + search);
+    return NextResponse.redirect(loginUrl);
   }
 
   const hasSkipQuery = searchParams.get("skip") === "true";

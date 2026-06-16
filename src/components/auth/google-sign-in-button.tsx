@@ -20,8 +20,17 @@ export function GoogleSignInButton({
       return;
     }
 
+    // middleware가 보존한 ?next= 경로가 있으면 우선 (데모 QR 답안 등)
+    let target = callbackUrl;
+    if (typeof window !== "undefined") {
+      const next = new URLSearchParams(window.location.search).get("next");
+      if (next && next.startsWith("/")) {
+        target = next;
+      }
+    }
+
     await signIn("google", {
-      callbackUrl,
+      callbackUrl: target,
     });
   };
 
