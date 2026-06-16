@@ -181,7 +181,7 @@ const ContextToggle = styled.button`
   font-size: 13px;
   font-weight: 500;
   font-family: inherit;
-  cursor: pointer;
+  cursor: none;
   transition: color 150ms;
 
   &:hover {
@@ -228,7 +228,7 @@ const AnswerButton = styled.button<{ $selected: boolean }>`
   font-size: 16px;
   font-weight: ${({ $selected }) => ($selected ? 600 : 500)};
   text-align: left;
-  cursor: pointer;
+  cursor: none;
   transition: background 140ms ease;
 
   &:hover:enabled {
@@ -236,7 +236,7 @@ const AnswerButton = styled.button<{ $selected: boolean }>`
   }
 
   &:disabled {
-    cursor: not-allowed;
+    cursor: none;
     opacity: 0.6;
   }
 `;
