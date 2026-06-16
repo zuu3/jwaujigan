@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 import type { HotIssue, IssueVoteCounts, IssueVoteStance } from "@/types/issue";
 import { showToast } from "@/lib/toast";
+import { TermHighlight } from "@/components/TermHighlight";
 
 type IssueDetailContainerProps = {
   issue: HotIssue;
@@ -254,7 +255,7 @@ export function IssueDetailContainer({ issue: initialIssue, initialBodyText }: I
               <BodyTitle>법안 상세 내용</BodyTitle>
               <BodyText>
                 {bodyText.split("\n\n").map((para, i) => (
-                  <p key={i}>{para}</p>
+                  <p key={i}><TermHighlight text={para} /></p>
                 ))}
               </BodyText>
             </BodySection>
