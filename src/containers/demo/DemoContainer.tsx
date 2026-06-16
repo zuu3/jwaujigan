@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { keyframes } from "@emotion/react";
 import styled from "@/lib/styled";
 import { QRCodeSVG } from "qrcode.react";
 import { questions, likertOptions } from "@/containers/onboarding/questions";
@@ -139,7 +140,7 @@ function TestScreen({
         </TestHeader>
 
         {/* Middle: question + context — fixed height prevents jump */}
-        <QuestionArea>
+        <QuestionArea key={currentIndex}>
           <QuestionText>{question.text}</QuestionText>
           <ContextSlot>
             {question.context ? (
@@ -179,6 +180,13 @@ function TestScreen({
 function ResultScreen({ result, answers, onReset }: { result: PoliticalProfileResult; answers: PoliticalAnswers; onReset: () => void }) {
   const qrUrl = `${BASE_URL}/save-result?a=${encodeAnswers(answers)}`;
 
+  // mount 후 막대를 0 → 목표값으로 자라게 (stat 모션)
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setShown(true), 80);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <FullPage>
       <ResultInner>
@@ -187,9 +195,9 @@ function ResultScreen({ result, answers, onReset }: { result: PoliticalProfileRe
         <ResultSub>경제·안보·사회 3가지 축으로 분석한 결과예요.</ResultSub>
 
         <AxisList>
-          <AxisBar label="경제" score={result.economic_score} />
-          <AxisBar label="안보" score={result.security_score} />
-          <AxisBar label="사회" score={result.social_score} />
+          <AxisBar label="경제" score={result.economic_score} shown={shown} delay={0} />
+          <AxisBar label="안보" score={result.security_score} shown={shown} delay={120} />
+          <AxisBar label="사회" score={result.social_score} shown={shown} delay={240} />
         </AxisList>
 
         <Divider />
@@ -212,9 +220,10 @@ function ResultScreen({ result, answers, onReset }: { result: PoliticalProfileRe
 
 // ─── AxisBar ─────────────────────────────────────────────────────────────────
 
-function AxisBar({ label, score }: { label: string; score: number }) {
+function AxisBar({ label, score, shown, delay = 0 }: { label: string; score: number; shown: boolean; delay?: number }) {
   const pct = (score + 100) / 2; // 0~100
   const isPositive = score >= 0;
+  const fillWidth = isPositive ? pct - 50 : 50 - pct;
 
   return (
     <AxisWrap>
@@ -229,9 +238,9 @@ function AxisBar({ label, score }: { label: string; score: number }) {
       <BarTrack>
         <BarCenter />
         {isPositive ? (
-          <BarFill style={{ left: "50%", width: `${pct - 50}%`, background: "#3182f6" }} />
+          <BarFill style={{ left: "50%", width: shown ? `${fillWidth}%` : "0%", background: "#3182f6", transitionDelay: `${delay}ms` }} />
         ) : (
-          <BarFill style={{ left: `${pct}%`, width: `${50 - pct}%`, background: "#e5484d" }} />
+          <BarFill style={{ left: `${pct}%`, width: shown ? `${fillWidth}%` : "0%", background: "#e5484d", transitionDelay: `${delay}ms` }} />
         )}
       </BarTrack>
     </AxisWrap>
@@ -239,6 +248,22 @@ function AxisBar({ label, score }: { label: string; score: number }) {
 }
 
 // ─── Styled ──────────────────────────────────────────────────────────────────
+
+// 등장 모션: opacity-only (DESIGN.md — y-slide entrance 금지)
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+
+const enter = `
+  animation: ${fadeIn} 450ms cubic-bezier(0, 0, 0.2, 1) both;
+  @media (prefers-reduced-motion: reduce) { animation: none; }
+`;
+
+const enterFast = `
+  animation: ${fadeIn} 240ms cubic-bezier(0, 0, 0.2, 1) both;
+  @media (prefers-reduced-motion: reduce) { animation: none; }
+`;
 
 const FullPage = styled.div`
   min-height: 100dvh;
@@ -260,6 +285,7 @@ const LandingInner = styled.div`
   padding: 60px 40px;
   max-width: 600px;
   width: 100%;
+  ${enter}
 `;
 
 const AppBadge = styled.div`
@@ -320,6 +346,7 @@ const TestLayout = styled.div`
   max-width: 640px;
   min-height: 100dvh;
   padding: 40px 40px 48px;
+  ${enter}
 
   @media (max-width: 600px) { padding: 28px 24px 36px; }
 `;
@@ -373,6 +400,7 @@ const QuestionArea = styled.div`
   flex-direction: column;
   justify-content: flex-start;
   margin-bottom: 32px;
+  ${enterFast}
 `;
 
 const QuestionText = styled.h2`
@@ -486,6 +514,7 @@ const ResultInner = styled.div`
   max-width: 560px;
   padding: 48px 40px 60px;
   text-align: center;
+  ${enter}
 
   @media (max-width: 600px) { padding: 32px 24px 40px; }
 `;
@@ -569,6 +598,9 @@ const BarFill = styled.div`
   top: 0;
   height: 100%;
   border-radius: 5px;
+  transition: width 700ms cubic-bezier(0, 0, 0.2, 1);
+
+  @media (prefers-reduced-motion: reduce) { transition: none; }
 `;
 
 const Divider = styled.div`
