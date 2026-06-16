@@ -7,7 +7,8 @@ const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
 
 export async function GET(req: Request) {
   const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  const validSecret = process.env.CRON_SECRET ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (auth !== `Bearer ${validSecret}`) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
