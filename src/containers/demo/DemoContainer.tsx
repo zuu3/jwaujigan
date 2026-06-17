@@ -24,6 +24,7 @@ export function DemoContainer() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [result, setResult] = useState<PoliticalProfileResult | null>(null);
   const [locked, setLocked] = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
 
   const currentQuestion = questions[currentIndex];
   const existingAnswer = answers[currentQuestion?.id] ?? null;
@@ -44,8 +45,10 @@ export function DemoContainer() {
     const next = { ...answers, [currentQuestion.id]: score };
     setAnswers(next);
     setLocked(true);
+    setTransitioning(true);
     setTimeout(() => {
       setLocked(false);
+      setTransitioning(false);
       if (currentIndex + 1 >= questions.length) {
         goToResult(next);
       } else {
@@ -79,7 +82,7 @@ export function DemoContainer() {
   if (screen === "test") return (
     <TestScreen
       currentIndex={currentIndex}
-      selectedAnswer={existingAnswer as number | null}
+      selectedAnswer={transitioning ? null : (existingAnswer as number | null)}
       onSelect={handleSelect}
       onPrev={handlePrev}
       onNext={handleNext}
