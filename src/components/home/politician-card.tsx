@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import styled from "@/lib/styled";
 import { ArrowRight, ExternalLink, MapPin } from "lucide-react";
 import Image from "next/image";
@@ -49,12 +50,19 @@ export function PoliticianCard({
 }: PoliticianCardProps) {
   const partyTone = getPartyTone(politician.party);
   const party = getPartyPresentation(politician.party);
+  const [imgFailed, setImgFailed] = React.useState(false);
 
   return (
     <PoliticianRow>
       <PoliticianImageWrap>
-        {politician.image ? (
-          <PoliticianImage src={politician.image} alt={politician.name} width={32} height={32} />
+        {politician.image && !imgFailed ? (
+          <PoliticianImage
+            src={politician.image}
+            alt={politician.name}
+            width={32}
+            height={32}
+            onError={() => setImgFailed(true)}
+          />
         ) : (
           <PoliticianFallback>
             {politician.name.slice(0, 1)}

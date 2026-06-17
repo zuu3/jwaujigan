@@ -11,6 +11,14 @@ import {
 import type { PollOption } from "@/services/community/community.api";
 import { CommentSection } from "@/components/arena/CommentSection";
 
+// 마지막 글자 받침 여부로 은/는 선택
+function eunNeun(text: string): string {
+  if (!text) return "은";
+  const code = text.charCodeAt(text.length - 1);
+  if (code < 0xac00 || code > 0xd7a3) return "은";
+  return (code - 0xac00) % 28 === 0 ? "는" : "은";
+}
+
 const OPTION_COLORS = ["#3182f6", "#e5484d", "#03b26c", "#fe9800"] as const;
 const TENDENCY_LABEL: Record<string, string> = {
   progressive: "진보 성향",
@@ -99,7 +107,7 @@ function PollInsightSummary({
               {isMajorityChoice ? "현재 다수 의견과 같아요" : "현재 소수 의견이에요"}
             </InsightTitle>
             <InsightBody>
-              내 선택 <strong>{selectedText}</strong>은 전체의 <strong>{selectedPct}%</strong>
+              내 선택 <strong>{selectedText}</strong>{eunNeun(selectedText ?? "")} 전체의 <strong>{selectedPct}%</strong>
               {isMajorityChoice
                 ? "가 고른 선택이에요."
                 : topText
