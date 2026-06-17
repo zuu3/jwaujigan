@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { flushSync } from "react-dom";
 import { keyframes } from "@emotion/react";
 import styled from "@/lib/styled";
 import { QRCodeSVG } from "qrcode.react";
@@ -25,10 +24,9 @@ export function DemoContainer() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [result, setResult] = useState<PoliticalProfileResult | null>(null);
   const [locked, setLocked] = useState(false);
-  const [transitioning, setTransitioning] = useState(false);
+  const [displayAnswer, setDisplayAnswer] = useState<number | null>(null);
 
   const currentQuestion = questions[currentIndex];
-  const existingAnswer = answers[currentQuestion?.id] ?? null;
 
   // 모든 문항 답 완료 시에만 결과로 전환 (불완전하면 첫 미답 문항으로 이동)
   const goToResult = (finalAnswers: PoliticalAnswers) => {
@@ -45,35 +43,34 @@ export function DemoContainer() {
     if (locked || !currentQuestion) return;
     const next = { ...answers, [currentQuestion.id]: score };
     setAnswers(next);
+    setDisplayAnswer(score);
     setLocked(true);
-    setTransitioning(true);
     setTimeout(() => {
       setLocked(false);
+      setDisplayAnswer(null);
       if (currentIndex + 1 >= questions.length) {
-        setTransitioning(false);
         goToResult(next);
       } else {
-        // flushSync: 인덱스 변경 렌더를 동기적으로 완료한 뒤 transitioning 해제
-        // Safari/WebKit에서 배치 타이밍 차이로 인한 잔상 방지
-        flushSync(() => {
-          setCurrentIndex((i) => Math.min(i + 1, questions.length - 1));
-        });
-        setTransitioning(false);
+        setCurrentIndex((i) => Math.min(i + 1, questions.length - 1));
       }
     }, 180);
   };
 
   const handleNext = () => {
-    if (locked || existingAnswer === null) return;
+    if (locked || displayAnswer === null) return;
     if (currentIndex + 1 >= questions.length) {
       goToResult(answers);
     } else {
+      setDisplayAnswer(null);
       setCurrentIndex((i) => Math.min(i + 1, questions.length - 1));
     }
   };
 
   const handlePrev = () => {
-    if (currentIndex > 0) setCurrentIndex((i) => Math.max(i - 1, 0));
+    if (currentIndex > 0) {
+      setDisplayAnswer(null);
+      setCurrentIndex((i) => Math.max(i - 1, 0));
+    }
   };
 
   const reset = () => {
@@ -88,7 +85,7 @@ export function DemoContainer() {
   if (screen === "test") return (
     <TestScreen
       currentIndex={currentIndex}
-      selectedAnswer={transitioning ? null : (existingAnswer as number | null)}
+      selectedAnswer={displayAnswer}
       onSelect={handleSelect}
       onPrev={handlePrev}
       onNext={handleNext}
