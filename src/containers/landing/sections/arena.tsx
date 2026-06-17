@@ -28,7 +28,7 @@ export function ArenaSection() {
             <SectionEyebrow>AI 아레나</SectionEyebrow>
             <SectionTitle>같은 이슈를 두 관점으로 비교해요</SectionTitle>
             <SectionText>
-              서로 다른 입장을 한 화면에서 나란히 읽습니다.
+              서로 다른 입장을 한 화면에서 나란히 읽어요.
             </SectionText>
 
             <PointStack>

@@ -68,7 +68,7 @@ export function LocalInfoSection() {
 
             <PreviewFooter>
               <Bookmark size={14} />
-              팔로우한 의원의 법안은 홈 피드에서 바로 확인됩니다.
+              팔로우한 의원의 법안은 홈 피드에서 바로 확인돼요.
             </PreviewFooter>
           </PreviewPanel>
         </FeatureLayout>
