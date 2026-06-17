@@ -13,10 +13,10 @@ export type PoliticalProfileResult = {
   political_type: string;
 };
 
-const MAX_AXIS_SCORE = 10;
-const THRESHOLD = 30;
+const THRESHOLD = 40;
 
 function normalizeAxisScore(axisQuestions: Question[], answers: PoliticalAnswers) {
+  const maxScore = axisQuestions.length * 2;
   const rawTotal = axisQuestions.reduce((sum, question) => {
     const answer = answers[question.id];
     const safeScore = typeof answer === "number" ? answer : 0;
@@ -25,7 +25,7 @@ function normalizeAxisScore(axisQuestions: Question[], answers: PoliticalAnswers
     return sum + adjustedScore;
   }, 0);
 
-  return Math.max(-100, Math.min(100, (rawTotal / MAX_AXIS_SCORE) * 100));
+  return Math.max(-100, Math.min(100, (rawTotal / maxScore) * 100));
 }
 
 function getAxisState(score: number) {
