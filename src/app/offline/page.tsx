@@ -18,7 +18,7 @@ export default function OfflinePage() {
         인터넷 연결이 필요해요
       </div>
       <div style={{ fontSize: 14, color: "#8b95a1", lineHeight: 1.6 }}>
-        네트워크 상태를 확인해요.
+        네트워크 상태를 확인해주세요.
       </div>
     </main>
   );

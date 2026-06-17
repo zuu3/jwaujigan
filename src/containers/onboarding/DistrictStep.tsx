@@ -20,7 +20,7 @@ function getCurrentPosition(options?: PositionOptions) {
     if (typeof window !== "undefined" && !window.isSecureContext) {
       reject(
         new Error(
-          "보안 정책으로 위치를 쓸 수 없어요. HTTPS 환경에서 접속해요.",
+          "보안 정책으로 위치를 쓸 수 없어요. HTTPS 환경에서 접속해주세요.",
         ),
       );
       return;
@@ -47,11 +47,11 @@ function getLocationErrorMessage(error: unknown) {
   if (isGeolocationFailure(error)) {
     switch (error.code) {
       case 1:
-        return "위치 권한이 막혀 있어요. 아래서 직접 골라요.";
+        return "위치 권한이 막혀 있어요. 아래서 직접 골라주세요.";
       case 2:
-        return "현재 위치를 못 찾았어요. 잠시 후 다시 시도하거나 직접 골라요.";
+        return "현재 위치를 못 찾았어요. 잠시 후 다시 시도하거나 직접 골라주세요.";
       case 3:
-        return "위치 확인 시간이 지났어요. 다시 시도하거나 직접 골라요.";
+        return "위치 확인 시간이 지났어요. 다시 시도하거나 직접 골라주세요.";
       default:
         return error.message ?? "현재 위치를 못 찾았어요.";
     }
@@ -219,7 +219,7 @@ export function DistrictStep({
             </ResultList>
           ) : (
             <EmptyState>
-              해당하는 행정동이 없어요. 시/도를 바꾸거나 동 이름을 더 입력해요.
+              해당하는 행정동이 없어요. 시/도를 바꾸거나 동 이름을 더 입력해주세요.
             </EmptyState>
           )
         )}

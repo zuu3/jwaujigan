@@ -30,7 +30,7 @@ export function SaveResultContainer({ isAuthenticated, answers, profile, encoded
         <Inner>
           <Badge>좌우지간</Badge>
           <Title>결과 정보를 불러올 수 없어요</Title>
-          <Desc>QR 다시 스캔하거나 테스트를 다시 해봐요.</Desc>
+          <Desc>QR 다시 스캔하거나 테스트를 다시 해주세요.</Desc>
         </Inner>
       </Page>
     );

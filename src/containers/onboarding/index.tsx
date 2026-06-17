@@ -273,7 +273,7 @@ export function OnboardingContainer({
 
   const handleContinueToQuestions = () => {
     if (!district) {
-      setDistrictError("지역구를 먼저 골라요.");
+      setDistrictError("지역구를 먼저 골라주세요.");
       return;
     }
 
@@ -331,7 +331,7 @@ export function OnboardingContainer({
 
   const handleAnswer = async (score: number) => {
     if (!district) {
-      setDistrictError("지역구를 먼저 설정해요.");
+      setDistrictError("지역구를 먼저 설정해주세요.");
       return;
     }
 
@@ -431,7 +431,7 @@ export function OnboardingContainer({
                 <StepChip>1 / 2 지역구</StepChip>
                 <StepTitle>먼저 지역구를 골라요</StepTitle>
                 <StepDescription>
-                  현재 위치로 찾거나 행정동으로 검색해요.
+                  현재 위치로 찾거나 행정동으로 검색해주세요.
                 </StepDescription>
               </StepHeader>
 

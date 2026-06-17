@@ -223,7 +223,7 @@ const searchResultsQuery = useSearch(debouncedQuery);
               <EmptyCard>
                 <EmptyCardTitle>의원 정보를 불러오지 못했어요.</EmptyCardTitle>
                 <EmptyCardText>
-                  잠시 후 다시 시도해요. 계속되면 지역구 설정을 확인해요.
+                  잠시 후 다시 시도해주세요. 계속되면 지역구 설정을 확인해주세요.
                 </EmptyCardText>
                 <RetryButton
                   type="button"
@@ -261,7 +261,7 @@ const searchResultsQuery = useSearch(debouncedQuery);
             ) : (
               <EmptyCard>
                 <EmptyCardTitle>이 지역구로 등록된 의원이 없어요.</EmptyCardTitle>
-                <EmptyCardText>온보딩에서 지역구를 다시 골라요.</EmptyCardText>
+                <EmptyCardText>온보딩에서 지역구를 다시 골라주세요.</EmptyCardText>
               </EmptyCard>
             )}
           </MotionSection>
