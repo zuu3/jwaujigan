@@ -40,6 +40,11 @@ export function DemoContainer() {
     setScreen("result");
   };
 
+  // currentIndex 변경 후 렌더 완료 시점에 transitioning 해제
+  useEffect(() => {
+    setTransitioning(false);
+  }, [currentIndex]);
+
   const handleSelect = (score: number) => {
     if (locked || !currentQuestion) return;
     const next = { ...answers, [currentQuestion.id]: score };
@@ -48,11 +53,12 @@ export function DemoContainer() {
     setTransitioning(true);
     setTimeout(() => {
       setLocked(false);
-      setTransitioning(false);
       if (currentIndex + 1 >= questions.length) {
+        setTransitioning(false);
         goToResult(next);
       } else {
         setCurrentIndex((i) => Math.min(i + 1, questions.length - 1));
+        // transitioning은 위 useEffect에서 해제
       }
     }, 180);
   };
