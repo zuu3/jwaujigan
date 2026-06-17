@@ -28,7 +28,7 @@ export function LocalInfoSection() {
             variants={fadeUp}
           >
             <SectionEyebrow>정치인 탐색</SectionEyebrow>
-            <SectionTitle>우리 동네 정치인을 먼저 보여줍니다</SectionTitle>
+            <SectionTitle>우리 동네 정치인을 먼저 보여줘요</SectionTitle>
             <SectionText>
               지역구를 기준으로 정치인을 찾고, 어떤 사람인지 짧게 정리해요.
             </SectionText>

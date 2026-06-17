@@ -26,11 +26,11 @@ export function HeroSection({ isAuthenticated }: HeroSectionProps) {
           <Eyebrow variants={fadeUp}>우리 동네 정치를 더 쉽게</Eyebrow>
 
           <HeroTitle variants={fadeUp}>
-            정치인을 알고, 이슈를 비교하고, 판단을 만듭니다
+            정치인을 알고, 이슈를 비교하고, 판단을 만들어요
           </HeroTitle>
 
           <HeroText variants={fadeUp}>
-            지역 정치인 정보와 이슈 요약, AI 토론을 한 흐름으로 보여줍니다.
+            지역 정치인 정보와 이슈 요약, AI 토론을 한 흐름으로 보여줘요.
           </HeroText>
 
           <HeroActions variants={fadeUp}>

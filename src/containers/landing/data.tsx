@@ -28,12 +28,12 @@ export const values: ValueItem[] = [
   },
   {
     title: "균형 있게",
-    description: "같은 이슈를 진보와 보수 관점으로 나란히 봅니다.",
+    description: "같은 이슈를 진보와 보수 관점으로 나란히 봐요.",
     icon: Scale,
   },
   {
     title: "쉽게",
-    description: "우리 동네 정치인부터 시작해 부담 없이 들어옵니다.",
+    description: "우리 동네 정치인부터 시작해 부담 없이 들어와요.",
     icon: MapPinned,
   },
 ];
@@ -65,12 +65,12 @@ export const engagementItems: EngagementItem[] = [
   },
   {
     title: "토론 개입",
-    description: "내 의견을 직접 넣으면 AI가 그 맥락을 반영해 다음 발언을 이어갑니다.",
+    description: "내 의견을 직접 넣으면 AI가 그 맥락을 반영해 다음 발언을 이어가요.",
     icon: MessageCircleMore,
   },
   {
     title: "결과 공유",
-    description: "토론 결과 카드를 링크로 공유할 수 있습니다.",
+    description: "토론 결과 카드를 링크로 공유할 수 있어요.",
     icon: Share2,
   },
 ];
