@@ -668,7 +668,7 @@ export function ArenaBattle({
             </ComposerMeta>
             {phase === "intervention" ? (
               <InterventionHint>
-                내 생각을 보내면 AI가 다음 발언에 반영합니다. 이슈에 대한 근거나 반론을 자유롭게 적어보세요.
+                내 생각을 보내면 AI가 다음 발언에 반영해요. 이슈에 대한 근거나 반론을 자유롭게 적어보세요.
               </InterventionHint>
             ) : null}
             <ArgumentInput

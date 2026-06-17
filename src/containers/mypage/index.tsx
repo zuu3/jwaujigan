@@ -103,7 +103,7 @@ export function MyPageContainer({
 
   const handleInvite = async () => {
     if (referralTodayCount !== null && referralTodayCount >= 3) {
-      showToast("오늘 초대 한도(3명)에 도달했어요. 내일 다시 시도하세요.", "error");
+      showToast("오늘 초대 한도(3명)에 도달했어요. 내일 다시 시도해주세요.", "error");
       return;
     }
     const data = await fetchReferralInfo();
@@ -585,7 +585,7 @@ function PointsBadge({ points, battleLogs }: { points: number; battleLogs: Battl
                 ))}
               </tbody>
             </LevelTable>
-            <LevelPopoverNote>배틀 참여, 이슈 투표 등 활동으로 점수가 쌓입니다.</LevelPopoverNote>
+            <LevelPopoverNote>배틀 참여, 이슈 투표 등 활동으로 점수가 쌓여요.</LevelPopoverNote>
           </LevelPopover>
         )}
       </PointsRow>

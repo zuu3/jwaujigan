@@ -169,7 +169,7 @@ export function IssueDetailContainer({ issue: initialIssue, initialBodyText }: I
                   법안의 제목·제안자·소관위원회·상태는 국회 의안정보 Open API
                   (open.assembly.go.kr)에서 직접 가져옵니다. 본문 설명과 진보·보수
                   관점은 Google 검색으로 수집한 뉴스·국회 자료를 바탕으로 AI(Google Gemini)가
-                  작성합니다. 아레나 토론 및 판정은 DeepSeek AI가 생성합니다.
+                  작성해요. 아레나 토론 및 판정은 DeepSeek AI가 생성해요.
                 </MethodologyText>
               </MethodologyBlock>
 
@@ -178,7 +178,7 @@ export function IssueDetailContainer({ issue: initialIssue, initialBodyText }: I
                 <MethodologyText>
                   좌우지간은 어느 진영도 대변하지 않습니다. 진보·보수 관점은 동일한
                   분량과 동일한 시각적 비중으로 제시되며, 한쪽을 결론으로 유도하지
-                  않습니다. 사실 진술과 의견을 구분해 표기합니다.
+                  않아요. 사실 진술과 의견을 구분해 표기해요.
                 </MethodologyText>
               </MethodologyBlock>
 
@@ -187,7 +187,7 @@ export function IssueDetailContainer({ issue: initialIssue, initialBodyText }: I
                 <MethodologyText>
                   법안 원문이 공개 API로 제공되지 않는 경우, AI가 검색 결과와 법안명을
                   바탕으로 추론한 내용이 포함될 수 있습니다. 정확한 조항·표결·의결
-                  내용은 반드시 아래 원문 링크에서 확인하세요.
+                  내용은 반드시 아래 원문 링크에서 확인해주세요.
                 </MethodologyText>
               </MethodologyBlock>
 
@@ -276,7 +276,7 @@ export function IssueDetailContainer({ issue: initialIssue, initialBodyText }: I
                     <ScenarioItem key={i}>{para.replace(/^•\s*/, "")}</ScenarioItem>
                   ))}
               </ScenarioList>
-              <ScenarioFootnote>법안 통과를 가정한 AI 생성 시나리오입니다.</ScenarioFootnote>
+              <ScenarioFootnote>법안 통과를 가정한 AI 생성 시나리오예요.</ScenarioFootnote>
             </ScenarioSection>
           )}
 

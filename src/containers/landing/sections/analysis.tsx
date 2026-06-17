@@ -27,9 +27,9 @@ export function AnalysisSection() {
             variants={fadeUp}
           >
             <SectionEyebrow>이슈 분석</SectionEyebrow>
-            <SectionTitle>복잡한 정책도 짧고 분명하게 정리합니다</SectionTitle>
+            <SectionTitle>복잡한 정책도 짧고 분명하게 정리해요</SectionTitle>
             <SectionText>
-              한 문장 요약으로 먼저 파악하고, 진보·보수 관점 차이를 나란히 확인합니다.
+              한 문장 요약으로 먼저 파악하고, 진보·보수 관점 차이를 나란히 확인해요.
             </SectionText>
 
             <StepGrid>

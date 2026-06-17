@@ -48,7 +48,7 @@ export function ArenaIndex({ issues, isAuthenticated }: ArenaIndexProps) {
           <HeroEyebrow>AI 토론 배틀</HeroEyebrow>
           <HeroTitle>이슈를 고르고 AI 토론을 지켜보세요</HeroTitle>
           <HeroDescription>
-            진보 AI와 보수 AI가 3라운드 토론을 벌입니다. 원할 때 내 생각을 보내면 AI가 다음 발언에 반영합니다.
+            진보 AI와 보수 AI가 3라운드 토론을 벌여요. 원할 때 내 생각을 보내면 AI가 다음 발언에 반영해요.
           </HeroDescription>
           <HowItWorks>
             <HowStep>

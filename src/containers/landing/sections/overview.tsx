@@ -22,7 +22,7 @@ export function OverviewSection() {
           variants={fadeUp}
         >
           <SectionEyebrow>서비스 소개</SectionEyebrow>
-          <SectionTitle>정치를 어렵지 않게 시작합니다</SectionTitle>
+          <SectionTitle>정치를 어렵지 않게 시작해요</SectionTitle>
           <SectionText>
             많은 기능을 나열하지 않고, 바로 이해할 수 있는 흐름을 만듭니다.
           </SectionText>

@@ -21,7 +21,7 @@ export function EngagementSection() {
           variants={fadeUp}
         >
           <SectionEyebrow>참여</SectionEyebrow>
-          <SectionTitle>보고 끝나지 않고 함께 판단합니다</SectionTitle>
+          <SectionTitle>보고 끝나지 않고 함께 판단해요</SectionTitle>
         </SectionHeader>
 
         <EngagementRow>

@@ -26,7 +26,7 @@ export function ArenaSection() {
             variants={fadeUp}
           >
             <SectionEyebrow>AI 아레나</SectionEyebrow>
-            <SectionTitle>같은 이슈를 두 관점으로 비교합니다</SectionTitle>
+            <SectionTitle>같은 이슈를 두 관점으로 비교해요</SectionTitle>
             <SectionText>
               서로 다른 입장을 한 화면에서 나란히 읽습니다.
             </SectionText>
@@ -69,7 +69,7 @@ export function ArenaSection() {
             </DebateColumns>
 
             <DebateHint>
-              한쪽 주장만 보여주지 않고 핵심 차이를 나란히 읽게 합니다.
+              한쪽 주장만 보여주지 않고 핵심 차이를 나란히 읽을 수 있어요.
             </DebateHint>
           </PreviewPanel>
         </FeatureLayout>
