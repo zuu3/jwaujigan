@@ -63,7 +63,7 @@ export default function NotFound() {
             textDecoration: "none",
           }}
         >
-          홈으로 돌아가기
+          홈으로
         </Link>
       </div>
     </main>

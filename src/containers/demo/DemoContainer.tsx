@@ -98,9 +98,9 @@ function LandingScreen({ onStart }: { onStart: () => void }) {
         <AppBadge>좌우지간</AppBadge>
         <LandingTitle>나는 어떤<br />정치 성향일까?</LandingTitle>
         <LandingDesc>
-          15개 질문으로 경제·안보·사회<br />3가지 축을 분석해드려요.
+          15가지 질문으로 나의 정치 성향을<br />알아봐요.
         </LandingDesc>
-        <StartButton onClick={onStart}>테스트 시작하기</StartButton>
+        <StartButton onClick={onStart}>시작하기</StartButton>
       </LandingInner>
     </FullPage>
   );
@@ -204,7 +204,7 @@ function ResultScreen({ result, answers, onReset }: { result: PoliticalProfileRe
 
         <QRSection>
           <QRText>
-            QR을 스캔하고 로그인하면<br /><strong>내 결과가 저장</strong>돼요
+            QR 찍으면 결과가<br /><strong>내 폰에 저장</strong>돼요
           </QRText>
           <QRWrap>
             <QRCodeSVG value={qrUrl} size={160} />

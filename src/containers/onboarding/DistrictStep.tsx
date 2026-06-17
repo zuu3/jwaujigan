@@ -20,14 +20,14 @@ function getCurrentPosition(options?: PositionOptions) {
     if (typeof window !== "undefined" && !window.isSecureContext) {
       reject(
         new Error(
-          "브라우저 보안 정책 때문에 현재 위치를 사용할 수 없습니다. HTTPS 또는 localhost에서 접속해 주세요.",
+          "보안 정책으로 위치를 쓸 수 없어요. HTTPS 환경에서 접속해요.",
         ),
       );
       return;
     }
 
     if (!navigator.geolocation) {
-      reject(new Error("브라우저가 위치 정보를 지원하지 않습니다."));
+      reject(new Error("이 브라우저는 위치 정보를 지원하지 않아요."));
       return;
     }
 
@@ -47,17 +47,17 @@ function getLocationErrorMessage(error: unknown) {
   if (isGeolocationFailure(error)) {
     switch (error.code) {
       case 1:
-        return "위치 권한이 차단되어 있습니다. 아래에서 직접 지역구를 선택하세요.";
+        return "위치 권한이 막혀 있어요. 아래서 직접 골라요.";
       case 2:
-        return "현재 위치를 확인하지 못했습니다. 잠시 후 다시 시도하거나 직접 선택하세요.";
+        return "현재 위치를 못 찾았어요. 잠시 후 다시 시도하거나 직접 골라요.";
       case 3:
-        return "위치 확인 시간이 초과됐습니다. 다시 시도하거나 직접 선택하세요.";
+        return "위치 확인 시간이 지났어요. 다시 시도하거나 직접 골라요.";
       default:
-        return error.message ?? "현재 위치를 확인하지 못했습니다.";
+        return error.message ?? "현재 위치를 못 찾았어요.";
     }
   }
 
-  return "현재 위치를 확인하지 못했습니다.";
+  return "현재 위치를 못 찾았어요.";
 }
 
 const MANUAL_MATCH_LIMIT = 8;
@@ -219,7 +219,7 @@ export function DistrictStep({
             </ResultList>
           ) : (
             <EmptyState>
-              일치하는 행정동이 없습니다. 시/도를 바꾸거나 동 이름을 더 입력하세요.
+              해당하는 행정동이 없어요. 시/도를 바꾸거나 동 이름을 더 입력해요.
             </EmptyState>
           )
         )}

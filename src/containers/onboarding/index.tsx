@@ -242,11 +242,11 @@ export function OnboardingContainer({
     setDistrictNotice(
       payload.district
         ? result.matchedArea
-          ? `${result.matchedArea} 기준으로 지역구를 설정했습니다.`
-          : "지역구를 설정했습니다."
+          ? `${result.matchedArea} 기준으로 지역구를 설정했어요.`
+          : "지역구를 설정했어요."
         : result.matchedArea
-          ? `${result.matchedArea} 기준으로 지역구를 찾았습니다.`
-          : "지역구를 찾았습니다.",
+          ? `${result.matchedArea} 기준으로 지역구를 찾았어요.`
+          : "지역구를 찾았어요.",
     );
   };
 
@@ -273,7 +273,7 @@ export function OnboardingContainer({
 
   const handleContinueToQuestions = () => {
     if (!district) {
-      setDistrictError("지역구를 먼저 선택하세요.");
+      setDistrictError("지역구를 먼저 골라요.");
       return;
     }
 
@@ -321,7 +321,7 @@ export function OnboardingContainer({
       setDistrictError(
         error instanceof Error
           ? error.message
-          : "선택한 지역구를 저장하지 못했습니다.",
+          : "지역구 저장에 실패했어요.",
       );
     } finally {
       setIsSavingManualDistrict(false);
@@ -331,7 +331,7 @@ export function OnboardingContainer({
 
   const handleAnswer = async (score: number) => {
     if (!district) {
-      setDistrictError("지역구를 먼저 설정하세요.");
+      setDistrictError("지역구를 먼저 설정해요.");
       return;
     }
 
@@ -405,7 +405,7 @@ export function OnboardingContainer({
       {isSubmitting ? (
         <FullScreenLoader
           title="결과를 저장하고 있어요"
-          description="정치 성향을 분석하고 있습니다."
+          description="정치 성향을 분석하고 있어요."
         />
       ) : null}
       <TopBar>
@@ -429,9 +429,9 @@ export function OnboardingContainer({
             <>
               <StepHeader>
                 <StepChip>1 / 2 지역구</StepChip>
-                <StepTitle>먼저 지역구를 선택하세요</StepTitle>
+                <StepTitle>먼저 지역구를 골라요</StepTitle>
                 <StepDescription>
-                  현재 위치로 찾거나 행정동을 검색해 지역구를 저장합니다.
+                  현재 위치로 찾거나 행정동으로 검색해요.
                 </StepDescription>
               </StepHeader>
 
@@ -466,8 +466,8 @@ export function OnboardingContainer({
                 <StepTitle>{isRetest ? "성향 재검사" : "정치 성향 테스트"}</StepTitle>
                 <StepDescription>
                   {isRetest
-                    ? "답변을 마치면 새로운 결과로 업데이트돼요."
-                    : "지역구 선택은 끝났습니다. 답변을 마치면 결과를 확인할 수 있어요."}
+                    ? "답변 끝나면 결과가 바뀌어요."
+                    : "지역구 선택 완료! 답변 끝나면 결과를 볼 수 있어요."}
                 </StepDescription>
               </StepHeader>
 
@@ -724,7 +724,7 @@ function ResultScreen({
       </AxisList>
 
       <GoHomeButton type="button" onClick={onGoHome}>
-        {isRetest ? "마이페이지로 돌아가기" : "홈으로 가기"}
+        {isRetest ? "마이페이지로" : "홈으로"}
       </GoHomeButton>
     </ResultWrapper>
   );

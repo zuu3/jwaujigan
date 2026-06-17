@@ -30,7 +30,7 @@ export function SaveResultContainer({ isAuthenticated, answers, profile, encoded
         <Inner>
           <Badge>좌우지간</Badge>
           <Title>결과 정보를 불러올 수 없어요</Title>
-          <Desc>QR을 다시 스캔하거나 테스트를 다시 진행해주세요.</Desc>
+          <Desc>QR 다시 스캔하거나 테스트를 다시 해봐요.</Desc>
         </Inner>
       </Page>
     );
@@ -62,12 +62,12 @@ export function SaveResultContainer({ isAuthenticated, answers, profile, encoded
         {status === "saved" ? (
           <>
             <Title>결과가 저장됐어요!</Title>
-            <Desc>좌우지간에서 나에게 맞는 정치 정보를 받아보세요.</Desc>
+            <Desc>이제 나만의 정치 피드를 받아봐요.</Desc>
           </>
         ) : (
           <>
             <Title>테스트 결과가 도착했어요</Title>
-            <Desc>아래 결과를 내 계정에 저장할 수 있어요.</Desc>
+            <Desc>이 결과를 내 계정에 저장해요.</Desc>
           </>
         )}
 

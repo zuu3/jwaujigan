@@ -34,7 +34,7 @@ function getOnboardingCopy({
     return {
       label: "지역구와 성향 분석이 필요해요",
       action: "설정 이어가기",
-      title: "지역구와 정치 성향을 먼저 정리해 볼까요?",
+      title: "지역구랑 정치 성향을 먼저 설정해요.",
       description: "지역구와 성향을 저장하면 의원·이슈가 더 정확해져요.",
     };
   }
@@ -43,7 +43,7 @@ function getOnboardingCopy({
     return {
       label: "지역구 설정이 필요해요",
       action: "지역구 설정",
-      title: "내 지역구를 먼저 설정해 볼까요?",
+      title: "내 지역구를 먼저 설정해요.",
       description: "지역구를 저장하면 현재 선거구 의원을 바로 볼 수 있어요.",
     };
   }
@@ -51,7 +51,7 @@ function getOnboardingCopy({
   return {
     label: "성향 분석을 완료해 주세요",
     action: "성향 분석 이어가기",
-    title: "정치 성향 분석을 마무리해 볼까요?",
+    title: "정치 성향 분석을 마저 완료해요.",
     description: "성향 분석을 마치면 토론 진입이 더 자연스러워져요.",
   };
 }
@@ -223,7 +223,7 @@ const searchResultsQuery = useSearch(debouncedQuery);
               <EmptyCard>
                 <EmptyCardTitle>의원 정보를 불러오지 못했어요.</EmptyCardTitle>
                 <EmptyCardText>
-                  잠시 후 다시 시도해 주세요. 계속되면 지역구 설정도 확인해 주세요.
+                  잠시 후 다시 시도해요. 계속되면 지역구 설정을 확인해요.
                 </EmptyCardText>
                 <RetryButton
                   type="button"
@@ -261,7 +261,7 @@ const searchResultsQuery = useSearch(debouncedQuery);
             ) : (
               <EmptyCard>
                 <EmptyCardTitle>이 지역구로 등록된 의원이 없어요.</EmptyCardTitle>
-                <EmptyCardText>온보딩에서 지역구를 다시 설정해 주세요.</EmptyCardText>
+                <EmptyCardText>온보딩에서 지역구를 다시 골라요.</EmptyCardText>
               </EmptyCard>
             )}
           </MotionSection>
