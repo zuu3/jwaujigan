@@ -301,6 +301,17 @@ What defines 좌우지간 visually is restraint in a space that isn't restrained
 **Forbidden phrases.** `불편을 드려 죄송합니다`, `Oops`, `죄송하지만`, any phrase implying editorial alignment (`~라는 주장`, `~측에 따르면`, `사실은`), approximations on statistics (`약 60%`, `200여 석`), any exclamatory framing on political topics, sentences starting with `I'm sorry` in English strings.
 **Voice guardrails.** 사실 진술형/명사형 종결을 유지하고, 마케팅·캐치카피 톤(예: `지금 바로`, `혁신`)은 사용하지 않는다.
 
+### Korean Sentence Endings (토스체 규칙)
+
+| 상황 | 어미 | 예 |
+|------|------|---|
+| 서비스가 상태/결과를 설명 | `~해요` / `~이에요` | `저장됐어요`, `결과가 나와요` |
+| 사용자에게 행동 요청 | `~해주세요` | `골라주세요`, `확인해주세요`, `입력해주세요` |
+| 에러 — 원인 설명 | `~해요` | `권한이 막혀 있어요` |
+| 에러 — 해결 방법 | `~해주세요` | `다시 시도해주세요`, `직접 골라주세요` |
+
+**금지.** `~합니다` / `~입니다` / `~드립니다` (모든 서비스 UI에서 금지 — 헤드라인 포함). `~해 볼까요?` (선택 유도형 완곡 표현 금지 — 직접 서술로 교체). `~하시면 됩니다` (패딩 금지).
+
 ## 11. Brand Narrative
 
 좌우지간 is a political literacy platform for a generation that knows more about trending audio than pending legislation. The product launched with a single founding refusal: that political information in Korea defaults to outrage, tribal color, and the presumption that the reader has already picked a side. 좌우지간 refuses that aesthetic vocabulary entirely.
