@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { flushSync } from "react-dom";
 import { keyframes } from "@emotion/react";
 import styled from "@/lib/styled";
 import { QRCodeSVG } from "qrcode.react";
@@ -40,11 +41,6 @@ export function DemoContainer() {
     setScreen("result");
   };
 
-  // currentIndex 변경 후 렌더 완료 시점에 transitioning 해제
-  useEffect(() => {
-    setTransitioning(false);
-  }, [currentIndex]);
-
   const handleSelect = (score: number) => {
     if (locked || !currentQuestion) return;
     const next = { ...answers, [currentQuestion.id]: score };
@@ -57,8 +53,12 @@ export function DemoContainer() {
         setTransitioning(false);
         goToResult(next);
       } else {
-        setCurrentIndex((i) => Math.min(i + 1, questions.length - 1));
-        // transitioning은 위 useEffect에서 해제
+        // flushSync: 인덱스 변경 렌더를 동기적으로 완료한 뒤 transitioning 해제
+        // Safari/WebKit에서 배치 타이밍 차이로 인한 잔상 방지
+        flushSync(() => {
+          setCurrentIndex((i) => Math.min(i + 1, questions.length - 1));
+        });
+        setTransitioning(false);
       }
     }, 180);
   };
