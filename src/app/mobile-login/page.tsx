@@ -14,10 +14,10 @@ export default async function MobileLoginPage({ searchParams }: Props) {
     <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24, padding: 24, fontFamily: "system-ui, sans-serif", background: "#fff" }}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, textAlign: "center" }}>
         <span style={{ fontSize: 32, fontWeight: 800, color: "#2563eb", letterSpacing: "-0.02em" }}>좌우지간</span>
-        <p style={{ fontSize: 16, color: "#4b5563", margin: 0 }}>앱에서 계속하려면 Google 계정으로 로그인하세요.</p>
+        <p style={{ fontSize: 16, color: "#4b5563", margin: 0 }}>앱에서 계속하려면 Google 계정으로 로그인해주세요.</p>
         {error ? (
           <p style={{ fontSize: 14, color: "#ef4444", margin: 0 }}>
-            {error === "unauthenticated" ? "로그인이 필요합니다." : "로그인 중 오류가 발생했습니다. 다시 시도해 주세요."}
+            {error === "unauthenticated" ? "로그인이 필요해요." : "로그인 중 오류가 발생했어요. 다시 시도해주세요."}
           </p>
         ) : null}
       </div>

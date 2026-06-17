@@ -23,7 +23,7 @@ export type EngagementItem = {
 export const values: ValueItem[] = [
   {
     title: "재미있게",
-    description: "배틀과 투표로 정치 이슈를 지루하지 않게 이해합니다.",
+    description: "배틀과 투표로 정치 이슈를 지루하지 않게 이해해요.",
     icon: Sparkles,
   },
   {
@@ -60,7 +60,7 @@ export const analysisPoints = [
 export const engagementItems: EngagementItem[] = [
   {
     title: "실시간 투표",
-    description: "토론을 보면서 어느 쪽이 더 설득력 있는지 바로 참여합니다.",
+    description: "토론을 보면서 어느 쪽이 더 설득력 있는지 바로 참여해요.",
     icon: Vote,
   },
   {

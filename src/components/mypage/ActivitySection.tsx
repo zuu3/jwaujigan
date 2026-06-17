@@ -36,10 +36,10 @@ export function ActivitySection({ activityData }: ActivitySectionProps) {
       {activityData ? (
         activityData.summary.total_issues === 0 ? (
           <EmptyState>
-            <EmptyTitle>아직 참여한 이슈가 없습니다</EmptyTitle>
+            <EmptyTitle>아직 참여한 이슈가 없어요</EmptyTitle>
             <EmptyText>
               이슈에 투표하거나 배틀을 완료하면 나의 정치 활동 흐름이 여기에
-              쌓입니다.
+              쌓여요.
             </EmptyText>
             <PrimaryLink href="/home">
               오늘의 핫이슈 보기

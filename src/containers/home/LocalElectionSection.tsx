@@ -263,7 +263,7 @@ export function LocalElectionSection({ district }: { district: string | null }) 
                     <a href="https://github.com/zuu3/jwaujigan/blob/main/src/lib/districts/PROVINCIAL_GAPS.md" target="_blank" rel="noopener noreferrer">
                       여기
                     </a>
-                    를 참고하세요.
+                    를 참고해주세요.
                   </HelpText>
                 </HelpTooltip>
               )}

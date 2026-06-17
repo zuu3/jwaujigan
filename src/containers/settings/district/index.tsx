@@ -131,7 +131,7 @@ export function SettingsDistrictContainer() {
 
   const handleContinue = () => {
     if (!district) {
-      setDistrictError("지역구를 먼저 선택하세요.");
+      setDistrictError("지역구를 먼저 골라주세요.");
       return;
     }
     setSaved(true);
