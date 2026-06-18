@@ -116,17 +116,19 @@ function AxisBar({ label, score }: { label: string; score: number }) {
       <AxisMeta>
         <AxisLabel>{label}</AxisLabel>
         <AxisSides>
-          <span style={{ color: "#e5484d", fontWeight: clamped < -10 ? 700 : 400 }}>보수</span>
-          <span style={{ color: "#b0b8c1" }}>·</span>
           <span style={{ color: "#3182f6", fontWeight: clamped > 10 ? 700 : 400 }}>진보</span>
+          <span style={{ color: "#b0b8c1" }}>·</span>
+          <span style={{ color: "#e5484d", fontWeight: clamped < -10 ? 700 : 400 }}>보수</span>
         </AxisSides>
       </AxisMeta>
       <BarTrack>
         <BarCenter />
         {positive ? (
-          <BarFill style={{ left: "50%", width: `${pct}%`, background: "#3182f6" }} />
+          // 진보: 중앙에서 왼쪽으로
+          <BarFill style={{ right: "50%", width: `${pct}%`, background: "#3182f6" }} />
         ) : (
-          <BarFill style={{ left: `${50 - pct}%`, width: `${pct}%`, background: "#e5484d" }} />
+          // 보수: 중앙에서 오른쪽으로
+          <BarFill style={{ left: "50%", width: `${pct}%`, background: "#e5484d" }} />
         )}
       </BarTrack>
     </AxisWrap>

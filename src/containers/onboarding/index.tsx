@@ -651,7 +651,8 @@ function AxisBar({ label, score, leftLabel, rightLabel, leftColor, rightColor }:
   const clampedScore = Math.max(-100, Math.min(100, score));
   const isPositive = clampedScore >= 0;
   const fillPct = Math.abs(clampedScore) / 2;
-  const fillColor = isPositive ? rightColor : leftColor;
+  // 진보(positive)는 왼쪽 색, 보수(negative)는 오른쪽 색
+  const fillColor = isPositive ? leftColor : rightColor;
 
   return (
     <AxisRow>
@@ -660,14 +661,16 @@ function AxisBar({ label, score, leftLabel, rightLabel, leftColor, rightColor }:
         <AxisSideLabel $align="left">{leftLabel}</AxisSideLabel>
         <AxisTrack>
           <AxisCenter />
-          {clampedScore < 0 && (
+          {clampedScore > 0 && (
+            // 진보 → 중앙에서 왼쪽으로
             <AxisFill
               $color={fillColor}
               $left={50 - fillPct}
               $width={fillPct}
             />
           )}
-          {clampedScore > 0 && (
+          {clampedScore < 0 && (
+            // 보수 → 중앙에서 오른쪽으로
             <AxisFill
               $color={fillColor}
               $left={50}
@@ -700,26 +703,26 @@ function ResultScreen({
         <AxisBar
           label="경제"
           score={result.economic_score}
-          leftLabel="보수"
-          rightLabel="진보"
-          leftColor="#e5484d"
-          rightColor="#3182f6"
+          leftLabel="진보"
+          rightLabel="보수"
+          leftColor="#3182f6"
+          rightColor="#e5484d"
         />
         <AxisBar
           label="안보"
           score={result.security_score}
-          leftLabel="보수"
-          rightLabel="진보"
-          leftColor="#e5484d"
-          rightColor="#3182f6"
+          leftLabel="진보"
+          rightLabel="보수"
+          leftColor="#3182f6"
+          rightColor="#e5484d"
         />
         <AxisBar
           label="사회"
           score={result.social_score}
-          leftLabel="보수"
-          rightLabel="진보"
-          leftColor="#e5484d"
-          rightColor="#3182f6"
+          leftLabel="진보"
+          rightLabel="보수"
+          leftColor="#3182f6"
+          rightColor="#e5484d"
         />
       </AxisList>
 

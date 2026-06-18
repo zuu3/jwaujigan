@@ -39,11 +39,11 @@ export async function GET(request: Request) {
   const level = getLevel(user.points);
   const name = user.name ?? "사용자";
 
-  // economic_score: -100 (진보) ~ +100 (보수)
-  // spectrum bar: 0 (진보) ~ 100 (보수), center 50 = 중립
+  // economic_score: +100 (진보) ~ -100 (보수)
+  // spectrum bar: 0 (왼쪽=진보) ~ 100 (오른쪽=보수), center 50 = 중립
   const spectrumPct =
     politicalProfile != null
-      ? Math.round((politicalProfile.economic_score + 100) / 2)
+      ? Math.round((100 - politicalProfile.economic_score) / 2)
       : null;
 
   const progressiveColor = "#3182f6";
