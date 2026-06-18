@@ -157,10 +157,12 @@ function TestScreen({
 
         {/* Bottom: answers + navigation */}
         <AnswerArea>
+          {/* key에 currentIndex 포함 → 문항 전환마다 버튼 DOM 강제 remount.
+              iPad Safari에서 탭 후 :hover/:focus가 재사용 노드에 고착되는 문제 방지 */}
           <AnswerGrid>
             {[...likertOptions].reverse().map((opt) => (
               <AnswerBtn
-                key={opt.value}
+                key={`${currentIndex}-${opt.value}`}
                 $selected={selectedAnswer === opt.value}
                 onClick={() => onSelect(opt.value)}
               >
