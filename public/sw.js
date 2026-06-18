@@ -1,9 +1,9 @@
-const CACHE = "jwj-v1";
+const CACHE = "jwj-v2";
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
     caches.open(CACHE).then((c) =>
-      c.addAll(["/", "/offline"])
+      c.addAll(["/offline"])
     ).then(() => self.skipWaiting())
   );
 });
@@ -36,20 +36,14 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // 페이지 네비게이션 — network-first, 실패 시 캐시 or /offline
+  // 페이지 네비게이션 — network-only, 실패 시에만 /offline 폴백.
+  // HTML을 캐싱하면 재배포 후 stale HTML이 죽은 _next 청크 해시를 참조 →
+  // hydration 실패 → 버튼이 안 눌리는 문제. HTML은 절대 캐싱하지 않음.
   if (request.mode === "navigate") {
     e.respondWith(
-      fetch(request)
-        .then((res) => {
-          if (res.ok) {
-            const clone = res.clone();
-            caches.open(CACHE).then((c) => c.put(request, clone));
-          }
-          return res;
-        })
-        .catch(() =>
-          caches.match(request).then((cached) => cached ?? caches.match("/offline"))
-        )
+      fetch(request).catch(() =>
+        caches.match("/offline").then((cached) => cached ?? Response.error()),
+      ),
     );
     return;
   }
