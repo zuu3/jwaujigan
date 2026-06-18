@@ -24,9 +24,12 @@ export function DemoContainer() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [result, setResult] = useState<PoliticalProfileResult | null>(null);
   const [locked, setLocked] = useState(false);
-  const [displayAnswer, setDisplayAnswer] = useState<number | null>(null);
 
   const currentQuestion = questions[currentIndex];
+  // 현재 문항의 저장된 답 → 선택 하이라이트. (이전으로 돌아가면 고른 답이 다시 보임)
+  // 자동 전진 시 다음 문항은 미답이라 null → 잔상 없음.
+  // hover 고착 잔상은 AnswerBtn $noHover/remount로 별도 차단됨.
+  const existingAnswer = answers[currentQuestion?.id] ?? null;
 
   // 모든 문항 답 완료 시에만 결과로 전환 (불완전하면 첫 미답 문항으로 이동)
   const goToResult = (finalAnswers: PoliticalAnswers) => {
@@ -43,11 +46,9 @@ export function DemoContainer() {
     if (locked || !currentQuestion) return;
     const next = { ...answers, [currentQuestion.id]: score };
     setAnswers(next);
-    setDisplayAnswer(score);
     setLocked(true);
     setTimeout(() => {
       setLocked(false);
-      setDisplayAnswer(null);
       if (currentIndex + 1 >= questions.length) {
         goToResult(next);
       } else {
@@ -57,20 +58,16 @@ export function DemoContainer() {
   };
 
   const handleNext = () => {
-    if (locked || displayAnswer === null) return;
+    if (locked || existingAnswer === null) return;
     if (currentIndex + 1 >= questions.length) {
       goToResult(answers);
     } else {
-      setDisplayAnswer(null);
       setCurrentIndex((i) => Math.min(i + 1, questions.length - 1));
     }
   };
 
   const handlePrev = () => {
-    if (currentIndex > 0) {
-      setDisplayAnswer(null);
-      setCurrentIndex((i) => Math.max(i - 1, 0));
-    }
+    if (currentIndex > 0) setCurrentIndex((i) => Math.max(i - 1, 0));
   };
 
   const reset = () => {
@@ -85,7 +82,7 @@ export function DemoContainer() {
   if (screen === "test") return (
     <TestScreen
       currentIndex={currentIndex}
-      selectedAnswer={displayAnswer}
+      selectedAnswer={existingAnswer}
       onSelect={handleSelect}
       onPrev={handlePrev}
       onNext={handleNext}
