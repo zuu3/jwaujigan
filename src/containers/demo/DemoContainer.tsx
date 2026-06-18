@@ -462,9 +462,11 @@ const AnswerBtn = styled.button<{ $selected: boolean }>`
   cursor: pointer;
   transition: border-color 120ms, background 120ms, color 120ms;
 
-  &:hover {
-    border-color: #3182f6;
-    background: #f0f7ff;
+  @media (hover: hover) {
+    &:hover {
+      border-color: #3182f6;
+      background: #f0f7ff;
+    }
   }
 
   @media (max-width: 600px) { height: 54px; font-size: 16px; }
