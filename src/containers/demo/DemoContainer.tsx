@@ -131,6 +131,17 @@ function TestScreen({
   const progress = (currentIndex / questions.length) * 100;
   const isLast = currentIndex === questions.length - 1;
 
+  // 터치 디바이스 감지 → hover 스타일 차단.
+  // iPadOS Safari는 데스크톱 모드에서 hover:hover/pointer:fine를 거짓 보고하므로
+  // CSS 미디어쿼리로는 못 거름. maxTouchPoints는 iPad가 데스크톱 모드여도 참값 보고.
+  const [isTouch, setIsTouch] = useState(false);
+  useEffect(() => {
+    setIsTouch(
+      typeof navigator !== "undefined" &&
+        (navigator.maxTouchPoints > 0 || "ontouchstart" in window),
+    );
+  }, []);
+
   return (
     <FullPage>
       <TestLayout>
@@ -164,6 +175,7 @@ function TestScreen({
               <AnswerBtn
                 key={`${currentIndex}-${opt.value}`}
                 $selected={selectedAnswer === opt.value}
+                $noHover={isTouch}
                 onClick={() => onSelect(opt.value)}
               >
                 {opt.label}
@@ -451,7 +463,7 @@ const AnswerGrid = styled.div`
   margin-bottom: 20px;
 `;
 
-const AnswerBtn = styled.button<{ $selected: boolean }>`
+const AnswerBtn = styled.button<{ $selected: boolean; $noHover: boolean }>`
   width: 100%;
   height: 64px;
   border: 1.5px solid ${({ $selected }) => $selected ? "#3182f6" : "#e5e8eb"};
@@ -462,14 +474,16 @@ const AnswerBtn = styled.button<{ $selected: boolean }>`
   font-weight: ${({ $selected }) => $selected ? 600 : 400};
   font-family: inherit;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   transition: border-color 120ms, background 120ms, color 120ms;
 
-  @media (hover: hover) {
-    &:hover {
-      border-color: #3182f6;
-      background: #f0f7ff;
-    }
-  }
+  ${({ $noHover }) =>
+    $noHover
+      ? ""
+      : `&:hover {
+          border-color: #3182f6;
+          background: #f0f7ff;
+        }`}
 
   @media (max-width: 600px) { height: 54px; font-size: 16px; }
 `;
