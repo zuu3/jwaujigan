@@ -248,7 +248,8 @@ export function getLocalElectionPhotoUrl(
   if (!SD_ONLY_TYPES.has(electionType)) return null;
   const gsg = SD_GSG[sdName];
   if (!gsg || !huboid) return null;
-  return `https://cdn.nec.go.kr/photo_${sgId}/Gsg${gsg}/Hb${huboid}/gicho/${huboid}.JPG`;
+  // cdn.nec.go.kr 도메인 폐기(NXDOMAIN) → info.nec.go.kr로 이전
+  return `https://info.nec.go.kr/photo_${sgId}/Gsg${gsg}/Hb${huboid}/gicho/${huboid}.JPG`;
 }
 
 // ─── 동→선거구 mapping ───────────────────────────────────────────────────────
