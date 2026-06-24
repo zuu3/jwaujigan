@@ -30,7 +30,7 @@ export async function syncUserRecord(input: SyncUserInput) {
         onConflict: "email",
       },
     )
-    .select("id, email, district")
+    .select("id, email, district, area")
     .single();
 
   if (error) {

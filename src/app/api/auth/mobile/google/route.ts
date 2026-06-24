@@ -81,6 +81,7 @@ export async function POST(request: Request) {
       name: tokenInfo.name ?? null,
       image: tokenInfo.picture ?? null,
       district: synced.data.district ?? null,
+      area: synced.data.area ?? null,
     },
   });
 }

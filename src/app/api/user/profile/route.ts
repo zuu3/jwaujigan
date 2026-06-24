@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   const supabase = createServiceRoleSupabaseClient();
   const { data, error } = await supabase
     .from("users")
-    .select("id, email, name, image, district, points, is_public")
+    .select("id, email, name, image, district, area, points, is_public")
     .eq("email", session.user.email)
     .maybeSingle();
 
@@ -52,10 +52,12 @@ export async function GET(request: Request) {
       name: session.user.name ?? null,
       image: session.user.image ?? null,
       district: gateState.district ?? session.user.district ?? null,
+      area: gateState.area ?? session.user.area ?? null,
       points: 0,
       is_public: true,
     }),
     district: gateState.district ?? data?.district ?? session.user.district ?? null,
+    area: gateState.area ?? data?.area ?? session.user.area ?? null,
     hasPoliticalProfile: gateState.hasPoliticalProfile,
     streak,
     today_active,

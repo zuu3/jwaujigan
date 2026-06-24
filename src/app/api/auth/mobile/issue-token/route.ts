@@ -33,6 +33,7 @@ export async function GET() {
     name: session.user.name ?? null,
     image: session.user.image ?? null,
     district: synced.data.district ?? null,
+    area: synced.data.area ?? null,
   }));
 
   return NextResponse.redirect(
