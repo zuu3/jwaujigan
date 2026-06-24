@@ -1,20 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requestAuth } from "@/lib/request-auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 
 type Ctx = { params: Promise<{ id: string; commentId: string }> };
 
-async function getAuthenticatedUserId(email: string): Promise<string | null> {
-  const svc = createServiceRoleSupabaseClient();
-  const { data } = await svc.from("users").select("id").eq("email", email).single();
-  return data?.id ?? null;
-}
-
 export async function PATCH(req: NextRequest, { params }: Ctx) {
   const { commentId } = await params;
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
+  const session = await requestAuth(req);
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
   }
 
@@ -24,8 +17,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     return NextResponse.json({ error: "댓글은 1자 이상 500자 이하여야 해요." }, { status: 400 });
   }
 
-  const userId = await getAuthenticatedUserId(session.user.email);
-  if (!userId) return NextResponse.json({ error: "사용자를 찾을 수 없어요." }, { status: 404 });
+  const userId = session.user.id;
 
   const svc = createServiceRoleSupabaseClient();
   const { data: existing } = await svc
@@ -47,15 +39,14 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   return NextResponse.json({ comment: { ...updated, is_mine: true } });
 }
 
-export async function DELETE(_req: NextRequest, { params }: Ctx) {
+export async function DELETE(req: NextRequest, { params }: Ctx) {
   const { commentId } = await params;
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
+  const session = await requestAuth(req);
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
   }
 
-  const userId = await getAuthenticatedUserId(session.user.email);
-  if (!userId) return NextResponse.json({ error: "사용자를 찾을 수 없어요." }, { status: 404 });
+  const userId = session.user.id;
 
   const svc = createServiceRoleSupabaseClient();
   const { data: existing } = await svc

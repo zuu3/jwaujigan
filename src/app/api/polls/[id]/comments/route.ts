@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requestAuth } from "@/lib/request-auth";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -68,15 +67,10 @@ export async function GET(req: NextRequest, { params }: Ctx) {
   const { id: pollId } = await params;
   const cursor = req.nextUrl.searchParams.get("cursor");
 
-  const session = await getServerSession(authOptions);
+  const session = await requestAuth(req);
   const svc = createServiceRoleSupabaseClient();
 
-  let currentUserId: string | null = null;
-  if (session?.user?.email) {
-    const { data: me } = await svc
-      .from("users").select("id").eq("email", session.user.email).single();
-    currentUserId = me?.id ?? null;
-  }
+  const currentUserId: string | null = session?.user?.id ?? null;
 
   // Fetch top-level comments
   let q = svc
@@ -136,8 +130,8 @@ export async function GET(req: NextRequest, { params }: Ctx) {
 
 export async function POST(req: NextRequest, { params }: Ctx) {
   const { id: pollId } = await params;
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
+  const session = await requestAuth(req);
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "로그인이 필요해요." }, { status: 401 });
   }
 
@@ -148,9 +142,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
   }
 
   const svc = createServiceRoleSupabaseClient();
-  const { data: user } = await svc
-    .from("users").select("id").eq("email", session.user.email).single();
-  if (!user) return NextResponse.json({ error: "사용자를 찾을 수 없어요." }, { status: 404 });
+  const user = { id: session.user.id };
 
   // Validate parent_id — must be a top-level comment of this poll
   let resolvedParentId: string | null = null;
