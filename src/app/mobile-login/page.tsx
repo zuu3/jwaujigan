@@ -3,6 +3,9 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "좌우지간 — 앱 로그인" };
 
+const koreanFontFamily =
+  '"Apple SD Gothic Neo", "Pretendard", -apple-system, BlinkMacSystemFont, "Noto Sans KR", "Malgun Gothic", sans-serif';
+
 type Props = {
   searchParams: Promise<{ error?: string }>;
 };
@@ -11,7 +14,7 @@ export default async function MobileLoginPage({ searchParams }: Props) {
   const { error } = await searchParams;
 
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24, padding: 24, fontFamily: "system-ui, sans-serif", background: "#fff" }}>
+    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24, padding: 24, fontFamily: koreanFontFamily, background: "#fff" }}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, textAlign: "center" }}>
         <span style={{ fontSize: 32, fontWeight: 800, color: "#2563eb", letterSpacing: "-0.02em" }}>좌우지간</span>
         <p style={{ fontSize: 16, color: "#4b5563", margin: 0 }}>앱에서 계속하려면 Google 계정으로 로그인해주세요.</p>
